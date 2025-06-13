@@ -14,16 +14,39 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
+    console.log('Method:', req.method)
+    console.log('Headers:', Object.fromEntries(req.headers.entries()))
 
-    const { account, margin, positions, history } = await req.json()
+    // Initialize Supabase client with SERVICE ROLE KEY (bypass RLS)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
-    console.log('Dados recebidos do MT4/MT5:', { account, margin, positions, history })
+    console.log('Supabase URL:', supabaseUrl)
+    console.log('Service Key disponível:', !!supabaseServiceKey)
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    })
+
+    // Parse request body
+    const requestBody = await req.text()
+    console.log('Request body recebido:', requestBody)
+    
+    const { account, margin, positions, history } = JSON.parse(requestBody)
+    
+    console.log('Dados parseados:', { 
+      account: account?.accountNumber, 
+      margin: margin?.used, 
+      positions: positions?.length,
+      history: history?.length 
+    })
 
     // Upsert trading account
+    console.log('=== SALVANDO CONTA ===')
     const { data: accountData, error: accountError } = await supabase
       .from('trading_accounts')
       .upsert({
@@ -42,13 +65,15 @@ serve(async (req) => {
 
     if (accountError) {
       console.error('Erro ao salvar conta:', accountError)
-      throw accountError
+      throw new Error(`Erro conta: ${accountError.message}`)
     }
 
+    console.log('Conta salva:', accountData?.id)
     const accountId = accountData.id
 
     // Update margin info
-    await supabase
+    console.log('=== SALVANDO MARGEM ===')
+    const { error: marginError } = await supabase
       .from('margin_info')
       .upsert({
         account_id: accountId,
@@ -60,14 +85,27 @@ serve(async (req) => {
         onConflict: 'account_id'
       })
 
+    if (marginError) {
+      console.error('Erro ao salvar margem:', marginError)
+      throw new Error(`Erro margem: ${marginError.message}`)
+    }
+
+    console.log('Margem salva com sucesso')
+
     // Clear old positions and insert new ones
-    await supabase
+    console.log('=== LIMPANDO POSIÇÕES ANTIGAS ===')
+    const { error: deleteError } = await supabase
       .from('open_positions')
       .delete()
       .eq('account_id', accountId)
 
+    if (deleteError) {
+      console.error('Erro ao limpar posições:', deleteError)
+    }
+
     // Insert current positions
     if (positions && positions.length > 0) {
+      console.log('=== SALVANDO', positions.length, 'POSIÇÕES ===')
       const positionsData = positions.map((pos: any) => ({
         account_id: accountId,
         ticket: pos.ticket,
@@ -81,15 +119,23 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       }))
 
-      await supabase
+      const { error: positionsError } = await supabase
         .from('open_positions')
         .insert(positionsData)
+
+      if (positionsError) {
+        console.error('Erro ao salvar posições:', positionsError)
+        throw new Error(`Erro posições: ${positionsError.message}`)
+      }
+
+      console.log('Posições salvas:', positions.length)
     }
 
     // Insert trade history (avoid duplicates)
     if (history && history.length > 0) {
+      console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
       for (const trade of history) {
-        await supabase
+        const { error: historyError } = await supabase
           .from('trade_history')
           .upsert({
             account_id: accountId,
@@ -105,18 +151,36 @@ serve(async (req) => {
           }, {
             onConflict: 'account_id,ticket'
           })
+
+        if (historyError) {
+          console.error('Erro ao salvar trade:', trade.ticket, historyError)
+        }
       }
+      console.log('Histórico processado')
     }
 
+    console.log('=== SUCESSO TOTAL ===')
     return new Response(
-      JSON.stringify({ success: true, message: 'Dados atualizados com sucesso' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Dados atualizados com sucesso',
+        account_id: accountId,
+        timestamp: new Date().toISOString()
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Erro na Edge Function:', error)
+    console.error('=== ERRO NA EDGE FUNCTION ===')
+    console.error('Erro completo:', error)
+    console.error('Stack trace:', error.stack)
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Verifique os logs da Edge Function',
+        timestamp: new Date().toISOString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

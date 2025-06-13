@@ -1,1 +1,5 @@
+
 project_id = "kgrlcsimdszbrkcwjpke"
+
+[functions.trading-data]
+verify_jwt = false

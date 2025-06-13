@@ -53,7 +53,7 @@ const TradeHistory = () => {
             </thead>
             <tbody>
               {trades.map((trade) => (
-                <tr key={trade.ticket} className="border-b hover:bg-gray-50">
+                <tr key={`${trade.ticket}-${trade.close_time}`} className="border-b hover:bg-gray-50">
                   <td className="py-3 font-mono text-xs">{trade.ticket}</td>
                   <td className="py-3 font-semibold">{trade.symbol}</td>
                   <td className="py-3">
@@ -62,7 +62,7 @@ const TradeHistory = () => {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      ➚ {trade.type}
+                      {trade.type === 'BUY' ? '↗ BUY' : '↙ SELL'}
                     </span>
                   </td>
                   <td className="py-3 text-right">{Number(trade.volume).toFixed(2)}</td>
@@ -71,15 +71,17 @@ const TradeHistory = () => {
                   <td className={`py-3 text-right font-bold ${
                     Number(trade.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    US$ {Number(trade.profit).toFixed(1)}
+                    US$ {Number(trade.profit).toFixed(2)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {trades.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
-              Nenhum histórico de trades disponível
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">📊</div>
+              <p>Nenhum histórico de trades disponível</p>
+              <p className="text-sm text-gray-400 mt-1">O histórico aparecerá quando houver trades fechados</p>
             </div>
           )}
         </div>

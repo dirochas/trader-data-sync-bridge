@@ -62,7 +62,7 @@ const OpenPositions = () => {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      ➚ {position.type}
+                      {position.type === 'BUY' ? '↗ BUY' : '↙ SELL'}
                     </span>
                   </td>
                   <td className="py-3 text-right">{Number(position.volume).toFixed(2)}</td>
@@ -78,8 +78,10 @@ const OpenPositions = () => {
             </tbody>
           </table>
           {positions.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
-              Nenhuma posição aberta no momento
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">📈</div>
+              <p>Nenhuma posição aberta no momento</p>
+              <p className="text-sm text-gray-400 mt-1">As posições abertas aparecerão aqui automaticamente</p>
             </div>
           )}
         </div>

@@ -26,7 +26,7 @@ const AccountInfo = () => {
     );
   }
 
-  if (error) {
+  if (!accountData) {
     return (
       <Card className="h-full">
         <CardHeader className="pb-4">
@@ -36,22 +36,19 @@ const AccountInfo = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600">Erro ao carregar dados da conta</p>
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">🔄</div>
+            <p>Aguardando dados da conta...</p>
+            <p className="text-sm text-gray-400 mt-1">Os dados aparecerão quando o EA enviar informações</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Dados padrão caso não haja dados do Supabase
-  const defaultData = {
-    account_number: "12345678",
-    server: "MetaQuotes-Demo",
-    balance: 10000.50,
-    equity: 10150.75,
-    profit: 150.25
-  };
-
-  const data = accountData || defaultData;
+  const balance = Number(accountData.balance);
+  const equity = Number(accountData.equity);
+  const profit = Number(accountData.profit);
 
   return (
     <Card className="h-full">
@@ -59,19 +56,19 @@ const AccountInfo = () => {
         <CardTitle className="flex items-center gap-2 text-lg">
           <span className="text-gray-600">👤</span>
           Informações da Conta
-          {accountData && <span className="text-xs text-green-600">🟢 LIVE</span>}
+          <span className="text-xs text-green-600">🟢 LIVE</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-blue-600 font-medium">Conta</span>
-            <span className="font-mono text-sm">{data.account_number}</span>
+            <span className="font-mono text-sm">{accountData.account_number}</span>
           </div>
           
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Servidor</span>
-            <span className="text-sm">{data.server}</span>
+            <span className="text-sm">{accountData.server}</span>
           </div>
           
           <div className="border-t pt-3 space-y-3">
@@ -80,7 +77,7 @@ const AccountInfo = () => {
                 💰 Balance
               </span>
               <span className="text-lg font-bold text-green-600">
-                US$ {Number(data.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                US$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
             
@@ -89,7 +86,7 @@ const AccountInfo = () => {
                 📈 Equity
               </span>
               <span className="text-lg font-bold text-blue-600">
-                US$ {Number(data.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                US$ {equity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
             
@@ -97,8 +94,8 @@ const AccountInfo = () => {
               <span className="text-sm font-medium flex items-center gap-1">
                 📊 Lucro/Prejuízo
               </span>
-              <span className={`text-lg font-bold ${Number(data.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                US$ {Number(data.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <span className={`text-lg font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                US$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>

@@ -1,5 +1,5 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
@@ -72,28 +72,36 @@ export const useTradeHistory = () => {
   });
 };
 
-// Hook para configurar atualizações em tempo real
+// Hook para configurar atualizações em tempo real SEM refresh da página
 export const useRealtimeUpdates = () => {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const channel = supabase
       .channel('trading-updates')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'trading_accounts' },
         () => {
-          // Força atualização dos dados quando houver mudanças
-          window.location.reload();
+          // Atualiza apenas os dados necessários sem refresh
+          queryClient.invalidateQueries({ queryKey: ['trading-account'] });
         }
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'margin_info' },
         () => {
-          window.location.reload();
+          queryClient.invalidateQueries({ queryKey: ['margin-info'] });
         }
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'open_positions' },
         () => {
-          window.location.reload();
+          queryClient.invalidateQueries({ queryKey: ['open-positions'] });
+        }
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'trade_history' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['trade-history'] });
         }
       )
       .subscribe();
@@ -101,5 +109,5 @@ export const useRealtimeUpdates = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 };

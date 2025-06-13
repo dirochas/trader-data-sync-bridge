@@ -5,8 +5,12 @@ import AccountInfo from '@/components/AccountInfo';
 import MarginInfo from '@/components/MarginInfo';
 import OpenPositions from '@/components/OpenPositions';
 import TradeHistory from '@/components/TradeHistory';
+import { useRealtimeUpdates } from '@/hooks/useTradingData';
 
 const Index = () => {
+  // Configurar atualizações em tempo real
+  useRealtimeUpdates();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <TradingHeader />
@@ -26,13 +30,16 @@ const Index = () => {
       </div>
       
       {/* Footer com informação sobre integração */}
-      <div className="bg-blue-50 border-t border-blue-200 p-4 mt-8">
+      <div className="bg-green-50 border-t border-green-200 p-4 mt-8">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-sm text-blue-700">
-            🔄 <strong>Status:</strong> Dados de exemplo - Aguardando integração com Supabase e Expert Advisor MT4/MT5
+          <p className="text-sm text-green-700">
+            🟢 <strong>Status:</strong> Integração Supabase ATIVA - Dados em tempo real
+          </p>
+          <p className="text-xs text-green-600 mt-1">
+            <strong>Endpoint MT4/MT5:</strong> https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data
           </p>
           <p className="text-xs text-blue-600 mt-1">
-            O código MQL4 está preparado para enviar dados reais quando a conexão for estabelecida
+            Configure seu Expert Advisor com este endpoint para começar a enviar dados reais
           </p>
         </div>
       </div>

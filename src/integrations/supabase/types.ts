@@ -9,7 +9,186 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      margin_info: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          free_margin: number
+          id: string
+          margin_level: number
+          updated_at: string
+          used_margin: number
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          free_margin?: number
+          id?: string
+          margin_level?: number
+          updated_at?: string
+          used_margin?: number
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          free_margin?: number
+          id?: string
+          margin_level?: number
+          updated_at?: string
+          used_margin?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "margin_info_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_positions: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          current_price: number
+          id: string
+          open_price: number
+          open_time: string
+          profit: number
+          symbol: string
+          ticket: number
+          type: string
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          current_price: number
+          id?: string
+          open_price: number
+          open_time: string
+          profit?: number
+          symbol: string
+          ticket: number
+          type: string
+          updated_at?: string
+          volume: number
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          current_price?: number
+          id?: string
+          open_price?: number
+          open_time?: string
+          profit?: number
+          symbol?: string
+          ticket?: number
+          type?: string
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_positions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_history: {
+        Row: {
+          account_id: string | null
+          close_price: number
+          close_time: string
+          created_at: string
+          id: string
+          open_price: number
+          open_time: string
+          profit: number
+          symbol: string
+          ticket: number
+          type: string
+          volume: number
+        }
+        Insert: {
+          account_id?: string | null
+          close_price: number
+          close_time: string
+          created_at?: string
+          id?: string
+          open_price: number
+          open_time: string
+          profit?: number
+          symbol: string
+          ticket: number
+          type: string
+          volume: number
+        }
+        Update: {
+          account_id?: string | null
+          close_price?: number
+          close_time?: string
+          created_at?: string
+          id?: string
+          open_price?: number
+          open_time?: string
+          profit?: number
+          symbol?: string
+          ticket?: number
+          type?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_history_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trading_accounts: {
+        Row: {
+          account_number: string
+          balance: number
+          created_at: string
+          equity: number
+          id: string
+          leverage: number
+          profit: number
+          server: string
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          balance?: number
+          created_at?: string
+          equity?: number
+          id?: string
+          leverage?: number
+          profit?: number
+          server: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          balance?: number
+          created_at?: string
+          equity?: number
+          id?: string
+          leverage?: number
+          profit?: number
+          server?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

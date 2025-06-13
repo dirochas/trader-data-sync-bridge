@@ -1,22 +1,32 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTradeHistory } from '@/hooks/useTradingData';
 
 const TradeHistory = () => {
-  // Dados de exemplo - serão substituídos pelos dados reais do MT4/MT5
-  const trades = [
-    {
-      ticket: 123458,
-      symbol: "EURUSD",
-      type: "BUY",
-      volume: 0.1,
-      openPrice: 1.08200,
-      closePrice: 1.08350,
-      openTime: "2024-06-13 14:30",
-      closeTime: "2024-06-13 15:45",
-      profit: 15.0
-    }
-  ];
+  const { data: trades = [], isLoading, error } = useTradeHistory();
+
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <span className="text-gray-600">🕐</span>
+            Histórico de Trades
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-8 bg-gray-200 rounded"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full">
@@ -24,6 +34,7 @@ const TradeHistory = () => {
         <CardTitle className="flex items-center gap-2 text-lg">
           <span className="text-gray-600">🕐</span>
           Histórico de Trades ({trades.length})
+          {trades.length > 0 && <span className="text-xs text-green-600">🟢 LIVE</span>}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -54,27 +65,23 @@ const TradeHistory = () => {
                       ➚ {trade.type}
                     </span>
                   </td>
-                  <td className="py-3 text-right">{trade.volume}</td>
-                  <td className="py-3 text-right font-mono">{trade.openPrice.toFixed(5)}</td>
-                  <td className="py-3 text-right font-mono">{trade.closePrice.toFixed(5)}</td>
+                  <td className="py-3 text-right">{Number(trade.volume).toFixed(2)}</td>
+                  <td className="py-3 text-right font-mono">{Number(trade.open_price).toFixed(5)}</td>
+                  <td className="py-3 text-right font-mono">{Number(trade.close_price).toFixed(5)}</td>
                   <td className={`py-3 text-right font-bold ${
-                    trade.profit >= 0 ? 'text-green-600' : 'text-red-600'
+                    Number(trade.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    US$ {trade.profit.toFixed(1)}
+                    US$ {Number(trade.profit).toFixed(1)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-        
-        {/* Navegação */}
-        <div className="flex justify-center items-center mt-4 space-x-2">
-          <button className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">◀</button>
-          <div className="h-2 flex-1 bg-gray-200 rounded-full">
-            <div className="h-full w-1/4 bg-blue-500 rounded-full"></div>
-          </div>
-          <button className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">▶</button>
+          {trades.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              Nenhum histórico de trades disponível
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,29 +1,32 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOpenPositions } from '@/hooks/useTradingData';
 
 const OpenPositions = () => {
-  // Dados de exemplo - serão substituídos pelos dados reais do MT4/MT5
-  const positions = [
-    {
-      ticket: 123456,
-      symbol: "EURUSD",
-      type: "BUY",
-      volume: 0.1,
-      openPrice: 1.08500,
-      currentPrice: 1.08650,
-      profit: 15.00
-    },
-    {
-      ticket: 123457,
-      symbol: "GBPUSD",
-      type: "SELL",
-      volume: 0.05,
-      openPrice: 1.27800,
-      currentPrice: 1.27650,
-      profit: 7.50
-    }
-  ];
+  const { data: positions = [], isLoading, error } = useOpenPositions();
+
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <span className="text-gray-600">📊</span>
+            Posições Abertas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-8 bg-gray-200 rounded"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full">
@@ -31,6 +34,7 @@ const OpenPositions = () => {
         <CardTitle className="flex items-center gap-2 text-lg">
           <span className="text-gray-600">📊</span>
           Posições Abertas ({positions.length})
+          {positions.length > 0 && <span className="text-xs text-green-600">🟢 LIVE</span>}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -61,18 +65,23 @@ const OpenPositions = () => {
                       ➚ {position.type}
                     </span>
                   </td>
-                  <td className="py-3 text-right">{position.volume}</td>
-                  <td className="py-3 text-right font-mono">{position.openPrice.toFixed(5)}</td>
-                  <td className="py-3 text-right font-mono">{position.currentPrice.toFixed(5)}</td>
+                  <td className="py-3 text-right">{Number(position.volume).toFixed(2)}</td>
+                  <td className="py-3 text-right font-mono">{Number(position.open_price).toFixed(5)}</td>
+                  <td className="py-3 text-right font-mono">{Number(position.current_price).toFixed(5)}</td>
                   <td className={`py-3 text-right font-bold ${
-                    position.profit >= 0 ? 'text-green-600' : 'text-red-600'
+                    Number(position.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    US$ {position.profit.toFixed(2)}
+                    US$ {Number(position.profit).toFixed(2)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {positions.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              Nenhuma posição aberta no momento
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -157,35 +157,44 @@ export type Database = {
         Row: {
           account_number: string
           balance: number
+          broker: string | null
           created_at: string
           equity: number
           id: string
           leverage: number
+          name: string | null
           profit: number
           server: string
           updated_at: string
+          vps_name: string | null
         }
         Insert: {
           account_number: string
           balance?: number
+          broker?: string | null
           created_at?: string
           equity?: number
           id?: string
           leverage?: number
+          name?: string | null
           profit?: number
           server: string
           updated_at?: string
+          vps_name?: string | null
         }
         Update: {
           account_number?: string
           balance?: number
+          broker?: string | null
           created_at?: string
           equity?: number
           id?: string
           leverage?: number
+          name?: string | null
           profit?: number
           server?: string
           updated_at?: string
+          vps_name?: string | null
         }
         Relationships: []
       }

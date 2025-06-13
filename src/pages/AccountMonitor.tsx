@@ -3,12 +3,28 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useTradingAccounts } from '@/hooks/useTradingData';
+import { useTradingAccounts, useOpenPositions } from '@/hooks/useTradingData';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
   const navigate = useNavigate();
+
+  // Buscar todas as posições abertas para calcular totais
+  const { data: allOpenPositions = [] } = useQuery({
+    queryKey: ['all-open-positions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('open_positions')
+        .select('*');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 5000,
+  });
 
   const handleViewAccount = (accountNumber: string) => {
     navigate(`/account/${accountNumber}`);
@@ -27,22 +43,21 @@ const AccountMonitor = () => {
     }
   };
 
-  const getStatusDot = (status: string) => {
-    switch (status) {
-      case 'Live':
-        return '🟢';
-      case 'Disconnected':
-        return '🔴';
-      case 'Slow connection':
-        return '🟡';
-      default:
-        return '⚪';
-    }
+  // Função para contar trades abertas por conta
+  const getOpenTradesCount = (accountId: string) => {
+    return allOpenPositions.filter(pos => pos.account_id === accountId).length;
+  };
+
+  // Função para calcular Open PnL por conta
+  const getOpenPnL = (accountId: string) => {
+    return allOpenPositions
+      .filter(pos => pos.account_id === accountId)
+      .reduce((sum, pos) => sum + Number(pos.profit || 0), 0);
   };
 
   // Calcular estatísticas com base nos dados reais
   const totalAccounts = accounts.length;
-  const totalTrades = 0; // Removido a referência ao open_trades inexistente
+  const totalTrades = allOpenPositions.length;
   const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
   const totalClients = accounts.length; // Assumindo 1 cliente por conta
 
@@ -132,59 +147,74 @@ const AccountMonitor = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Account Number</TableHead>
-                    <TableHead>Server</TableHead>
+                    <TableHead>VPS</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
                     <TableHead className="text-right">Equity</TableHead>
-                    <TableHead className="text-right">Profit</TableHead>
+                    <TableHead className="text-right">Open Trades</TableHead>
+                    <TableHead className="text-right">Open PnL</TableHead>
+                    <TableHead className="text-right">Day</TableHead>
+                    <TableHead>BROKER</TableHead>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {accounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span>🟢</span>
-                          <span className="text-sm font-medium text-green-600">
-                            Live
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {account.account_number} {/* Temporário até termos campo name */}
-                      </TableCell>
-                      <TableCell className="font-mono">{account.account_number}</TableCell>
-                      <TableCell>{account.server}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className={`text-right font-bold ${Number(account.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        US$ {Number(account.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            CLOSE ALL
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700"
-                            onClick={() => handleViewAccount(account.account_number)}
-                          >
-                            VIEW
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {accounts.map((account) => {
+                    const openTradesCount = getOpenTradesCount(account.id);
+                    const openPnL = getOpenPnL(account.id);
+                    
+                    return (
+                      <TableRow key={account.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>🟢</span>
+                            <span className="text-sm font-medium text-green-600">
+                              Live
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {account.name || `Account ${account.account_number}`}
+                        </TableCell>
+                        <TableCell className="font-mono">{account.account_number}</TableCell>
+                        <TableCell>{account.vps_name || 'N/A'}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right font-bold">
+                          {openTradesCount}
+                        </TableCell>
+                        <TableCell className={`text-right font-bold ${openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          US$ {openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className={`text-right font-bold ${Number(account.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          US$ {Number(account.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell>{account.broker || account.server}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              CLOSE ALL
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => handleViewAccount(account.account_number)}
+                            >
+                              VIEW
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
 

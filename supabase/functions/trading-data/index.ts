@@ -16,7 +16,6 @@ serve(async (req) => {
   try {
     console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
     console.log('Method:', req.method)
-    console.log('Headers:', Object.fromEntries(req.headers.entries()))
 
     // Initialize Supabase client with SERVICE ROLE KEY (bypass RLS)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -71,18 +70,28 @@ serve(async (req) => {
     console.log('Conta salva:', accountData?.id)
     const accountId = accountData.id
 
-    // Update margin info
-    console.log('=== SALVANDO MARGEM ===')
+    // Delete old margin info and insert new one
+    console.log('=== ATUALIZANDO MARGEM ===')
+    
+    // First delete existing margin info for this account
+    const { error: deleteMarginError } = await supabase
+      .from('margin_info')
+      .delete()
+      .eq('account_id', accountId)
+
+    if (deleteMarginError) {
+      console.log('Info: Nenhuma margem anterior para deletar ou erro:', deleteMarginError.message)
+    }
+
+    // Insert new margin info
     const { error: marginError } = await supabase
       .from('margin_info')
-      .upsert({
+      .insert({
         account_id: accountId,
         used_margin: margin.used,
         free_margin: margin.free,
         margin_level: margin.level,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'account_id'
       })
 
     if (marginError) {
@@ -101,6 +110,8 @@ serve(async (req) => {
 
     if (deleteError) {
       console.error('Erro ao limpar posições:', deleteError)
+    } else {
+      console.log('Posições antigas removidas')
     }
 
     // Insert current positions
@@ -129,34 +140,44 @@ serve(async (req) => {
       }
 
       console.log('Posições salvas:', positions.length)
+    } else {
+      console.log('Nenhuma posição aberta para salvar')
     }
 
     // Insert trade history (avoid duplicates)
     if (history && history.length > 0) {
       console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
       for (const trade of history) {
-        const { error: historyError } = await supabase
-          .from('trade_history')
-          .upsert({
-            account_id: accountId,
-            ticket: trade.ticket,
-            symbol: trade.symbol,
-            type: trade.type,
-            volume: trade.volume,
-            open_price: trade.openPrice,
-            close_price: trade.closePrice,
-            profit: trade.profit,
-            open_time: new Date(trade.openTime).toISOString(),
-            close_time: new Date(trade.closeTime).toISOString()
-          }, {
-            onConflict: 'account_id,ticket'
-          })
+        try {
+          const { error: historyError } = await supabase
+            .from('trade_history')
+            .upsert({
+              account_id: accountId,
+              ticket: trade.ticket,
+              symbol: trade.symbol,
+              type: trade.type,
+              volume: trade.volume,
+              open_price: trade.openPrice,
+              close_price: trade.closePrice,
+              profit: trade.profit,
+              open_time: new Date(trade.openTime).toISOString(),
+              close_time: new Date(trade.closeTime).toISOString()
+            }, {
+              onConflict: 'account_id,ticket'
+            })
 
-        if (historyError) {
-          console.error('Erro ao salvar trade:', trade.ticket, historyError)
+          if (historyError) {
+            console.error('Erro ao salvar trade:', trade.ticket, historyError)
+          } else {
+            console.log('Trade salvo:', trade.ticket)
+          }
+        } catch (error) {
+          console.error('Erro ao processar trade:', trade.ticket, error)
         }
       }
       console.log('Histórico processado')
+    } else {
+      console.log('Nenhum histórico para salvar')
     }
 
     console.log('=== SUCESSO TOTAL ===')
@@ -165,6 +186,8 @@ serve(async (req) => {
         success: true, 
         message: 'Dados atualizados com sucesso',
         account_id: accountId,
+        positions_count: positions?.length || 0,
+        history_count: history?.length || 0,
         timestamp: new Date().toISOString()
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

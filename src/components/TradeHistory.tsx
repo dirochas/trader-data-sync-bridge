@@ -3,9 +3,20 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTradeHistory } from '@/hooks/useTradingData';
+import { usePagination } from '@/hooks/usePagination';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious,
+  PaginationEllipsis 
+} from '@/components/ui/pagination';
 
 const TradeHistory = () => {
   const { data: trades = [], isLoading, error } = useTradeHistory();
+  const { currentPage, totalPages, paginatedData, goToPage, nextPage, previousPage } = usePagination(trades, 10);
 
   if (isLoading) {
     return (
@@ -53,7 +64,7 @@ const TradeHistory = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trades.map((trade) => (
+              {paginatedData.map((trade) => (
                 <TableRow key={`${trade.ticket}-${trade.close_time}`}>
                   <TableCell className="font-mono text-xs">{trade.ticket}</TableCell>
                   <TableCell className="font-semibold">{trade.symbol}</TableCell>
@@ -83,6 +94,60 @@ const TradeHistory = () => {
               <div className="text-4xl mb-2">📊</div>
               <p>Nenhum histórico de trades disponível</p>
               <p className="text-sm text-gray-400 mt-1">O histórico aparecerá quando houver trades fechados</p>
+            </div>
+          )}
+          
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={previousPage}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          onClick={() => goToPage(pageNumber)}
+                          isActive={currentPage === pageNumber}
+                          className="cursor-pointer"
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  {totalPages > 5 && currentPage < totalPages - 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={nextPage}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </div>

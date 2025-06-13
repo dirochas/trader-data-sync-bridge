@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTradeHistory } from '@/hooks/useTradingData';
 
 const TradeHistory = () => {
@@ -39,24 +40,24 @@ const TradeHistory = () => {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-gray-600">
-                <th className="text-left py-2">Ticket</th>
-                <th className="text-left py-2">Símbolo</th>
-                <th className="text-left py-2">Tipo</th>
-                <th className="text-right py-2">Volume</th>
-                <th className="text-right py-2">Abertura</th>
-                <th className="text-right py-2">Fechamento</th>
-                <th className="text-right py-2">Lucro</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ticket</TableHead>
+                <TableHead>Símbolo</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead className="text-right">Volume</TableHead>
+                <TableHead className="text-right">Abertura</TableHead>
+                <TableHead className="text-right">Fechamento</TableHead>
+                <TableHead className="text-right">Lucro</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {trades.map((trade) => (
-                <tr key={`${trade.ticket}-${trade.close_time}`} className="border-b hover:bg-gray-50">
-                  <td className="py-3 font-mono text-xs">{trade.ticket}</td>
-                  <td className="py-3 font-semibold">{trade.symbol}</td>
-                  <td className="py-3">
+                <TableRow key={`${trade.ticket}-${trade.close_time}`}>
+                  <TableCell className="font-mono text-xs">{trade.ticket}</TableCell>
+                  <TableCell className="font-semibold">{trade.symbol}</TableCell>
+                  <TableCell>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       trade.type === 'BUY' 
                         ? 'bg-green-100 text-green-800' 
@@ -64,19 +65,19 @@ const TradeHistory = () => {
                     }`}>
                       {trade.type === 'BUY' ? '↗ BUY' : '↙ SELL'}
                     </span>
-                  </td>
-                  <td className="py-3 text-right">{Number(trade.volume).toFixed(2)}</td>
-                  <td className="py-3 text-right font-mono">{Number(trade.open_price).toFixed(5)}</td>
-                  <td className="py-3 text-right font-mono">{Number(trade.close_price).toFixed(5)}</td>
-                  <td className={`py-3 text-right font-bold ${
+                  </TableCell>
+                  <TableCell className="text-right">{Number(trade.volume).toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(trade.open_price).toFixed(5)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(trade.close_price).toFixed(5)}</TableCell>
+                  <TableCell className={`text-right font-bold ${
                     Number(trade.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     US$ {Number(trade.profit).toFixed(2)}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {trades.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <div className="text-4xl mb-2">📊</div>

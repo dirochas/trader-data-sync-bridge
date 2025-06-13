@@ -22,7 +22,7 @@ const AccountDetails = () => {
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <a href="/" className="hover:text-blue-600">Account Monitor</a>
-          <span>></span>
+          <span>{'>'}</span>
           <span className="text-gray-900 font-medium">Account Details #{accountId}</span>
         </div>
 

@@ -42,7 +42,7 @@ const AccountMonitor = () => {
 
   // Calcular estatísticas com base nos dados reais
   const totalAccounts = accounts.length;
-  const totalTrades = accounts.reduce((sum, account) => sum + (account.open_trades || 0), 0);
+  const totalTrades = 0; // Removido a referência ao open_trades inexistente
   const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
   const totalClients = accounts.length; // Assumindo 1 cliente por conta
 

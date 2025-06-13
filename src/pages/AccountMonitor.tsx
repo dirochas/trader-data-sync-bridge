@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useTradingAccounts, useOpenPositions } from '@/hooks/useTradingData';
+import { useTradingAccounts } from '@/hooks/useTradingData';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,21 +26,31 @@ const AccountMonitor = () => {
     refetchInterval: 5000,
   });
 
+  // Buscar histórico de trades do dia atual para calcular Day
+  const { data: todayTrades = [] } = useQuery({
+    queryKey: ['todays-trades'],
+    queryFn: async () => {
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+      const { data, error } = await supabase
+        .from('trade_history')
+        .select('*')
+        .gte('close_time', startOfDay.toISOString());
+      
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 10000,
+  });
+
   const handleViewAccount = (accountNumber: string) => {
     navigate(`/account/${accountNumber}`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Live':
-        return 'text-green-600';
-      case 'Disconnected':
-        return 'text-red-600';
-      case 'Slow connection':
-        return 'text-yellow-600';
-      default:
-        return 'text-gray-600';
-    }
+  const handleEditAccount = (accountId: string) => {
+    // TODO: Implementar função de edição
+    console.log('Edit account:', accountId);
   };
 
   // Função para contar trades abertas por conta
@@ -48,11 +58,16 @@ const AccountMonitor = () => {
     return allOpenPositions.filter(pos => pos.account_id === accountId).length;
   };
 
-  // Função para calcular Open PnL por conta
-  const getOpenPnL = (accountId: string) => {
-    return allOpenPositions
-      .filter(pos => pos.account_id === accountId)
-      .reduce((sum, pos) => sum + Number(pos.profit || 0), 0);
+  // Função para calcular Open PnL por conta (usando o profit da conta)
+  const getOpenPnL = (account: any) => {
+    return Number(account.profit || 0);
+  };
+
+  // Função para calcular Day (saldo fechado no dia) por conta
+  const getDayProfit = (accountId: string) => {
+    return todayTrades
+      .filter(trade => trade.account_id === accountId)
+      .reduce((sum, trade) => sum + Number(trade.profit || 0), 0);
   };
 
   // Calcular estatísticas com base nos dados reais
@@ -160,7 +175,8 @@ const AccountMonitor = () => {
                 <TableBody>
                   {accounts.map((account) => {
                     const openTradesCount = getOpenTradesCount(account.id);
-                    const openPnL = getOpenPnL(account.id);
+                    const openPnL = getOpenPnL(account);
+                    const dayProfit = getDayProfit(account.id);
                     
                     return (
                       <TableRow key={account.id}>
@@ -189,8 +205,8 @@ const AccountMonitor = () => {
                         <TableCell className={`text-right font-bold ${openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           US$ {openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className={`text-right font-bold ${Number(account.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          US$ {Number(account.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <TableCell className={`text-right font-bold ${dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          US$ {dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell>{account.broker || account.server}</TableCell>
                         <TableCell>
@@ -201,6 +217,14 @@ const AccountMonitor = () => {
                               className="text-red-600 hover:text-red-700"
                             >
                               CLOSE ALL
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-orange-600 hover:text-orange-700"
+                              onClick={() => handleEditAccount(account.id)}
+                            >
+                              EDIT
                             </Button>
                             <Button
                               variant="outline"

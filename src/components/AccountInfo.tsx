@@ -3,8 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTradingAccount } from '@/hooks/useTradingData';
 
-const AccountInfo = () => {
-  const { data: accountData, isLoading, error } = useTradingAccount();
+interface AccountInfoProps {
+  accountNumber?: string;
+}
+
+const AccountInfo = ({ accountNumber }: AccountInfoProps) => {
+  const { data: accountData, isLoading, error } = useTradingAccount(accountNumber);
 
   if (isLoading) {
     return (

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,8 +13,12 @@ import {
   PaginationEllipsis 
 } from '@/components/ui/pagination';
 
-const OpenPositions = () => {
-  const { data: positions = [], isLoading, error } = useOpenPositions();
+interface OpenPositionsProps {
+  accountNumber?: string;
+}
+
+const OpenPositions = ({ accountNumber }: OpenPositionsProps) => {
+  const { data: positions = [], isLoading, error } = useOpenPositions(accountNumber);
   const { currentPage, totalPages, paginatedData, goToPage, nextPage, previousPage } = usePagination(positions, 10);
 
   if (isLoading) {

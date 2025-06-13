@@ -28,14 +28,14 @@ const AccountDetails = () => {
 
         {/* Row 1: Account Info and Margin Info */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccountInfo />
-          <MarginInfo />
+          <AccountInfo accountNumber={accountId} />
+          <MarginInfo accountNumber={accountId} />
         </div>
         
         {/* Row 2: Open Positions and Trade History */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <OpenPositions />
-          <TradeHistory />
+          <OpenPositions accountNumber={accountId} />
+          <TradeHistory accountNumber={accountId} />
         </div>
       </div>
       

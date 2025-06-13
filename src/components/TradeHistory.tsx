@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,8 +13,12 @@ import {
   PaginationEllipsis 
 } from '@/components/ui/pagination';
 
-const TradeHistory = () => {
-  const { data: trades = [], isLoading, error } = useTradeHistory();
+interface TradeHistoryProps {
+  accountNumber?: string;
+}
+
+const TradeHistory = ({ accountNumber }: TradeHistoryProps) => {
+  const { data: trades = [], isLoading, error } = useTradeHistory(accountNumber);
   const { currentPage, totalPages, paginatedData, goToPage, nextPage, previousPage } = usePagination(trades, 10);
 
   if (isLoading) {

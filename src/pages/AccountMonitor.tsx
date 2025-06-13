@@ -3,32 +3,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useTradingAccount } from '@/hooks/useTradingData';
+import { useTradingAccounts } from '@/hooks/useTradingData';
 import { useNavigate } from 'react-router-dom';
 
 const AccountMonitor = () => {
-  const { data: accounts = [], isLoading } = useTradingAccount();
+  const { data: accounts = [], isLoading } = useTradingAccounts();
   const navigate = useNavigate();
 
-  // Simulando múltiplas contas - posteriormente isso virá do banco
-  const mockAccounts = [
-    {
-      id: '1',
-      name: 'Apollo',
-      account_number: '66615658',
-      server: 'ICMarketsSC-Demo06',
-      balance: 15532.53,
-      equity: 18466.94,
-      status: 'Live',
-      vps: 'VPS1',
-      open_trades: 28,
-      profit: 2934.41,
-      broker: 'IC-Markets'
-    }
-  ];
-
-  const handleViewAccount = (accountId: string) => {
-    navigate(`/account/${accountId}`);
+  const handleViewAccount = (accountNumber: string) => {
+    navigate(`/account/${accountNumber}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -57,6 +40,12 @@ const AccountMonitor = () => {
     }
   };
 
+  // Calcular estatísticas com base nos dados reais
+  const totalAccounts = accounts.length;
+  const totalTrades = accounts.reduce((sum, account) => sum + (account.open_trades || 0), 0);
+  const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
+  const totalClients = accounts.length; // Assumindo 1 cliente por conta
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -74,8 +63,8 @@ const AccountMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Accounts</p>
-                  <p className="text-2xl font-bold">1</p>
-                  <p className="text-xs text-red-500">-3.65% Since last week</p>
+                  <p className="text-2xl font-bold">{totalAccounts}</p>
+                  <p className="text-xs text-green-500">Contas conectadas</p>
                 </div>
                 <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 text-xl">📊</span>
@@ -89,8 +78,8 @@ const AccountMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Trades</p>
-                  <p className="text-2xl font-bold">28</p>
-                  <p className="text-xs text-green-500">5.25% Since last week</p>
+                  <p className="text-2xl font-bold">{totalTrades}</p>
+                  <p className="text-xs text-green-500">Posições abertas</p>
                 </div>
                 <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
                   <span className="text-green-600 text-xl">⏰</span>
@@ -104,8 +93,8 @@ const AccountMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Earnings</p>
-                  <p className="text-2xl font-bold">US$ 2,934.41</p>
-                  <p className="text-xs text-green-500">6.65% Since last week</p>
+                  <p className="text-2xl font-bold">US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-xs text-green-500">Lucro total</p>
                 </div>
                 <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
                   <span className="text-yellow-600 text-xl">💰</span>
@@ -119,8 +108,8 @@ const AccountMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Clients</p>
-                  <p className="text-2xl font-bold">1</p>
-                  <p className="text-xs text-red-500">-2.25% Since last week</p>
+                  <p className="text-2xl font-bold">{totalClients}</p>
+                  <p className="text-xs text-blue-500">Contas ativas</p>
                 </div>
                 <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
                   <span className="text-purple-600 text-xl">👥</span>
@@ -142,43 +131,39 @@ const AccountMonitor = () => {
                   <TableRow>
                     <TableHead>Status</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>VPS</TableHead>
+                    <TableHead>Account Number</TableHead>
+                    <TableHead>Server</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
                     <TableHead className="text-right">Equity</TableHead>
-                    <TableHead className="text-right">Open Trades</TableHead>
-                    <TableHead className="text-right">Open PnL</TableHead>
-                    <TableHead className="text-right">Day</TableHead>
-                    <TableHead>BROKER</TableHead>
+                    <TableHead className="text-right">Profit</TableHead>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockAccounts.map((account) => (
+                  {accounts.map((account) => (
                     <TableRow key={account.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span>{getStatusDot(account.status)}</span>
-                          <span className={`text-sm font-medium ${getStatusColor(account.status)}`}>
-                            {account.status}
+                          <span>🟢</span>
+                          <span className="text-sm font-medium text-green-600">
+                            Live
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{account.name}</TableCell>
-                      <TableCell>{account.vps}</TableCell>
+                      <TableCell className="font-medium">
+                        {account.account_number} {/* Temporário até termos campo name */}
+                      </TableCell>
+                      <TableCell className="font-mono">{account.account_number}</TableCell>
+                      <TableCell>{account.server}</TableCell>
                       <TableCell className="text-right font-mono">
-                        US$ {account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        US$ {account.equity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className="text-right">{account.open_trades}</TableCell>
-                      <TableCell className={`text-right font-bold ${account.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        US$ {account.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <TableCell className={`text-right font-bold ${Number(account.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        US$ {Number(account.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className="text-right">
-                        US$ {account.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>{account.broker}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button
@@ -192,7 +177,7 @@ const AccountMonitor = () => {
                             variant="outline"
                             size="sm"
                             className="text-blue-600 hover:text-blue-700"
-                            onClick={() => handleViewAccount(account.id)}
+                            onClick={() => handleViewAccount(account.account_number)}
                           >
                             VIEW
                           </Button>
@@ -203,11 +188,18 @@ const AccountMonitor = () => {
                 </TableBody>
               </Table>
 
-              {mockAccounts.length === 0 && (
+              {accounts.length === 0 && !isLoading && (
                 <div className="text-center py-8 text-gray-500">
                   <div className="text-4xl mb-2">📊</div>
                   <p>Nenhuma conta conectada</p>
                   <p className="text-sm text-gray-400 mt-1">Configure seus EAs para começar a monitorar contas</p>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-2">⏳</div>
+                  <p>Carregando contas...</p>
                 </div>
               )}
             </div>

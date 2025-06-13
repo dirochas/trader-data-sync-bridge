@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useMarginInfo } from '@/hooks/useTradingData';
 
-const MarginInfo = () => {
-  const { data: marginData, isLoading, error } = useMarginInfo();
+interface MarginInfoProps {
+  accountNumber?: string;
+}
+
+const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
+  const { data: marginData, isLoading, error } = useMarginInfo(accountNumber);
 
   if (isLoading) {
     return (

@@ -1,4 +1,3 @@
-
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq5 |
 //|                                                                  |
@@ -231,7 +230,7 @@ void SendIdleStatusToSupabase()
    jsonData += "\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",";
    jsonData += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
    jsonData += "},";
-   jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_FREEMARGIN), 2) + ",\"level\":0.00},";
+   jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",\"level\":0.00},";
    jsonData += "\"positions\":[],";
    jsonData += "\"history\":[],";
    jsonData += "\"status\":\"IDLE\"";
@@ -331,11 +330,11 @@ string BuildJsonData()
    // Margin Info
    json += "\"margin\":{";
    json += "\"used\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + ",";
-   json += "\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_FREEMARGIN), 2) + ",";
+   json += "\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
    json += "\"level\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN) == 0 ? 0 : AccountInfoDouble(ACCOUNT_EQUITY)/AccountInfoDouble(ACCOUNT_MARGIN)*100, 2);
    json += "},";
    
-   LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_FREEMARGIN), 2));
+   LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2));
    
    // Open Positions (MQL5)
    json += "\"positions\":[";

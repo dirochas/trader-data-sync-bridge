@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -110,50 +109,31 @@ const AccountMonitor = () => {
   const enrichedAccounts = useMemo(() => {
     return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
+      const openTradeCount = getOpenTradesCount(account.id);
+      const openPnLValue = getOpenPnL(account);
+      
       return {
         ...account,
-        openTrades: getOpenTradesCount(account.id),
-        dayProfit: getDayProfit(account.id),
+        // Propriedades calculadas com NOMES DIRETOS para ordenação
         connectionStatus: connectionStatus,
-        // Valores específicos para ordenação
-        statusValue: connectionStatus.status,
-        nameValue: account.name || `Account ${account.account_number}`,
-        vpsValue: account.vps_name || 'N/A',
-        openPnLValue: Number(account.profit || 0)
+        status: connectionStatus.status, // Usar 'status' diretamente
+        name: account.name || `Account ${account.account_number}`, // Usar 'name' diretamente  
+        vps: account.vps_name || 'N/A', // Usar 'vps' diretamente
+        openTrades: openTradeCount, // Usar 'openTrades' diretamente
+        openPnL: openPnLValue, // Usar 'openPnL' diretamente
+        dayProfit: getDayProfit(account.id)
       };
     });
   }, [accounts, allOpenPositions, todayTrades]);
 
-  // Funções customizadas de ordenação para colunas específicas
+  // Funções customizadas de ordenação APENAS onde necessário
   const customSortFunctions = {
-    // Para Status - usar statusValue
+    // Para Status - usar ordem específica
     status: (a: any, b: any) => {
-      console.log('Sorting by status:', a.statusValue, 'vs', b.statusValue);
+      console.log('Sorting by status:', a.status, 'vs', b.status);
       const statusOrder = { 'Live': 0, 'Slow Connection': 1, 'Delayed': 2, 'Disconnected': 3 };
-      return (statusOrder[a.statusValue as keyof typeof statusOrder] || 4) - (statusOrder[b.statusValue as keyof typeof statusOrder] || 4);
-    },
-    // Para Name - usar nameValue
-    name: (a: any, b: any) => {
-      console.log('Sorting by name:', a.nameValue, 'vs', b.nameValue);
-      return a.nameValue.localeCompare(b.nameValue);
-    },
-    // Para VPS - usar vpsValue
-    vps: (a: any, b: any) => {
-      console.log('Sorting by vps:', a.vpsValue, 'vs', b.vpsValue);
-      return a.vpsValue.localeCompare(b.vpsValue);
-    },
-    // Para Open Trades - usar openTrades
-    open_trades: (a: any, b: any) => {
-      console.log('Sorting by open trades:', a.openTrades, 'vs', b.openTrades);
-      return a.openTrades - b.openTrades;
-    },
-    // Para Open PnL - usar openPnLValue
-    open_pnl: (a: any, b: any) => {
-      console.log('Sorting by open PnL:', a.openPnLValue, 'vs', b.openPnLValue);
-      return a.openPnLValue - b.openPnLValue;
-    },
-    // Manter as outras funções existentes
-    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit
+      return (statusOrder[a.status as keyof typeof statusOrder] || 4) - (statusOrder[b.status as keyof typeof statusOrder] || 4);
+    }
   };
 
   // Hook de ordenação com dados enriquecidos
@@ -344,75 +324,71 @@ const AccountMonitor = () => {
                     <SortableHeader sortKey="vps">VPS</SortableHeader>
                     <SortableHeader sortKey="balance" className="text-right">Balance</SortableHeader>
                     <SortableHeader sortKey="equity" className="text-right">Equity</SortableHeader>
-                    <SortableHeader sortKey="open_trades" className="text-right">Open Trades</SortableHeader>
-                    <SortableHeader sortKey="open_pnl" className="text-right">Open PnL</SortableHeader>
+                    <SortableHeader sortKey="openTrades" className="text-right">Open Trades</SortableHeader>
+                    <SortableHeader sortKey="openPnL" className="text-right">Open PnL</SortableHeader>
                     <SortableHeader sortKey="dayProfit" className="text-right">Day</SortableHeader>
                     <SortableHeader sortKey="server">SERVIDOR</SortableHeader>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedAccounts.map((account) => {
-                    const openPnL = getOpenPnL(account);
-                    
-                    return (
-                      <TableRow key={account.id}>
-                        <TableCell>
-                          <ConnectionStatus lastUpdate={account.updated_at} />
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {account.nameValue}
-                        </TableCell>
-                        <TableCell className="font-mono">{account.account_number}</TableCell>
-                        <TableCell>{account.vpsValue}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right font-bold">
-                          {account.openTrades}
-                        </TableCell>
-                        <TableCell className={`text-right font-bold ${openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          US$ {openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className={`text-right font-bold ${account.dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleCloseAllPositions(account)}
-                              disabled={account.openTrades === 0}
-                            >
-                              CLOSE ALL
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-orange-600 hover:text-orange-700"
-                              onClick={() => handleEditAccount(account)}
-                            >
-                              EDIT
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700"
-                              onClick={() => handleViewAccount(account.account_number)}
-                            >
-                              VIEW
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {sortedAccounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell>
+                        <ConnectionStatus lastUpdate={account.updated_at} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {account.name}
+                      </TableCell>
+                      <TableCell className="font-mono">{account.account_number}</TableCell>
+                      <TableCell>{account.vps}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        {account.openTrades}
+                      </TableCell>
+                      <TableCell className={`text-right font-bold ${account.openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className={`text-right font-bold ${account.dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleCloseAllPositions(account)}
+                            disabled={account.openTrades === 0}
+                          >
+                            CLOSE ALL
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 hover:text-orange-700"
+                            onClick={() => handleEditAccount(account)}
+                          >
+                            EDIT
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleViewAccount(account.account_number)}
+                          >
+                            VIEW
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
 
@@ -448,7 +424,7 @@ const AccountMonitor = () => {
         isOpen={closeAllModalOpen}
         onClose={() => setCloseAllModalOpen(false)}
         accountNumber={selectedAccountForClose?.account_number || ''}
-        accountName={selectedAccountForClose?.nameValue || ''}
+        accountName={selectedAccountForClose?.name || ''}
         openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
       />
     </div>

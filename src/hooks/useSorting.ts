@@ -35,21 +35,31 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     const result = [...data].sort((a, b) => {
       // Usar função customizada se disponível
       if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
-        const result = customSortFunctions[currentSortConfig.key](a, b);
-        return currentSortConfig.direction === 'asc' ? result : -result;
+        const customResult = customSortFunctions[currentSortConfig.key](a, b);
+        if (customResult !== 0) {
+          return currentSortConfig.direction === 'asc' ? customResult : -customResult;
+        }
+        // Se valores são iguais na comparação customizada, usar tie-breaker
+      } else {
+        // Usar ordenação padrão
+        const aValue = getNestedValue(a, currentSortConfig.key);
+        const bValue = getNestedValue(b, currentSortConfig.key);
+
+        if (aValue < bValue) {
+          return currentSortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return currentSortConfig.direction === 'asc' ? 1 : -1;
+        }
+        // Se valores são iguais, continuar para tie-breaker
       }
 
-      // Usar ordenação padrão
-      const aValue = getNestedValue(a, currentSortConfig.key);
-      const bValue = getNestedValue(b, currentSortConfig.key);
-
-      if (aValue < bValue) {
-        return currentSortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return currentSortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
+      // TIE-BREAKER: Usar ID da conta para garantir ordem estável
+      const aId = getNestedValue(a, 'id') || getNestedValue(a, 'account_number') || '';
+      const bId = getNestedValue(b, 'id') || getNestedValue(b, 'account_number') || '';
+      
+      // Ordenação sempre crescente para o tie-breaker (para consistência)
+      return aId < bId ? -1 : aId > bId ? 1 : 0;
     });
 
     return result;

@@ -7,13 +7,13 @@ import { useEffect } from 'react';
 export const getConnectionStatus = (lastUpdate: string) => {
   const now = new Date();
   const lastUpdateTime = new Date(lastUpdate);
-  const diffInMinutes = (now.getTime() - lastUpdateTime.getTime()) / (1000 * 60);
+  const diffInSeconds = (now.getTime() - lastUpdateTime.getTime()) / 1000;
 
-  if (diffInMinutes <= 2) {
+  if (diffInSeconds <= 10) {
     return { status: 'Live', color: 'text-green-600', icon: '🟢' };
-  } else if (diffInMinutes <= 5) {
+  } else if (diffInSeconds <= 30) {
     return { status: 'Slow Connection', color: 'text-yellow-600', icon: '🟡' };
-  } else if (diffInMinutes <= 10) {
+  } else if (diffInSeconds <= 120) { // 2 minutos
     return { status: 'Delayed', color: 'text-orange-600', icon: '🟠' };
   } else {
     return { status: 'Disconnected', color: 'text-red-600', icon: '🔴' };

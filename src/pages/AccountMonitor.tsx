@@ -123,16 +123,6 @@ const AccountMonitor = () => {
         connectionStatus: connectionStatus,
       };
       
-      console.log('🔍 ENRICHED ACCOUNT DATA:', {
-        id: enriched.id,
-        account_number: enriched.account_number,
-        status: enriched.status,
-        vps: enriched.vps,
-        openTrades: enriched.openTrades,
-        openPnL: enriched.openPnL,
-        keys: Object.keys(enriched)
-      });
-      
       return enriched;
     });
     
@@ -183,7 +173,7 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Função para criar cabeçalho clicável - CORRIGIDA
+  // Função para criar cabeçalho clicável - VERSÃO FINAL
   const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();

@@ -2,7 +2,7 @@
 //|                                           TradingDataSender.mq5 |
 //|                            EA para envio de dados de trading    |
 //+------------------------------------------------------------------+
-#property version   "2.10"
+#property version   "2.11"
 
 #include "Includes/Logger.mqh"
 #include "Includes/AccountUtils.mqh"
@@ -18,7 +18,7 @@ input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
 input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
-// DECLARAÇÃO DO NÍVEL DE LOGGING
+// DEFINIÇÃO DO NÍVEL DE LOGGING (não extern, mas input)
 input LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
 
 datetime lastSendTime = 0;
@@ -36,7 +36,7 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.10 - Sistema Inteligente MQL5");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.11 - Sistema Inteligente MQL5");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));

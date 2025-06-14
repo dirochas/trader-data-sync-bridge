@@ -12,7 +12,8 @@ enum LogLevel {
    LOG_ALL = 3          // Todos os logs
 };
 
-extern LogLevel LoggingLevel; // Declaração sem inicialização
+// Declaração externa da variável (será definida no arquivo principal)
+extern LogLevel LoggingLevel;
 
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO

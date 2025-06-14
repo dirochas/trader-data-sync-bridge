@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -123,25 +124,11 @@ const AccountMonitor = () => {
         connectionStatus: connectionStatus,
       };
       
-      console.log('Enriched account:', {
-        id: account.id,
-        account_number: account.account_number,
-        status: enriched.status,
-        vps: enriched.vps,
-        openTrades: enriched.openTrades,
-        openPnL: enriched.openPnL,
-        name: enriched.name,
-        balance: enriched.balance
-      });
-      
       return enriched;
     });
     
-    console.log('All enriched accounts:', result.length);
     return result;
   }, [accounts, allOpenPositions, todayTrades]);
-
-  console.log('Enriched accounts sample:', enrichedAccounts[0]);
 
   // Hook de ordenação
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(enrichedAccounts);
@@ -187,37 +174,27 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Componente para cabeçalho ordenável com logs máximos
-  const SortableHeader = ({ children, sortKey, className = "" }: { children: React.ReactNode, sortKey: string, className?: string }) => (
-    <TableHead 
-      className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
-      onClick={() => {
-        console.log(`🚀 CLICK DETECTED ON COLUMN: ${sortKey}`);
-        console.log('🔍 Data verification before sort:', {
-          sortKey,
-          enrichedAccountsLength: enrichedAccounts.length,
-          sampleData: enrichedAccounts.slice(0, 2).map(acc => ({
-            account: acc.account_number,
-            [sortKey]: acc[sortKey as keyof typeof acc],
-            type: typeof acc[sortKey as keyof typeof acc]
-          }))
-        });
-        
-        try {
-          console.log('🎯 Calling requestSort...');
-          requestSort(sortKey);
-          console.log('✅ requestSort completed');
-        } catch (error) {
-          console.error('❌ Error in requestSort:', error);
-        }
-      }}
-    >
-      <div className="flex items-center gap-1">
-        {children}
-        <span className="text-xs opacity-60">{getSortIcon(sortKey)}</span>
-      </div>
-    </TableHead>
-  );
+  // Função para criar cabeçalho clicável - VERSÃO SIMPLIFICADA
+  const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`🚀 SIMPLIFIED CLICK DETECTED ON COLUMN: ${sortKey}`);
+      requestSort(sortKey);
+    };
+
+    return (
+      <TableHead 
+        className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-center gap-1">
+          {label}
+          <span className="text-xs opacity-60">{getSortIcon(sortKey)}</span>
+        </div>
+      </TableHead>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -337,16 +314,16 @@ const AccountMonitor = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableHeader sortKey="status">Status</SortableHeader>
-                    <SortableHeader sortKey="name">Name</SortableHeader>
-                    <SortableHeader sortKey="account_number">Account Number</SortableHeader>
-                    <SortableHeader sortKey="vps">VPS</SortableHeader>
-                    <SortableHeader sortKey="balance" className="text-right">Balance</SortableHeader>
-                    <SortableHeader sortKey="equity" className="text-right">Equity</SortableHeader>
-                    <SortableHeader sortKey="openTrades" className="text-right">Open Trades</SortableHeader>
-                    <SortableHeader sortKey="openPnL" className="text-right">Open PnL</SortableHeader>
-                    <SortableHeader sortKey="dayProfit" className="text-right">Day</SortableHeader>
-                    <SortableHeader sortKey="server">SERVIDOR</SortableHeader>
+                    {createSortableHeader("Status", "status")}
+                    {createSortableHeader("Name", "name")}
+                    {createSortableHeader("Account Number", "account_number")}
+                    {createSortableHeader("VPS", "vps")}
+                    {createSortableHeader("Balance", "balance", "text-right")}
+                    {createSortableHeader("Equity", "equity", "text-right")}
+                    {createSortableHeader("Open Trades", "openTrades", "text-right")}
+                    {createSortableHeader("Open PnL", "openPnL", "text-right")}
+                    {createSortableHeader("Day", "dayProfit", "text-right")}
+                    {createSortableHeader("SERVIDOR", "server")}
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>

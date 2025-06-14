@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import ConnectionStatus from '@/components/ConnectionStatus';
+import EditAccountModal from '@/components/EditAccountModal';
 
 const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  // Estado para controlar o modal de edição
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
 
   // Buscar todas as posições abertas para calcular totais
   const { data: allOpenPositions = [] } = useQuery({
@@ -48,9 +54,21 @@ const AccountMonitor = () => {
     navigate(`/account/${accountNumber}`);
   };
 
-  const handleEditAccount = (accountId: string) => {
-    // TODO: Implementar função de edição
-    console.log('Edit account:', accountId);
+  const handleEditAccount = (account: any) => {
+    setSelectedAccount({
+      id: account.id,
+      name: account.name,
+      account_number: account.account_number,
+      vps_name: account.vps_name,
+      broker: account.broker,
+      server: account.server,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleAccountUpdated = () => {
+    // Atualizar os dados das contas após edição
+    queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
   };
 
   // Função para contar trades abertas por conta
@@ -261,7 +279,7 @@ const AccountMonitor = () => {
                               variant="outline"
                               size="sm"
                               className="text-orange-600 hover:text-orange-700"
-                              onClick={() => handleEditAccount(account.id)}
+                              onClick={() => handleEditAccount(account)}
                             >
                               EDIT
                             </Button>
@@ -299,6 +317,14 @@ const AccountMonitor = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Edição */}
+      <EditAccountModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        account={selectedAccount}
+        onAccountUpdated={handleAccountUpdated}
+      />
     </div>
   );
 };

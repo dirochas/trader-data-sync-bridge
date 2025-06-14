@@ -105,31 +105,30 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Enriquecer os dados das contas com propriedades calculadas
+  // Enriquecer os dados das contas com propriedades calculadas - VERSÃO ESTÁVEL
   const enrichedAccounts = useMemo(() => {
-    const result = accounts.map(account => {
+    return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
       const openTradeCount = getOpenTradesCount(account.id);
       const openPnLValue = getOpenPnL(account);
+      const dayProfitValue = getDayProfit(account.id);
       
-      const enriched = {
+      return {
         ...account,
+        // Propriedades estáveis para ordenação
         status: connectionStatus.status,
         name: account.name || `Account ${account.account_number}`,
         vps: account.vps_name || 'N/A',
         openTrades: openTradeCount,
         openPnL: openPnLValue,
-        dayProfit: getDayProfit(account.id),
+        dayProfit: dayProfitValue,
+        // Manter objeto completo para exibição
         connectionStatus: connectionStatus,
       };
-      
-      return enriched;
     });
-    
-    return result;
   }, [accounts, allOpenPositions, todayTrades]);
 
-  // Hook de ordenação
+  // Hook de ordenação - agora com dados estáveis
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(enrichedAccounts);
 
   const handleViewAccount = (accountNumber: string) => {

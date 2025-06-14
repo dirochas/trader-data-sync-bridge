@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -124,6 +123,16 @@ const AccountMonitor = () => {
         connectionStatus: connectionStatus,
       };
       
+      console.log('🔍 ENRICHED ACCOUNT DATA:', {
+        id: enriched.id,
+        account_number: enriched.account_number,
+        status: enriched.status,
+        vps: enriched.vps,
+        openTrades: enriched.openTrades,
+        openPnL: enriched.openPnL,
+        keys: Object.keys(enriched)
+      });
+      
       return enriched;
     });
     
@@ -174,12 +183,12 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Função para criar cabeçalho clicável - VERSÃO SIMPLIFICADA
+  // Função para criar cabeçalho clicável - CORRIGIDA
   const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`🚀 SIMPLIFIED CLICK DETECTED ON COLUMN: ${sortKey}`);
+      console.log(`🎯 COLUMN CLICK DETECTED: "${label}" with sortKey: "${sortKey}"`);
       requestSort(sortKey);
     };
 

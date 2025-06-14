@@ -3,3 +3,12 @@ project_id = "kgrlcsimdszbrkcwjpke"
 
 [functions.trading-data]
 verify_jwt = false
+
+[functions.get-commands]
+verify_jwt = false
+
+[functions.update-command-status]
+verify_jwt = false
+
+[functions.send-command]
+verify_jwt = false

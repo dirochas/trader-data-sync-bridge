@@ -3,7 +3,7 @@
 //|                                           TradingDataSender.mq5 |
 //|                                                                  |
 //+------------------------------------------------------------------+
-#property version   "2.08"
+#property version   "2.09"
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
 input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
@@ -71,7 +71,7 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.08 - Sistema Inteligente MQL5");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.09 - Sistema Inteligente MQL5");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
@@ -446,7 +446,7 @@ void OnTimer()
          {
             if(LoggingLevel >= LOG_ALL)
             {
-               int remaining = intervalToUse - (TimeCurrent() - lastCommandCheck);
+               int remaining = intervalToUse - (int)(TimeCurrent() - lastCommandCheck);
                LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
             }
          }
@@ -623,7 +623,7 @@ void ExecuteCloseAllCommand(string jsonResponse)
 //+------------------------------------------------------------------+
 // FUNÇÃO MELHORADA: Extrair ID do comando
 //+------------------------------------------------------------------+
-string ExtractCommandId(string json Response)
+string ExtractCommandId(string jsonResponse)
 {
    LogPrint(LOG_ALL, "PARSE", "Extraindo ID do comando...");
    LogPrint(LOG_ALL, "PARSE", "JSON: " + jsonResponse);

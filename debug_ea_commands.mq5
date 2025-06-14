@@ -1,8 +1,9 @@
+
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq5 |
 //|                            EA para envio de dados de trading    |
 //+------------------------------------------------------------------+
-#property version   "2.11"
+#property version   "2.12"
 
 #include "Includes/Logger.mqh"
 #include "Includes/AccountUtils.mqh"
@@ -34,29 +35,29 @@ bool activeLogAlreadyShown = false; // Flag para evitar logs repetitivos quando 
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   LogSeparator("EA INICIALIZAÇÃO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.11 - Sistema Inteligente MQL5");
-   LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
-   LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
-   LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
-   LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
+   LogSeparator(LoggingLevel, "EA INICIALIZAÇÃO");
+   LogPrint(LoggingLevel, LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
+   LogPrint(LoggingLevel, LOG_ESSENTIAL, "INIT", "Versão: 2.12 - Sistema Inteligente MQL5");
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
+   LogPrint(LoggingLevel, LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
    if(UseTimer)
    {
       EventSetTimer(SendIntervalSeconds);
-      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
-      LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
+      LogPrint(LoggingLevel, LOG_ESSENTIAL, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
+      LogPrint(LoggingLevel, LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
    }
    else
    {
-      LogPrint(LOG_ALL, "TIMER", "EA funcionará apenas com mercado ABERTO (ticks)");
+      LogPrint(LoggingLevel, LOG_ALL, "TIMER", "EA funcionará apenas com mercado ABERTO (ticks)");
    }
    
    // Enviar dados imediatamente na inicialização
-   LogPrint(LOG_ESSENTIAL, "INIT", "Enviando dados iniciais...");
+   LogPrint(LoggingLevel, LOG_ESSENTIAL, "INIT", "Enviando dados iniciais...");
    SendTradingDataIntelligent();
    
    return INIT_SUCCEEDED;
@@ -65,13 +66,13 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   LogSeparator("EA FINALIZAÇÃO");
+   LogSeparator(LoggingLevel, "EA FINALIZAÇÃO");
    if(UseTimer)
    {
       EventKillTimer();
-      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer finalizado");
+      LogPrint(LoggingLevel, LOG_ESSENTIAL, "TIMER", "Timer finalizado");
    }
-   LogPrint(LOG_ESSENTIAL, "DEINIT", "EA FINALIZADO - Motivo: " + IntegerToString(reason));
+   LogPrint(LoggingLevel, LOG_ESSENTIAL, "DEINIT", "EA FINALIZADO - Motivo: " + IntegerToString(reason));
 }
 
 //+------------------------------------------------------------------+
@@ -80,7 +81,7 @@ void OnTick()
    // Só funciona se UseTimer = false
    if(!UseTimer && TimeCurrent() - lastSendTime >= SendIntervalSeconds)
    {
-      LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
+      LogPrint(LoggingLevel, LOG_ALL, "TICK", "OnTick executado - enviando dados...");
       SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
    }
@@ -106,17 +107,17 @@ void SendTradingDataIntelligent()
       {
          if(stateChanged || !idleLogAlreadyShown)
          {
-            LogSubSeparator("MODO IDLE ATIVADO");
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " sem ordens abertas");
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2));
-            LogPrint(LOG_ALL, "IDLE", "Logs reduzidos ativados - dados continuam sendo enviados");
+            LogSubSeparator(LoggingLevel, "MODO IDLE ATIVADO");
+            LogPrint(LoggingLevel, LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " sem ordens abertas");
+            LogPrint(LoggingLevel, LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2));
+            LogPrint(LoggingLevel, LOG_ALL, "IDLE", "Logs reduzidos ativados - dados continuam sendo enviados");
             idleLogAlreadyShown = true;
             activeLogAlreadyShown = false; // Reset flag do modo ativo
          }
          else
          {
             // Log periódico (a cada 5 minutos)
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Status idle - Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2));
+            LogPrint(LoggingLevel, LOG_ESSENTIAL, "IDLE", "Status idle - Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2));
          }
          lastIdleLog = TimeCurrent();
       }
@@ -129,8 +130,8 @@ void SendTradingDataIntelligent()
       // COM ORDENS - Modo ativo completo
       if(stateChanged || !activeLogAlreadyShown)
       {
-         LogSubSeparator("MODO ATIVO REATIVADO");
-         LogPrint(LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - logs completos reativados");
+         LogSubSeparator(LoggingLevel, "MODO ATIVO REATIVADO");
+         LogPrint(LoggingLevel, LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - logs completos reativados");
          activeLogAlreadyShown = true;
          idleLogAlreadyShown = false; // Reset flag do modo idle
       }
@@ -138,8 +139,8 @@ void SendTradingDataIntelligent()
       // Logs detalhados apenas se mudou de estado ou se está em nível ALL
       if(stateChanged || LoggingLevel >= LOG_ALL)
       {
-         LogSubSeparator("COLETA DE DADOS COMPLETA");
-         LogPrint(LOG_ALL, "DATA", "Iniciando coleta completa de dados");
+         LogSubSeparator(LoggingLevel, "COLETA DE DADOS COMPLETA");
+         LogPrint(LoggingLevel, LOG_ALL, "DATA", "Iniciando coleta completa de dados");
       }
       
       string jsonData = BuildJsonData();
@@ -152,7 +153,7 @@ void SendTradingDataIntelligent()
          {
             FileWrite(file, jsonData);
             FileClose(file);
-            LogPrint(LOG_ALL, "DEBUG", "Dados salvos em arquivo: trading_data.json");
+            LogPrint(LoggingLevel, LOG_ALL, "DEBUG", "Dados salvos em arquivo: trading_data.json");
          }
       }
       
@@ -173,7 +174,7 @@ void SendIdleStatusToSupabase()
    // Log apenas se não foi mostrado ainda ou se está em nível ALL
    if(!idleLogAlreadyShown || LoggingLevel >= LOG_ALL)
    {
-      LogPrint(LOG_ALL, "IDLE", "Enviando status idle para servidor (mantendo conexão)...");
+      LogPrint(LoggingLevel, LOG_ALL, "IDLE", "Enviando status idle para servidor (mantendo conexão)...");
    }
    
    string jsonData = BuildIdleJsonData();
@@ -192,8 +193,8 @@ void OnTimer()
       // Log do timer apenas se mudou de estado ou se está em modo ativo com ordens
       if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
       {
-         LogSeparator("EXECUÇÃO TIMER");
-         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
+         LogSeparator(LoggingLevel, "EXECUÇÃO TIMER");
+         LogPrint(LoggingLevel, LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
       }
       
       SendTradingDataIntelligent();
@@ -209,8 +210,8 @@ void OnTimer()
             // Log apenas se necessário
             if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
             {
-               LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
-               LogPrint(LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+               LogPrint(LoggingLevel, hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
+               LogPrint(LoggingLevel, LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
             }
             CheckPendingCommands();
             lastCommandCheck = TimeCurrent();
@@ -220,7 +221,7 @@ void OnTimer()
             if(LoggingLevel >= LOG_ALL)
             {
                int remaining = intervalToUse - (int)(TimeCurrent() - lastCommandCheck);
-               LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
+               LogPrint(LoggingLevel, LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
             }
          }
       }

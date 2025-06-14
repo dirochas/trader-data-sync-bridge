@@ -1,5 +1,4 @@
 
-
 //+------------------------------------------------------------------+
 //|                                                       Logger.mqh |
 //| Sistema de logging melhorado para EA                             |
@@ -13,16 +12,13 @@ enum LogLevel {
    LOG_ALL = 3          // Todos os logs
 };
 
-// Declaração externa da variável (será definida no arquivo principal)
-extern LogLevel LoggingLevel;
-
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO
 //+------------------------------------------------------------------+
-void LogPrint(LogLevel level, string category, string message)
+void LogPrint(LogLevel currentLogLevel, LogLevel level, string category, string message)
 {
-   if(LoggingLevel == LOG_NONE) return;
-   if(level > LoggingLevel) return;
+   if(currentLogLevel == LOG_NONE) return;
+   if(level > currentLogLevel) return;
    
    string prefix = "";
    switch(level) {
@@ -34,17 +30,16 @@ void LogPrint(LogLevel level, string category, string message)
    Print(prefix + "[" + category + "] " + message);
 }
 
-void LogSeparator(string category)
+void LogSeparator(LogLevel currentLogLevel, string category)
 {
-   if(LoggingLevel == LOG_NONE) return;
+   if(currentLogLevel == LOG_NONE) return;
    Print("═══════════════════════════════════════════════════════════");
    Print("                    " + category);
    Print("═══════════════════════════════════════════════════════════");
 }
 
-void LogSubSeparator(string subcategory)
+void LogSubSeparator(LogLevel currentLogLevel, string subcategory)
 {
-   if(LoggingLevel == LOG_NONE) return;
+   if(currentLogLevel == LOG_NONE) return;
    Print("─────────────── " + subcategory + " ───────────────");
 }
-

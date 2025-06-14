@@ -105,7 +105,7 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Enriquecer os dados das contas com propriedades calculadas
+  // Enriquecer os dados das contas com propriedades calculadas usando nomes simples
   const enrichedAccounts = useMemo(() => {
     return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
@@ -114,34 +114,22 @@ const AccountMonitor = () => {
       
       return {
         ...account,
-        // Propriedades calculadas com NOMES DIRETOS para ordenação
-        connectionStatus: connectionStatus,
-        status: connectionStatus.status, // Usar 'status' diretamente
-        name: account.name || `Account ${account.account_number}`, // Usar 'name' diretamente  
-        vps: account.vps_name || 'N/A', // Usar 'vps' diretamente
-        openTrades: openTradeCount, // Usar 'openTrades' diretamente
-        openPnL: openPnLValue, // Usar 'openPnL' diretamente
-        dayProfit: getDayProfit(account.id)
+        // Propriedades com nomes simples para ordenação direta
+        status: connectionStatus.status,
+        name: account.name || `Account ${account.account_number}`,
+        vps: account.vps_name || 'N/A',
+        openTrades: openTradeCount,
+        openPnL: openPnLValue,
+        dayProfit: getDayProfit(account.id),
+        connectionStatus: connectionStatus, // manter para exibição
       };
     });
   }, [accounts, allOpenPositions, todayTrades]);
 
-  // Funções customizadas de ordenação APENAS onde necessário
-  const customSortFunctions = {
-    // Para Status - usar ordem específica
-    status: (a: any, b: any) => {
-      console.log('Sorting by status:', a.status, 'vs', b.status);
-      const statusOrder = { 'Live': 0, 'Slow Connection': 1, 'Delayed': 2, 'Disconnected': 3 };
-      return (statusOrder[a.status as keyof typeof statusOrder] || 4) - (statusOrder[b.status as keyof typeof statusOrder] || 4);
-    }
-  };
+  console.log('Enriched accounts sample:', enrichedAccounts[0]);
 
-  // Hook de ordenação com dados enriquecidos
-  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(
-    enrichedAccounts, 
-    undefined, 
-    customSortFunctions
-  );
+  // Hook de ordenação SEM funções customizadas - deixar tudo na ordenação padrão
+  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(enrichedAccounts);
 
   const handleViewAccount = (accountNumber: string) => {
     navigate(`/account/${accountNumber}`);
@@ -189,7 +177,7 @@ const AccountMonitor = () => {
     <TableHead 
       className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
       onClick={() => {
-        console.log('Clicking sort for key:', sortKey);
+        console.log(`Clicking sort for key: ${sortKey}, current data sample:`, enrichedAccounts[0]?.[sortKey]);
         requestSort(sortKey);
       }}
     >

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -24,9 +24,6 @@ const AccountMonitor = () => {
   const [closeAllModalOpen, setCloseAllModalOpen] = useState(false);
   const [selectedAccountForClose, setSelectedAccountForClose] = useState<any>(null);
 
-  // Hook de ordenação
-  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(accounts);
-
   // Buscar todas as posições abertas para calcular totais
   const { data: allOpenPositions = [] } = useQuery({
     queryKey: ['all-open-positions'],
@@ -38,7 +35,7 @@ const AccountMonitor = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
+    refetchInterval: 2000,
   });
 
   // Buscar histórico de trades do dia atual para calcular Day
@@ -56,34 +53,8 @@ const AccountMonitor = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 5000, // Mantido em 5 segundos para dados menos críticos
+    refetchInterval: 5000,
   });
-
-  const handleViewAccount = (accountNumber: string) => {
-    navigate(`/account/${accountNumber}`);
-  };
-
-  const handleEditAccount = (account: any) => {
-    setSelectedAccount({
-      id: account.id,
-      name: account.name,
-      account_number: account.account_number,
-      vps_name: account.vps_name,
-      broker: account.broker,
-      server: account.server,
-    });
-    setEditModalOpen(true);
-  };
-
-  const handleCloseAllPositions = (account: any) => {
-    setSelectedAccountForClose(account);
-    setCloseAllModalOpen(true);
-  };
-
-  const handleAccountUpdated = () => {
-    // Atualizar os dados das contas após edição
-    queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
-  };
 
   // Função para contar trades abertas por conta
   const getOpenTradesCount = (accountId: string) => {
@@ -132,6 +103,61 @@ const AccountMonitor = () => {
     }
     
     return 'N/A';
+  };
+
+  // Enriquecer os dados das contas com propriedades calculadas
+  const enrichedAccounts = useMemo(() => {
+    return accounts.map(account => ({
+      ...account,
+      openTrades: getOpenTradesCount(account.id),
+      dayProfit: getDayProfit(account.id),
+      connectionStatus: getConnectionStatus(account.updated_at)
+    }));
+  }, [accounts, allOpenPositions, todayTrades]);
+
+  // Funções customizadas de ordenação para colunas específicas
+  const customSortFunctions = {
+    updated_at: (a: any, b: any) => {
+      const statusA = a.connectionStatus.status;
+      const statusB = b.connectionStatus.status;
+      const statusOrder = { 'Live': 0, 'Slow Connection': 1, 'Delayed': 2, 'Disconnected': 3 };
+      return (statusOrder[statusA as keyof typeof statusOrder] || 4) - (statusOrder[statusB as keyof typeof statusOrder] || 4);
+    },
+    openTrades: (a: any, b: any) => a.openTrades - b.openTrades,
+    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit
+  };
+
+  // Hook de ordenação com dados enriquecidos
+  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(
+    enrichedAccounts, 
+    undefined, 
+    customSortFunctions
+  );
+
+  const handleViewAccount = (accountNumber: string) => {
+    navigate(`/account/${accountNumber}`);
+  };
+
+  const handleEditAccount = (account: any) => {
+    setSelectedAccount({
+      id: account.id,
+      name: account.name,
+      account_number: account.account_number,
+      vps_name: account.vps_name,
+      broker: account.broker,
+      server: account.server,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleCloseAllPositions = (account: any) => {
+    setSelectedAccountForClose(account);
+    setCloseAllModalOpen(true);
+  };
+
+  const handleAccountUpdated = () => {
+    // Atualizar os dados das contas após edição
+    queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
   };
 
   // Calcular estatísticas com base nos dados reais e status de conexão
@@ -295,9 +321,7 @@ const AccountMonitor = () => {
                 </TableHeader>
                 <TableBody>
                   {sortedAccounts.map((account) => {
-                    const openTradesCount = getOpenTradesCount(account.id);
                     const openPnL = getOpenPnL(account);
-                    const dayProfit = getDayProfit(account.id);
                     
                     return (
                       <TableRow key={account.id}>
@@ -316,13 +340,13 @@ const AccountMonitor = () => {
                           US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="text-right font-bold">
-                          {openTradesCount}
+                          {account.openTrades}
                         </TableCell>
                         <TableCell className={`text-right font-bold ${openPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           US$ {openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className={`text-right font-bold ${dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          US$ {dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <TableCell className={`text-right font-bold ${account.dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
                         <TableCell>
@@ -332,7 +356,7 @@ const AccountMonitor = () => {
                               size="sm"
                               className="text-red-600 hover:text-red-700"
                               onClick={() => handleCloseAllPositions(account)}
-                              disabled={openTradesCount === 0}
+                              disabled={account.openTrades === 0}
                             >
                               CLOSE ALL
                             </Button>
@@ -393,7 +417,7 @@ const AccountMonitor = () => {
         onClose={() => setCloseAllModalOpen(false)}
         accountNumber={selectedAccountForClose?.account_number || ''}
         accountName={selectedAccountForClose?.name || `Account ${selectedAccountForClose?.account_number}` || ''}
-        openTradesCount={selectedAccountForClose ? getOpenTradesCount(selectedAccountForClose.id) : 0}
+        openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
       />
     </div>
   );

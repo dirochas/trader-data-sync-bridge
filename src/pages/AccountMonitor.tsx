@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
+import { useSorting } from '@/hooks/useSorting';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +19,9 @@ const AccountMonitor = () => {
   // Estado para controlar o modal de edição
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
+
+  // Hook de ordenação
+  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(accounts);
 
   // Buscar todas as posições abertas para calcular totais
   const { data: allOpenPositions = [] } = useQuery({
@@ -102,6 +107,19 @@ const AccountMonitor = () => {
   }, {} as Record<string, number>);
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
+
+  // Componente para cabeçalho ordenável
+  const SortableHeader = ({ children, sortKey, className = "" }: { children: React.ReactNode, sortKey: string, className?: string }) => (
+    <TableHead 
+      className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
+      onClick={() => requestSort(sortKey)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        <span className="text-xs opacity-60">{getSortIcon(sortKey)}</span>
+      </div>
+    </TableHead>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,21 +239,21 @@ const AccountMonitor = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Account Number</TableHead>
-                    <TableHead>VPS</TableHead>
-                    <TableHead className="text-right">Balance</TableHead>
-                    <TableHead className="text-right">Equity</TableHead>
+                    <SortableHeader sortKey="updated_at">Status</SortableHeader>
+                    <SortableHeader sortKey="name">Name</SortableHeader>
+                    <SortableHeader sortKey="account_number">Account Number</SortableHeader>
+                    <SortableHeader sortKey="vps_name">VPS</SortableHeader>
+                    <SortableHeader sortKey="balance" className="text-right">Balance</SortableHeader>
+                    <SortableHeader sortKey="equity" className="text-right">Equity</SortableHeader>
                     <TableHead className="text-right">Open Trades</TableHead>
                     <TableHead className="text-right">Open PnL</TableHead>
                     <TableHead className="text-right">Day</TableHead>
-                    <TableHead>BROKER</TableHead>
+                    <SortableHeader sortKey="broker">BROKER</SortableHeader>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {accounts.map((account) => {
+                  {sortedAccounts.map((account) => {
                     const openTradesCount = getOpenTradesCount(account.id);
                     const openPnL = getOpenPnL(account);
                     const dayProfit = getDayProfit(account.id);
@@ -265,7 +283,7 @@ const AccountMonitor = () => {
                         <TableCell className={`text-right font-bold ${dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           US$ {dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell>{account.broker || account.server}</TableCell>
+                        <TableCell>{account.broker || 'N/A'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button

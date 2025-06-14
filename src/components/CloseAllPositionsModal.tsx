@@ -93,7 +93,7 @@ const CloseAllPositionsModal = ({
           <AlertDialogAction
             onClick={handleCloseAll}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 text-white font-medium"
           >
             {isLoading ? 'Enviando...' : 'Sim, fechar todas'}
           </AlertDialogAction>

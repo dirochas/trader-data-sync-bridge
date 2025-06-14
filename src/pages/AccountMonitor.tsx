@@ -105,30 +105,45 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Enriquecer os dados das contas com propriedades calculadas usando nomes simples
+  // Enriquecer os dados das contas com propriedades calculadas
   const enrichedAccounts = useMemo(() => {
-    return accounts.map(account => {
+    const result = accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
       const openTradeCount = getOpenTradesCount(account.id);
       const openPnLValue = getOpenPnL(account);
       
-      return {
+      const enriched = {
         ...account,
-        // Propriedades com nomes simples para ordenação direta
         status: connectionStatus.status,
         name: account.name || `Account ${account.account_number}`,
         vps: account.vps_name || 'N/A',
         openTrades: openTradeCount,
         openPnL: openPnLValue,
         dayProfit: getDayProfit(account.id),
-        connectionStatus: connectionStatus, // manter para exibição
+        connectionStatus: connectionStatus,
       };
+      
+      console.log('Enriched account:', {
+        id: account.id,
+        account_number: account.account_number,
+        status: enriched.status,
+        vps: enriched.vps,
+        openTrades: enriched.openTrades,
+        openPnL: enriched.openPnL,
+        name: enriched.name,
+        balance: enriched.balance
+      });
+      
+      return enriched;
     });
+    
+    console.log('All enriched accounts:', result.length);
+    return result;
   }, [accounts, allOpenPositions, todayTrades]);
 
   console.log('Enriched accounts sample:', enrichedAccounts[0]);
 
-  // Hook de ordenação SEM funções customizadas - deixar tudo na ordenação padrão
+  // Hook de ordenação
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(enrichedAccounts);
 
   const handleViewAccount = (accountNumber: string) => {
@@ -172,12 +187,24 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Componente para cabeçalho ordenável
+  // Componente para cabeçalho ordenável com logs detalhados
   const SortableHeader = ({ children, sortKey, className = "" }: { children: React.ReactNode, sortKey: string, className?: string }) => (
     <TableHead 
       className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
       onClick={() => {
-        console.log(`Clicking sort for key: ${sortKey}, current data sample:`, enrichedAccounts[0]?.[sortKey]);
+        console.log(`=== CLICKING SORT FOR: ${sortKey} ===`);
+        console.log('Sample data for this column:', {
+          sortKey,
+          sampleValues: enrichedAccounts.slice(0, 3).map(acc => ({
+            account: acc.account_number,
+            value: acc[sortKey as keyof typeof acc],
+            type: typeof acc[sortKey as keyof typeof acc]
+          }))
+        });
+        console.log('Current sorted accounts (first 3):', sortedAccounts.slice(0, 3).map(acc => ({
+          account: acc.account_number,
+          [sortKey]: acc[sortKey as keyof typeof acc]
+        })));
         requestSort(sortKey);
       }}
     >

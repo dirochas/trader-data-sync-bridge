@@ -1,9 +1,8 @@
-
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
 //|                                                                  |
 //+------------------------------------------------------------------+
-#property version   "2.07"
+#property version   "2.08"
 #property strict
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
@@ -13,6 +12,7 @@ input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com t
 // NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
+input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
 // SISTEMA DE LOGS MELHORADO
 enum LogLevel {
@@ -26,6 +26,9 @@ input LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
 
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
+datetime lastIdleLog = 0;
+bool lastHadOrders = false; // Para detectar mudanças de estado
+int lastOrderCount = -1;    // Para detectar mudanças na quantidade de ordens
 
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO
@@ -64,11 +67,12 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.07");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.08 - Sistema Inteligente");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
+   LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
    if(UseTimer)
@@ -84,7 +88,7 @@ int OnInit()
    
    // Enviar dados imediatamente na inicialização
    LogPrint(LOG_ESSENTIAL, "INIT", "Enviando dados iniciais...");
-   SendTradingData();
+   SendTradingDataIntelligent();
    
    return INIT_SUCCEEDED;
 }
@@ -108,45 +112,130 @@ void OnTick()
    if(!UseTimer && TimeCurrent() - lastSendTime >= SendIntervalSeconds)
    {
       LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
-      SendTradingData();
+      SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
    }
 }
 
 //+------------------------------------------------------------------+
-void SendTradingData()
+// NOVA FUNÇÃO INTELIGENTE: Verificar se há necessidade de processar
+//+------------------------------------------------------------------+
+bool HasOpenOrdersOrPendingOrders()
 {
-   LogSubSeparator("COLETA DE DADOS");
-   LogPrint(LOG_ALL, "DATA", "Iniciando coleta de dados");
+   int openPositions = 0;
+   int pendingOrders = 0;
    
-   string jsonData = BuildJsonData();
-   
-   // Debug - salvar em arquivo
-   if(LoggingLevel >= LOG_ALL)
+   for(int i = 0; i < OrdersTotal(); i++)
    {
-      int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
-      if(file != INVALID_HANDLE)
+      if(OrderSelect(i, SELECT_BY_POS))
       {
-         FileWrite(file, jsonData);
-         FileClose(file);
-         LogPrint(LOG_ALL, "DEBUG", "Dados salvos em arquivo: trading_data.json");
-      }
-      else
-      {
-         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao salvar arquivo de debug");
+         if(OrderType() <= 1) // BUY/SELL
+            openPositions++;
+         else
+            pendingOrders++;
       }
    }
    
-   // Enviar via HTTP para Supabase
+   return (openPositions > 0 || pendingOrders > 0);
+}
+
+//+------------------------------------------------------------------+
+// NOVA FUNÇÃO INTELIGENTE: Envio de dados com verificação prévia
+//+------------------------------------------------------------------+
+void SendTradingDataIntelligent()
+{
+   int currentOrderCount = OrdersTotal();
+   bool hasOrders = HasOpenOrdersOrPendingOrders();
+   
+   // Detectar mudanças de estado
+   bool stateChanged = (lastHadOrders != hasOrders) || (lastOrderCount != currentOrderCount);
+   
+   if(!hasOrders)
+   {
+      // SEM ORDENS - Modo econômico
+      if(stateChanged || TimeCurrent() - lastIdleLog >= 300) // Log a cada 5 minutos quando idle
+      {
+         LogSubSeparator("STATUS IDLE");
+         LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountNumber()) + " sem ordens abertas");
+         LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
+         LogPrint(LOG_ALL, "IDLE", "Modo econômico ativo - reduzindo verificações");
+         
+         // Enviar status "idle" para o servidor (dados mínimos)
+         SendIdleStatusToSupabase();
+         lastIdleLog = TimeCurrent();
+      }
+   }
+   else
+   {
+      // COM ORDENS - Modo ativo completo
+      if(stateChanged)
+      {
+         LogPrint(LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - ativando modo completo");
+      }
+      
+      LogSubSeparator("COLETA DE DADOS COMPLETA");
+      LogPrint(LOG_ALL, "DATA", "Iniciando coleta completa de dados");
+      
+      string jsonData = BuildJsonData();
+      
+      // Debug - salvar em arquivo apenas quando necessário
+      if(LoggingLevel >= LOG_ALL)
+      {
+         int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
+         if(file != INVALID_HANDLE)
+         {
+            FileWrite(file, jsonData);
+            FileClose(file);
+            LogPrint(LOG_ALL, "DEBUG", "Dados salvos em arquivo: trading_data.json");
+         }
+      }
+      
+      // Enviar via HTTP para Supabase
+      SendToSupabase(jsonData);
+   }
+   
+   // Atualizar estado anterior
+   lastHadOrders = hasOrders;
+   lastOrderCount = currentOrderCount;
+}
+
+//+------------------------------------------------------------------+
+// NOVA FUNÇÃO: Enviar status "idle" para o servidor (dados mínimos)
+//+------------------------------------------------------------------+
+void SendIdleStatusToSupabase()
+{
+   LogPrint(LOG_ALL, "IDLE", "Enviando status idle para servidor...");
+   
+   string jsonData = "{";
+   jsonData += "\"account\":{";
+   jsonData += "\"balance\":" + DoubleToString(AccountBalance(), 2) + ",";
+   jsonData += "\"equity\":" + DoubleToString(AccountEquity(), 2) + ",";
+   jsonData += "\"profit\":0.00,";
+   jsonData += "\"accountNumber\":\"" + IntegerToString(AccountNumber()) + "\",";
+   jsonData += "\"server\":\"" + AccountServer() + "\",";
+   jsonData += "\"leverage\":" + IntegerToString(AccountLeverage());
+   jsonData += "},";
+   jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountFreeMargin(), 2) + ",\"level\":0.00},";
+   jsonData += "\"positions\":[],";
+   jsonData += "\"history\":[],";
+   jsonData += "\"status\":\"IDLE\"";
+   jsonData += "}";
+   
    SendToSupabase(jsonData);
 }
 
 //+------------------------------------------------------------------+
 void SendToSupabase(string jsonData)
 {
-   LogSubSeparator("ENVIO SUPABASE");
-   LogPrint(LOG_ALL, "HTTP", "URL: " + ServerURL);
-   LogPrint(LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " caracteres");
+   bool isIdle = (StringFind(jsonData, "\"status\":\"IDLE\"") >= 0);
+   
+   if(!isIdle)
+   {
+      LogSubSeparator("ENVIO SUPABASE");
+   }
+   
+   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "URL: " + ServerURL);
+   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " caracteres");
    
    string headers = "Content-Type: application/json\r\n";
    
@@ -158,17 +247,17 @@ void SendToSupabase(string jsonData)
    StringToCharArray(jsonData, post, 0, WHOLE_ARRAY);
    ArrayResize(post, ArraySize(post) - 1); // Remove null terminator
    
-   LogPrint(LOG_ALL, "HTTP", "Fazendo requisição HTTP POST...");
+   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Fazendo requisição HTTP POST...");
    
    // Fazer requisição HTTP POST
    int timeout = 10000; // 10 segundos
    int res = WebRequest("POST", ServerURL, headers, timeout, post, result, resultHeaders);
    
-   LogPrint(LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
+   LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
    
    if(res == 200)
    {
-      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
+      LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
       string response = CharArrayToString(result);
       LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
    }
@@ -288,22 +377,27 @@ void OnTimer()
    {
       LogSeparator("EXECUÇÃO TIMER");
       LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
-      SendTradingData();
+      SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
       
-      // NOVA FUNCIONALIDADE: Verificar comandos pendentes
-      if(EnableCommandPolling && TimeCurrent() - lastCommandCheck >= CommandCheckIntervalSeconds)
+      // NOVA FUNCIONALIDADE INTELIGENTE: Verificar comandos com intervalos dinâmicos
+      if(EnableCommandPolling)
       {
-         LogPrint(LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
-         LogPrint(LOG_ALL, "POLLING", "Última verificação: " + TimeToString(lastCommandCheck));
-         LogPrint(LOG_ALL, "POLLING", "Diferença: " + IntegerToString(TimeCurrent() - lastCommandCheck) + " segundos");
-         CheckPendingCommands();
-         lastCommandCheck = TimeCurrent();
-      }
-      else
-      {
-         int remaining = CommandCheckIntervalSeconds - (TimeCurrent() - lastCommandCheck);
-         LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + " segundos");
+         bool hasOrders = HasOpenOrdersOrPendingOrders();
+         int intervalToUse = hasOrders ? CommandCheckIntervalSeconds : IdleCommandCheckIntervalSeconds;
+         
+         if(TimeCurrent() - lastCommandCheck >= intervalToUse)
+         {
+            LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
+            LogPrint(LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+            CheckPendingCommands();
+            lastCommandCheck = TimeCurrent();
+         }
+         else
+         {
+            int remaining = intervalToUse - (TimeCurrent() - lastCommandCheck);
+            LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
+         }
       }
    }
 }

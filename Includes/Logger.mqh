@@ -1,4 +1,5 @@
 
+
 //+------------------------------------------------------------------+
 //|                                                       Logger.mqh |
 //| Sistema de logging melhorado para EA                             |
@@ -12,14 +13,14 @@ enum LogLevel {
    LOG_ALL = 3          // Todos os logs
 };
 
-// Declaração externa da variável (será definida no arquivo principal)
-extern LogLevel LoggingLevel;
-
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO
 //+------------------------------------------------------------------+
 void LogPrint(LogLevel level, string category, string message)
 {
+   // A variável LoggingLevel será acessada do arquivo principal
+   extern LogLevel LoggingLevel;
+   
    if(LoggingLevel == LOG_NONE) return;
    if(level > LoggingLevel) return;
    
@@ -35,6 +36,7 @@ void LogPrint(LogLevel level, string category, string message)
 
 void LogSeparator(string category)
 {
+   extern LogLevel LoggingLevel;
    if(LoggingLevel == LOG_NONE) return;
    Print("═══════════════════════════════════════════════════════════");
    Print("                    " + category);
@@ -43,6 +45,8 @@ void LogSeparator(string category)
 
 void LogSubSeparator(string subcategory)
 {
+   extern LogLevel LoggingLevel;
    if(LoggingLevel == LOG_NONE) return;
    Print("─────────────── " + subcategory + " ───────────────");
 }
+

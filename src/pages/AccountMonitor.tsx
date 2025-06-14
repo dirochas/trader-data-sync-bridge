@@ -107,22 +107,28 @@ const AccountMonitor = () => {
 
   // Enriquecer os dados das contas com propriedades calculadas
   const enrichedAccounts = useMemo(() => {
-    return accounts.map(account => ({
-      ...account,
-      openTrades: getOpenTradesCount(account.id),
-      dayProfit: getDayProfit(account.id),
-      connectionStatus: getConnectionStatus(account.updated_at)
-    }));
+    return accounts.map(account => {
+      const connectionStatus = getConnectionStatus(account.updated_at);
+      return {
+        ...account,
+        openTrades: getOpenTradesCount(account.id),
+        dayProfit: getDayProfit(account.id),
+        connectionStatus: connectionStatus,
+        statusValue: connectionStatus.status, // Para ordenação
+        nameValue: account.name || `Account ${account.account_number}`, // Para ordenação
+        vpsValue: account.vps_name || 'N/A', // Para ordenação
+      };
+    });
   }, [accounts, allOpenPositions, todayTrades]);
 
   // Funções customizadas de ordenação para colunas específicas
   const customSortFunctions = {
     updated_at: (a: any, b: any) => {
-      const statusA = a.connectionStatus.status;
-      const statusB = b.connectionStatus.status;
       const statusOrder = { 'Live': 0, 'Slow Connection': 1, 'Delayed': 2, 'Disconnected': 3 };
-      return (statusOrder[statusA as keyof typeof statusOrder] || 4) - (statusOrder[statusB as keyof typeof statusOrder] || 4);
+      return (statusOrder[a.statusValue as keyof typeof statusOrder] || 4) - (statusOrder[b.statusValue as keyof typeof statusOrder] || 4);
     },
+    name: (a: any, b: any) => a.nameValue.localeCompare(b.nameValue),
+    vps_name: (a: any, b: any) => a.vpsValue.localeCompare(b.vpsValue),
     openTrades: (a: any, b: any) => a.openTrades - b.openTrades,
     dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit
   };
@@ -329,10 +335,10 @@ const AccountMonitor = () => {
                           <ConnectionStatus lastUpdate={account.updated_at} />
                         </TableCell>
                         <TableCell className="font-medium">
-                          {account.name || `Account ${account.account_number}`}
+                          {account.nameValue}
                         </TableCell>
                         <TableCell className="font-mono">{account.account_number}</TableCell>
-                        <TableCell>{account.vps_name || 'N/A'}</TableCell>
+                        <TableCell>{account.vpsValue}</TableCell>
                         <TableCell className="text-right font-mono">
                           US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
@@ -416,7 +422,7 @@ const AccountMonitor = () => {
         isOpen={closeAllModalOpen}
         onClose={() => setCloseAllModalOpen(false)}
         accountNumber={selectedAccountForClose?.account_number || ''}
-        accountName={selectedAccountForClose?.name || `Account ${selectedAccountForClose?.account_number}` || ''}
+        accountName={selectedAccountForClose?.nameValue || ''}
         openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
       />
     </div>

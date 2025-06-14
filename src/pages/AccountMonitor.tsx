@@ -279,7 +279,7 @@ const AccountMonitor = () => {
                     <SortableHeader sortKey="openTrades" className="text-right">Open Trades</SortableHeader>
                     <SortableHeader sortKey="profit" className="text-right">Open PnL</SortableHeader>
                     <SortableHeader sortKey="dayProfit" className="text-right">Day</SortableHeader>
-                    <SortableHeader sortKey="broker">BROKER</SortableHeader>
+                    <SortableHeader sortKey="server">SERVIDOR</SortableHeader>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -314,7 +314,7 @@ const AccountMonitor = () => {
                         <TableCell className={`text-right font-bold ${dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           US$ {dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="font-medium">{getBrokerName(account)}</TableCell>
+                        <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button

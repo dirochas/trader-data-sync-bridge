@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -91,6 +90,38 @@ const AccountMonitor = () => {
     return todayTrades
       .filter(trade => trade.account_id === accountId)
       .reduce((sum, trade) => sum + Number(trade.profit || 0), 0);
+  };
+
+  // Função para extrair nome do broker do server ou usar o campo broker
+  const getBrokerName = (account: any) => {
+    // Se já temos o broker definido, usar ele
+    if (account.broker && account.broker !== 'N/A' && account.broker.trim() !== '') {
+      return account.broker;
+    }
+    
+    // Caso contrário, tentar extrair do server name
+    if (account.server) {
+      // Remover prefixos comuns como "MT4-", "MT5-", etc.
+      let brokerName = account.server.replace(/^(MT[45]-?)/i, '');
+      
+      // Extrair nome do broker de patterns comuns
+      const patterns = [
+        /^([A-Za-z]+)(-|\.|_)/,  // Nome antes de separador
+        /^([A-Za-z\s]+)\d/,      // Nome antes de números
+        /^([A-Za-z]+)/           // Apenas letras iniciais
+      ];
+      
+      for (const pattern of patterns) {
+        const match = brokerName.match(pattern);
+        if (match && match[1].length > 2) {
+          return match[1].trim();
+        }
+      }
+      
+      return brokerName.split(/[-._\d]/)[0] || account.server;
+    }
+    
+    return 'N/A';
   };
 
   // Calcular estatísticas com base nos dados reais e status de conexão
@@ -245,9 +276,9 @@ const AccountMonitor = () => {
                     <SortableHeader sortKey="vps_name">VPS</SortableHeader>
                     <SortableHeader sortKey="balance" className="text-right">Balance</SortableHeader>
                     <SortableHeader sortKey="equity" className="text-right">Equity</SortableHeader>
-                    <TableHead className="text-right">Open Trades</TableHead>
-                    <TableHead className="text-right">Open PnL</TableHead>
-                    <TableHead className="text-right">Day</TableHead>
+                    <SortableHeader sortKey="openTrades" className="text-right">Open Trades</SortableHeader>
+                    <SortableHeader sortKey="profit" className="text-right">Open PnL</SortableHeader>
+                    <SortableHeader sortKey="dayProfit" className="text-right">Day</SortableHeader>
                     <SortableHeader sortKey="broker">BROKER</SortableHeader>
                     <TableHead>ACTIONS</TableHead>
                   </TableRow>
@@ -283,7 +314,7 @@ const AccountMonitor = () => {
                         <TableCell className={`text-right font-bold ${dayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           US$ {dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell>{account.broker || 'N/A'}</TableCell>
+                        <TableCell className="font-medium">{getBrokerName(account)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button

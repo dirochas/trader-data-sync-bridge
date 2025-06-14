@@ -8,7 +8,7 @@ export interface SortConfig {
   direction: SortDirection;
 }
 
-export const useSorting = <T>(data: T[], initialSort?: SortConfig) => {
+export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFunctions?: Record<string, (a: T, b: T) => number>) => {
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(initialSort || null);
 
   const sortedData = useMemo(() => {
@@ -17,6 +17,13 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig) => {
     }
 
     return [...data].sort((a, b) => {
+      // Usar função customizada se disponível
+      if (customSortFunctions && customSortFunctions[sortConfig.key]) {
+        const result = customSortFunctions[sortConfig.key](a, b);
+        return sortConfig.direction === 'asc' ? result : -result;
+      }
+
+      // Usar ordenação padrão
       const aValue = getNestedValue(a, sortConfig.key);
       const bValue = getNestedValue(b, sortConfig.key);
 
@@ -28,7 +35,7 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig) => {
       }
       return 0;
     });
-  }, [data, sortConfig]);
+  }, [data, sortConfig, customSortFunctions]);
 
   const requestSort = (key: string) => {
     let direction: SortDirection = 'asc';

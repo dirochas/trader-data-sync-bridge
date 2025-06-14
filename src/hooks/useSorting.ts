@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -9,29 +9,44 @@ export interface SortConfig {
 }
 
 export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFunctions?: Record<string, (a: T, b: T) => number>) => {
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(initialSort || null);
+  // Usar useRef para manter o estado de ordenação persistente
+  const sortConfigRef = useRef<SortConfig | null>(initialSort || null);
+  const [sortConfig, setSortConfigState] = useState<SortConfig | null>(initialSort || null);
+
+  // Função para atualizar o estado de ordenação
+  const setSortConfig = (newConfig: SortConfig | null) => {
+    sortConfigRef.current = newConfig;
+    setSortConfigState(newConfig);
+  };
+
+  // Manter a referência sincronizada com o estado
+  useEffect(() => {
+    sortConfigRef.current = sortConfig;
+  }, [sortConfig]);
 
   const sortedData = useMemo(() => {
-    if (!sortConfig || !sortConfig.key) {
+    const currentSortConfig = sortConfigRef.current;
+    
+    if (!currentSortConfig || !currentSortConfig.key) {
       return data;
     }
 
     return [...data].sort((a, b) => {
       // Usar função customizada se disponível
-      if (customSortFunctions && customSortFunctions[sortConfig.key]) {
-        const result = customSortFunctions[sortConfig.key](a, b);
-        return sortConfig.direction === 'asc' ? result : -result;
+      if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
+        const result = customSortFunctions[currentSortConfig.key](a, b);
+        return currentSortConfig.direction === 'asc' ? result : -result;
       }
 
       // Usar ordenação padrão
-      const aValue = getNestedValue(a, sortConfig.key);
-      const bValue = getNestedValue(b, sortConfig.key);
+      const aValue = getNestedValue(a, currentSortConfig.key);
+      const bValue = getNestedValue(b, currentSortConfig.key);
 
       if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+        return currentSortConfig.direction === 'asc' ? -1 : 1;
       }
       if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
+        return currentSortConfig.direction === 'asc' ? 1 : -1;
       }
       return 0;
     });
@@ -40,29 +55,30 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
   const requestSort = (key: string) => {
     let direction: SortDirection = 'asc';
     
-    if (sortConfig && sortConfig.key === key) {
-      if (sortConfig.direction === 'asc') {
+    if (sortConfigRef.current && sortConfigRef.current.key === key) {
+      if (sortConfigRef.current.direction === 'asc') {
         direction = 'desc';
-      } else if (sortConfig.direction === 'desc') {
+      } else if (sortConfigRef.current.direction === 'desc') {
         direction = null;
       }
     }
     
-    setSortConfig(direction ? { key, direction } : null);
+    const newConfig = direction ? { key, direction } : null;
+    setSortConfig(newConfig);
   };
 
   const getSortIcon = (columnKey: string) => {
-    if (!sortConfig || sortConfig.key !== columnKey) {
+    if (!sortConfigRef.current || sortConfigRef.current.key !== columnKey) {
       return '↕️';
     }
-    return sortConfig.direction === 'asc' ? '↑' : '↓';
+    return sortConfigRef.current.direction === 'asc' ? '↑' : '↓';
   };
 
   return {
     sortedData,
     requestSort,
     getSortIcon,
-    sortConfig,
+    sortConfig: sortConfigRef.current,
   };
 };
 

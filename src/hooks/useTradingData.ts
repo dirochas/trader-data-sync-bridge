@@ -33,7 +33,7 @@ export const useTradingAccounts = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 5000, // Atualizar a cada 5 segundos
+    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
   });
 };
 
@@ -56,7 +56,7 @@ export const useTradingAccount = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber,
-    refetchInterval: 5000,
+    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
   });
 };
 
@@ -88,7 +88,7 @@ export const useMarginInfo = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber,
-    refetchInterval: 5000,
+    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
   });
 };
 
@@ -118,7 +118,7 @@ export const useOpenPositions = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber,
-    refetchInterval: 5000,
+    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
   });
 };
 
@@ -149,7 +149,7 @@ export const useTradeHistory = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber,
-    refetchInterval: 10000,
+    refetchInterval: 5000, // Mantido em 5 segundos para histórico (menos crítico)
   });
 };
 

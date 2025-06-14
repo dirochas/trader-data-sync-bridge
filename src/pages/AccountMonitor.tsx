@@ -38,7 +38,7 @@ const AccountMonitor = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 5000,
+    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
   });
 
   // Buscar histórico de trades do dia atual para calcular Day
@@ -56,7 +56,7 @@ const AccountMonitor = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000, // Mantido em 5 segundos para dados menos críticos
   });
 
   const handleViewAccount = (accountNumber: string) => {

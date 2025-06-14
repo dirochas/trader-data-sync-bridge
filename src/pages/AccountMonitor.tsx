@@ -187,25 +187,29 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Componente para cabeçalho ordenável com logs detalhados
+  // Componente para cabeçalho ordenável com logs máximos
   const SortableHeader = ({ children, sortKey, className = "" }: { children: React.ReactNode, sortKey: string, className?: string }) => (
     <TableHead 
       className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
       onClick={() => {
-        console.log(`=== CLICKING SORT FOR: ${sortKey} ===`);
-        console.log('Sample data for this column:', {
+        console.log(`🚀 CLICK DETECTED ON COLUMN: ${sortKey}`);
+        console.log('🔍 Data verification before sort:', {
           sortKey,
-          sampleValues: enrichedAccounts.slice(0, 3).map(acc => ({
+          enrichedAccountsLength: enrichedAccounts.length,
+          sampleData: enrichedAccounts.slice(0, 2).map(acc => ({
             account: acc.account_number,
-            value: acc[sortKey as keyof typeof acc],
+            [sortKey]: acc[sortKey as keyof typeof acc],
             type: typeof acc[sortKey as keyof typeof acc]
           }))
         });
-        console.log('Current sorted accounts (first 3):', sortedAccounts.slice(0, 3).map(acc => ({
-          account: acc.account_number,
-          [sortKey]: acc[sortKey as keyof typeof acc]
-        })));
-        requestSort(sortKey);
+        
+        try {
+          console.log('🎯 Calling requestSort...');
+          requestSort(sortKey);
+          console.log('✅ requestSort completed');
+        } catch (error) {
+          console.error('❌ Error in requestSort:', error);
+        }
       }}
     >
       <div className="flex items-center gap-1">

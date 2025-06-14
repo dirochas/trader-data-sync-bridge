@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import EditAccountModal from '@/components/EditAccountModal';
+import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
 
 const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
@@ -18,6 +19,10 @@ const AccountMonitor = () => {
   // Estado para controlar o modal de edição
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
+
+  // Estado para controlar o modal de fechar todas as posições
+  const [closeAllModalOpen, setCloseAllModalOpen] = useState(false);
+  const [selectedAccountForClose, setSelectedAccountForClose] = useState<any>(null);
 
   // Hook de ordenação
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(accounts);
@@ -68,6 +73,11 @@ const AccountMonitor = () => {
       server: account.server,
     });
     setEditModalOpen(true);
+  };
+
+  const handleCloseAllPositions = (account: any) => {
+    setSelectedAccountForClose(account);
+    setCloseAllModalOpen(true);
   };
 
   const handleAccountUpdated = () => {
@@ -321,6 +331,8 @@ const AccountMonitor = () => {
                               variant="outline"
                               size="sm"
                               className="text-red-600 hover:text-red-700"
+                              onClick={() => handleCloseAllPositions(account)}
+                              disabled={openTradesCount === 0}
                             >
                               CLOSE ALL
                             </Button>
@@ -373,6 +385,15 @@ const AccountMonitor = () => {
         onClose={() => setEditModalOpen(false)}
         account={selectedAccount}
         onAccountUpdated={handleAccountUpdated}
+      />
+
+      {/* Modal de Fechar Todas as Posições */}
+      <CloseAllPositionsModal
+        isOpen={closeAllModalOpen}
+        onClose={() => setCloseAllModalOpen(false)}
+        accountNumber={selectedAccountForClose?.account_number || ''}
+        accountName={selectedAccountForClose?.name || `Account ${selectedAccountForClose?.account_number}` || ''}
+        openTradesCount={selectedAccountForClose ? getOpenTradesCount(selectedAccountForClose.id) : 0}
       />
     </div>
   );

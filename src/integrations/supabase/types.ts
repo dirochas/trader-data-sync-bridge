@@ -100,6 +100,47 @@ export type Database = {
           },
         ]
       }
+      pending_commands: {
+        Row: {
+          account_id: string
+          command_data: Json | null
+          command_type: string
+          created_at: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          account_id: string
+          command_data?: Json | null
+          command_type: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          account_id?: string
+          command_data?: Json | null
+          command_type?: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_commands_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_history: {
         Row: {
           account_id: string | null

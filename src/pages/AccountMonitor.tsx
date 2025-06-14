@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -114,24 +115,45 @@ const AccountMonitor = () => {
         openTrades: getOpenTradesCount(account.id),
         dayProfit: getDayProfit(account.id),
         connectionStatus: connectionStatus,
-        statusValue: connectionStatus.status, // Para ordenação
-        nameValue: account.name || `Account ${account.account_number}`, // Para ordenação
-        vpsValue: account.vps_name || 'N/A', // Para ordenação
+        // Valores específicos para ordenação
+        statusValue: connectionStatus.status,
+        nameValue: account.name || `Account ${account.account_number}`,
+        vpsValue: account.vps_name || 'N/A',
+        openPnLValue: Number(account.profit || 0)
       };
     });
   }, [accounts, allOpenPositions, todayTrades]);
 
   // Funções customizadas de ordenação para colunas específicas
   const customSortFunctions = {
-    updated_at: (a: any, b: any) => {
+    // Para Status - usar statusValue
+    status: (a: any, b: any) => {
+      console.log('Sorting by status:', a.statusValue, 'vs', b.statusValue);
       const statusOrder = { 'Live': 0, 'Slow Connection': 1, 'Delayed': 2, 'Disconnected': 3 };
       return (statusOrder[a.statusValue as keyof typeof statusOrder] || 4) - (statusOrder[b.statusValue as keyof typeof statusOrder] || 4);
     },
-    name: (a: any, b: any) => a.nameValue.localeCompare(b.nameValue),
-    vps_name: (a: any, b: any) => a.vpsValue.localeCompare(b.vpsValue),
-    openTrades: (a: any, b: any) => a.openTrades - b.openTrades,
-    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit,
-    profit: (a: any, b: any) => Number(a.profit || 0) - Number(b.profit || 0)
+    // Para Name - usar nameValue
+    name: (a: any, b: any) => {
+      console.log('Sorting by name:', a.nameValue, 'vs', b.nameValue);
+      return a.nameValue.localeCompare(b.nameValue);
+    },
+    // Para VPS - usar vpsValue
+    vps: (a: any, b: any) => {
+      console.log('Sorting by vps:', a.vpsValue, 'vs', b.vpsValue);
+      return a.vpsValue.localeCompare(b.vpsValue);
+    },
+    // Para Open Trades - usar openTrades
+    open_trades: (a: any, b: any) => {
+      console.log('Sorting by open trades:', a.openTrades, 'vs', b.openTrades);
+      return a.openTrades - b.openTrades;
+    },
+    // Para Open PnL - usar openPnLValue
+    open_pnl: (a: any, b: any) => {
+      console.log('Sorting by open PnL:', a.openPnLValue, 'vs', b.openPnLValue);
+      return a.openPnLValue - b.openPnLValue;
+    },
+    // Manter as outras funções existentes
+    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit
   };
 
   // Hook de ordenação com dados enriquecidos
@@ -186,7 +208,10 @@ const AccountMonitor = () => {
   const SortableHeader = ({ children, sortKey, className = "" }: { children: React.ReactNode, sortKey: string, className?: string }) => (
     <TableHead 
       className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
-      onClick={() => requestSort(sortKey)}
+      onClick={() => {
+        console.log('Clicking sort for key:', sortKey);
+        requestSort(sortKey);
+      }}
     >
       <div className="flex items-center gap-1">
         {children}
@@ -313,14 +338,14 @@ const AccountMonitor = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableHeader sortKey="updated_at">Status</SortableHeader>
+                    <SortableHeader sortKey="status">Status</SortableHeader>
                     <SortableHeader sortKey="name">Name</SortableHeader>
                     <SortableHeader sortKey="account_number">Account Number</SortableHeader>
-                    <SortableHeader sortKey="vps_name">VPS</SortableHeader>
+                    <SortableHeader sortKey="vps">VPS</SortableHeader>
                     <SortableHeader sortKey="balance" className="text-right">Balance</SortableHeader>
                     <SortableHeader sortKey="equity" className="text-right">Equity</SortableHeader>
-                    <SortableHeader sortKey="openTrades" className="text-right">Open Trades</SortableHeader>
-                    <SortableHeader sortKey="profit" className="text-right">Open PnL</SortableHeader>
+                    <SortableHeader sortKey="open_trades" className="text-right">Open Trades</SortableHeader>
+                    <SortableHeader sortKey="open_pnl" className="text-right">Open PnL</SortableHeader>
                     <SortableHeader sortKey="dayProfit" className="text-right">Day</SortableHeader>
                     <SortableHeader sortKey="server">SERVIDOR</SortableHeader>
                     <TableHead>ACTIONS</TableHead>

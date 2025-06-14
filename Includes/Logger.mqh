@@ -12,7 +12,7 @@ enum LogLevel {
    LOG_ALL = 3          // Todos os logs
 };
 
-extern LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
+extern LogLevel LoggingLevel; // Declaração sem inicialização
 
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO

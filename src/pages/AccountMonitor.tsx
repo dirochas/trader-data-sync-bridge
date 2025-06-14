@@ -130,7 +130,8 @@ const AccountMonitor = () => {
     name: (a: any, b: any) => a.nameValue.localeCompare(b.nameValue),
     vps_name: (a: any, b: any) => a.vpsValue.localeCompare(b.vpsValue),
     openTrades: (a: any, b: any) => a.openTrades - b.openTrades,
-    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit
+    dayProfit: (a: any, b: any) => a.dayProfit - b.dayProfit,
+    profit: (a: any, b: any) => Number(a.profit || 0) - Number(b.profit || 0)
   };
 
   // Hook de ordenação com dados enriquecidos

@@ -23,21 +23,12 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
   // Manter a referência sincronizada com o estado
   useEffect(() => {
     sortConfigRef.current = sortConfig;
-    console.log('📊 Sort config updated:', sortConfig);
   }, [sortConfig]);
 
   const sortedData = useMemo(() => {
     const currentSortConfig = sortConfigRef.current;
     
-    console.log('🧮 sortedData useMemo called with:', {
-      dataLength: data.length,
-      currentSortConfig,
-      hasData: data.length > 0,
-      firstItemKeys: data.length > 0 ? Object.keys(data[0] as any) : []
-    });
-    
     if (!currentSortConfig || !currentSortConfig.key) {
-      console.log('❌ No sort config, returning original data');
       return data;
     }
 
@@ -45,22 +36,12 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
       // Usar função customizada se disponível
       if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
         const result = customSortFunctions[currentSortConfig.key](a, b);
-        console.log('🔧 Using custom sort function for:', currentSortConfig.key);
         return currentSortConfig.direction === 'asc' ? result : -result;
       }
 
       // Usar ordenação padrão
       const aValue = getNestedValue(a, currentSortConfig.key);
       const bValue = getNestedValue(b, currentSortConfig.key);
-
-      console.log('📋 Sorting values:', {
-        key: currentSortConfig.key,
-        aValue,
-        bValue,
-        aType: typeof aValue,
-        bType: typeof bValue,
-        direction: currentSortConfig.direction
-      });
 
       if (aValue < bValue) {
         return currentSortConfig.direction === 'asc' ? -1 : 1;
@@ -71,29 +52,20 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
       return 0;
     });
 
-    console.log('✅ Sort completed, first 3 results:', result.slice(0, 3).map(item => ({
-      item: (item as any).account_number || 'unknown',
-      sortValue: getNestedValue(item, currentSortConfig.key)
-    })));
-
     return result;
   }, [data, sortConfig, customSortFunctions]);
 
   const requestSort = (key: string) => {
     console.log('🎯 requestSort called for key:', key);
-    console.log('📊 Current sortConfig before change:', sortConfigRef.current);
     
     let direction: SortDirection = 'asc';
     
     if (sortConfigRef.current && sortConfigRef.current.key === key) {
-      console.log('🔄 Same key clicked, cycling direction');
       if (sortConfigRef.current.direction === 'asc') {
         direction = 'desc';
       } else if (sortConfigRef.current.direction === 'desc') {
         direction = null;
       }
-    } else {
-      console.log('🆕 New key clicked, starting with asc');
     }
     
     const newConfig = direction ? { key, direction } : null;
@@ -107,11 +79,6 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     }
     return sortConfigRef.current.direction === 'asc' ? '↑' : '↓';
   };
-
-  console.log('🏁 useSorting returning:', {
-    sortedDataLength: sortedData.length,
-    currentSortConfig: sortConfigRef.current
-  });
 
   return {
     sortedData,
@@ -127,6 +94,5 @@ const getNestedValue = (obj: any, path: string) => {
     return current && current[key] !== undefined ? current[key] : '';
   }, obj);
   
-  console.log('🔍 getNestedValue:', { path, result, type: typeof result });
   return result;
 };

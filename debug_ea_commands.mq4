@@ -3,41 +3,87 @@
 //|                                           TradingDataSender.mq4 |
 //|                                                                  |
 //+------------------------------------------------------------------+
+#property version   "2.07"
 #property strict
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
-input int SendIntervalSeconds = 5; // Intervalo de envio (segundos)
+input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
 
 // NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
-input int CommandCheckIntervalSeconds = 10; // Intervalo para verificar comandos (segundos)
+input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
+
+// SISTEMA DE LOGS MELHORADO
+enum LogLevel {
+   LOG_NONE = 0,        // Sem logs
+   LOG_ESSENTIAL = 1,   // Apenas logs essenciais
+   LOG_CRITICAL = 2,    // Logs críticos + essenciais
+   LOG_ALL = 3          // Todos os logs
+};
+
+input LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
 
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
 
 //+------------------------------------------------------------------+
+// SISTEMA DE LOGGING MELHORADO
+//+------------------------------------------------------------------+
+void LogPrint(LogLevel level, string category, string message)
+{
+   if(LoggingLevel == LOG_NONE) return;
+   if(level > LoggingLevel) return;
+   
+   string prefix = "";
+   switch(level) {
+      case LOG_ESSENTIAL: prefix = "📌 "; break;
+      case LOG_CRITICAL:  prefix = "🚨 "; break;
+      case LOG_ALL:       prefix = "💬 "; break;
+   }
+   
+   Print(prefix + "[" + category + "] " + message);
+}
+
+void LogSeparator(string category)
+{
+   if(LoggingLevel == LOG_NONE) return;
+   Print("═══════════════════════════════════════════════════════════");
+   Print("                    " + category);
+   Print("═══════════════════════════════════════════════════════════");
+}
+
+void LogSubSeparator(string subcategory)
+{
+   if(LoggingLevel == LOG_NONE) return;
+   Print("─────────────── " + subcategory + " ───────────────");
+}
+
+//+------------------------------------------------------------------+
 int OnInit()
 {
-   Print("=== EA TRADING DATA SENDER INICIADO ===");
-   Print("URL do servidor: ", ServerURL);
-   Print("Intervalo de envio: ", SendIntervalSeconds, " segundos");
-   Print("Modo selecionado: ", UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)");
-   Print("Polling de comandos: ", EnableCommandPolling ? "HABILITADO" : "DESABILITADO");
+   LogSeparator("EA INICIALIZAÇÃO");
+   LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.07");
+   LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
+   LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
+   LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
+   LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
+   LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
    if(UseTimer)
    {
       EventSetTimer(SendIntervalSeconds);
-      Print("✅ Timer configurado para ", SendIntervalSeconds, " segundos");
-      Print("📡 EA funcionará mesmo com mercado FECHADO");
+      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
+      LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
    }
    else
    {
-      Print("📊 EA funcionará apenas com mercado ABERTO (ticks)");
+      LogPrint(LOG_ALL, "TIMER", "EA funcionará apenas com mercado ABERTO (ticks)");
    }
    
    // Enviar dados imediatamente na inicialização
-   Print("Enviando dados iniciais...");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Enviando dados iniciais...");
    SendTradingData();
    
    return INIT_SUCCEEDED;
@@ -46,12 +92,13 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
+   LogSeparator("EA FINALIZAÇÃO");
    if(UseTimer)
    {
       EventKillTimer();
-      Print("Timer finalizado");
+      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer finalizado");
    }
-   Print("=== EA FINALIZADO ===");
+   LogPrint(LOG_ESSENTIAL, "DEINIT", "EA FINALIZADO - Motivo: " + IntegerToString(reason));
 }
 
 //+------------------------------------------------------------------+
@@ -60,7 +107,7 @@ void OnTick()
    // Só funciona se UseTimer = false
    if(!UseTimer && TimeCurrent() - lastSendTime >= SendIntervalSeconds)
    {
-      Print("OnTick executado - enviando dados...");
+      LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
       SendTradingData();
       lastSendTime = TimeCurrent();
    }
@@ -69,20 +116,25 @@ void OnTick()
 //+------------------------------------------------------------------+
 void SendTradingData()
 {
-   Print("--- Iniciando coleta de dados ---");
+   LogSubSeparator("COLETA DE DADOS");
+   LogPrint(LOG_ALL, "DATA", "Iniciando coleta de dados");
+   
    string jsonData = BuildJsonData();
    
    // Debug - salvar em arquivo
-   int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
-   if(file != INVALID_HANDLE)
+   if(LoggingLevel >= LOG_ALL)
    {
-      FileWrite(file, jsonData);
-      FileClose(file);
-      Print("💾 Dados salvos em arquivo: trading_data.json");
-   }
-   else
-   {
-      Print("❌ Erro ao salvar arquivo de debug");
+      int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
+      if(file != INVALID_HANDLE)
+      {
+         FileWrite(file, jsonData);
+         FileClose(file);
+         LogPrint(LOG_ALL, "DEBUG", "Dados salvos em arquivo: trading_data.json");
+      }
+      else
+      {
+         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao salvar arquivo de debug");
+      }
    }
    
    // Enviar via HTTP para Supabase
@@ -92,9 +144,9 @@ void SendTradingData()
 //+------------------------------------------------------------------+
 void SendToSupabase(string jsonData)
 {
-   Print("=== INICIANDO ENVIO PARA SUPABASE ===");
-   Print("🌐 URL: ", ServerURL);
-   Print("📦 Tamanho dos dados: ", StringLen(jsonData), " caracteres");
+   LogSubSeparator("ENVIO SUPABASE");
+   LogPrint(LOG_ALL, "HTTP", "URL: " + ServerURL);
+   LogPrint(LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " caracteres");
    
    string headers = "Content-Type: application/json\r\n";
    
@@ -106,50 +158,47 @@ void SendToSupabase(string jsonData)
    StringToCharArray(jsonData, post, 0, WHOLE_ARRAY);
    ArrayResize(post, ArraySize(post) - 1); // Remove null terminator
    
-   Print("🚀 Fazendo requisição HTTP POST...");
+   LogPrint(LOG_ALL, "HTTP", "Fazendo requisição HTTP POST...");
    
    // Fazer requisição HTTP POST
-   int timeout = 10000; // 10 segundos (aumentei o timeout)
+   int timeout = 10000; // 10 segundos
    int res = WebRequest("POST", ServerURL, headers, timeout, post, result, resultHeaders);
    
-   Print("📡 Código de resposta HTTP: ", res);
+   LogPrint(LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
    
    if(res == 200)
    {
-      Print("✅ SUCESSO! Dados enviados para Supabase!");
+      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
       string response = CharArrayToString(result);
-      Print("📋 Resposta do servidor: ", response);
+      LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
    }
    else if(res == -1)
    {
-      Print("❌ ERRO: URL não permitida no WebRequest!");
-      Print("🔧 SOLUÇÃO: Adicione esta URL nas configurações:");
-      Print("   Ferramentas → Opções → Expert Advisors → WebRequest");
-      Print("   URL: https://kgrlcsimdszbrkcwjpke.supabase.co");
+      LogPrint(LOG_CRITICAL, "ERROR", "URL não permitida no WebRequest!");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "Adicione esta URL nas configurações:");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "URL: https://kgrlcsimdszbrkcwjpke.supabase.co");
    }
    else if(res == 0)
    {
-      Print("❌ ERRO: Timeout ou sem conexão com internet");
-      Print("🔧 Verifique sua conexão com a internet");
+      LogPrint(LOG_CRITICAL, "ERROR", "Timeout ou sem conexão com internet");
    }
    else
    {
-      Print("❌ Erro HTTP: ", res);
-      Print("📋 Headers de resposta: ", resultHeaders);
+      LogPrint(LOG_CRITICAL, "ERROR", "Erro HTTP: " + IntegerToString(res));
+      LogPrint(LOG_ALL, "DEBUG", "Headers de resposta: " + resultHeaders);
       if(ArraySize(result) > 0)
       {
          string errorResponse = CharArrayToString(result);
-         Print("📋 Resposta de erro: ", errorResponse);
+         LogPrint(LOG_ALL, "DEBUG", "Resposta de erro: " + errorResponse);
       }
    }
-   
-   Print("=== FIM DO ENVIO ===");
 }
 
 //+------------------------------------------------------------------+
 string BuildJsonData()
 {
-   Print("🔄 Construindo dados JSON...");
+   LogPrint(LOG_ALL, "JSON", "Construindo dados JSON...");
    
    string json = "{";
    
@@ -163,7 +212,7 @@ string BuildJsonData()
    json += "\"leverage\":" + IntegerToString(AccountLeverage());
    json += "},";
    
-   Print("💰 Conta: ", AccountNumber(), " | Balance: $", DoubleToString(AccountBalance(), 2));
+   LogPrint(LOG_ESSENTIAL, "ACCOUNT", "Conta: " + IntegerToString(AccountNumber()) + " | Balance: $" + DoubleToString(AccountBalance(), 2));
    
    // Margin Info
    json += "\"margin\":{";
@@ -172,7 +221,7 @@ string BuildJsonData()
    json += "\"level\":" + DoubleToString(AccountMargin() == 0 ? 0 : AccountEquity()/AccountMargin()*100, 2);
    json += "},";
    
-   Print("📊 Margem: Usada $", DoubleToString(AccountMargin(), 2), " | Livre $", DoubleToString(AccountFreeMargin(), 2));
+   LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountMargin(), 2) + " | Livre: $" + DoubleToString(AccountFreeMargin(), 2));
    
    // Open Positions
    json += "\"positions\":[";
@@ -197,7 +246,7 @@ string BuildJsonData()
    }
    json += "],";
    
-   Print("📈 Posições abertas: ", posCount);
+   LogPrint(LOG_ESSENTIAL, "POSITIONS", "Posições abertas: " + IntegerToString(posCount));
    
    // Trade History (últimos 10)
    json += "\"history\":[";
@@ -225,8 +274,8 @@ string BuildJsonData()
    
    json += "}";
    
-   Print("📜 Histórico de trades: ", histCount);
-   Print("✅ JSON construído com sucesso");
+   LogPrint(LOG_ALL, "HISTORY", "Histórico de trades: " + IntegerToString(histCount));
+   LogPrint(LOG_ALL, "JSON", "JSON construído com sucesso");
    
    return json;
 }
@@ -237,24 +286,24 @@ void OnTimer()
    // Só funciona se UseTimer = true
    if(UseTimer)
    {
-      Print("=== TIMER EXECUTADO ===");
-      Print("Horário atual: ", TimeToString(TimeCurrent()));
+      LogSeparator("EXECUÇÃO TIMER");
+      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
       SendTradingData();
       lastSendTime = TimeCurrent();
       
       // NOVA FUNCIONALIDADE: Verificar comandos pendentes
       if(EnableCommandPolling && TimeCurrent() - lastCommandCheck >= CommandCheckIntervalSeconds)
       {
-         Print("🔍 Iniciando verificação de comandos...");
-         Print("⏰ Última verificação: ", TimeToString(lastCommandCheck));
-         Print("⏰ Agora: ", TimeToString(TimeCurrent()));
-         Print("⏰ Diferença: ", TimeCurrent() - lastCommandCheck, " segundos");
+         LogPrint(LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
+         LogPrint(LOG_ALL, "POLLING", "Última verificação: " + TimeToString(lastCommandCheck));
+         LogPrint(LOG_ALL, "POLLING", "Diferença: " + IntegerToString(TimeCurrent() - lastCommandCheck) + " segundos");
          CheckPendingCommands();
          lastCommandCheck = TimeCurrent();
       }
       else
       {
-         Print("⏳ Aguardando próxima verificação de comandos em: ", CommandCheckIntervalSeconds - (TimeCurrent() - lastCommandCheck), " segundos");
+         int remaining = CommandCheckIntervalSeconds - (TimeCurrent() - lastCommandCheck);
+         LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + " segundos");
       }
    }
 }
@@ -264,11 +313,11 @@ void OnTimer()
 //+------------------------------------------------------------------+
 void CheckPendingCommands()
 {
-   Print("🔍 === INICIANDO VERIFICAÇÃO DE COMANDOS ===");
-   Print("📱 Conta: ", AccountNumber());
+   LogSubSeparator("VERIFICAÇÃO DE COMANDOS");
+   LogPrint(LOG_ESSENTIAL, "COMMANDS", "Verificando comandos para conta: " + IntegerToString(AccountNumber()));
    
    string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/get-commands?accountNumber=" + IntegerToString(AccountNumber());
-   Print("🌐 URL da requisição: ", url);
+   LogPrint(LOG_ALL, "GET", "URL: " + url);
    
    string headers = "Content-Type: application/json\r\n";
    
@@ -278,74 +327,70 @@ void CheckPendingCommands()
    // CORREÇÃO: Usar array vazio para requisição GET
    char emptyPost[];
    
-   Print("🚀 Fazendo requisição GET...");
+   LogPrint(LOG_ALL, "GET", "Fazendo requisição GET...");
    int res = WebRequest("GET", url, headers, 5000, emptyPost, result, resultHeaders);
    
-   Print("📡 Código de resposta HTTP: ", res);
-   Print("📋 Headers de resposta: ", resultHeaders);
+   LogPrint(LOG_ESSENTIAL, "GET", "Código de resposta: " + IntegerToString(res));
+   LogPrint(LOG_ALL, "GET", "Headers de resposta: " + resultHeaders);
    
    if(res == 200)
    {
       string response = CharArrayToString(result);
-      Print("✅ SUCESSO na requisição!");
-      Print("📋 Resposta completa: ", response);
-      Print("📏 Tamanho da resposta: ", StringLen(response), " caracteres");
+      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Comandos recebidos com sucesso!");
+      LogPrint(LOG_ALL, "RESPONSE", "Resposta completa: " + response);
+      LogPrint(LOG_ALL, "RESPONSE", "Tamanho: " + IntegerToString(StringLen(response)) + " caracteres");
       
       // Verificar se existe o campo "commands" na resposta
       if(StringFind(response, "\"commands\"") >= 0)
       {
-         Print("📦 Campo 'commands' encontrado na resposta");
+         LogPrint(LOG_ALL, "PARSE", "Campo 'commands' encontrado");
          
          // Verificar se existem comandos
          if(StringFind(response, "\"commands\":[]") >= 0)
          {
-            Print("📭 Nenhum comando pendente encontrado");
+            LogPrint(LOG_ESSENTIAL, "COMMANDS", "Nenhum comando pendente");
          }
          else
          {
-            Print("📬 Comandos encontrados! Processando...");
+            LogPrint(LOG_CRITICAL, "COMMANDS", "Comandos encontrados! Processando...");
             
             // Verificar especificamente por CLOSE_ALL
             if(StringFind(response, "CLOSE_ALL") >= 0)
             {
-               Print("⚡ COMANDO CLOSE_ALL ENCONTRADO!");
+               LogPrint(LOG_CRITICAL, "COMMAND", "COMANDO CLOSE_ALL ENCONTRADO!");
                ExecuteCloseAllCommand(response);
             }
             else
             {
-               Print("ℹ️ Outros comandos encontrados, mas não CLOSE_ALL");
+               LogPrint(LOG_ALL, "COMMAND", "Outros comandos encontrados, mas não CLOSE_ALL");
             }
          }
       }
       else
       {
-         Print("⚠️ Campo 'commands' não encontrado na resposta");
-         Print("🔍 Verificando formato da resposta...");
+         LogPrint(LOG_CRITICAL, "ERROR", "Campo 'commands' não encontrado na resposta");
       }
    }
    else if(res == -1)
    {
-      Print("❌ ERRO: URL não permitida no WebRequest!");
-      Print("🔧 SOLUÇÃO: Adicione estas URLs nas configurações do MetaTrader:");
-      Print("   Ferramentas → Opções → Expert Advisors → WebRequest");
-      Print("   URL 1: https://kgrlcsimdszbrkcwjpke.supabase.co");
-      Print("   URL 2: *.supabase.co");
+      LogPrint(LOG_CRITICAL, "ERROR", "URL não permitida no WebRequest!");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "Adicione estas URLs nas configurações:");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
+      LogPrint(LOG_CRITICAL, "SOLUTION", "URLs: https://kgrlcsimdszbrkcwjpke.supabase.co e *.supabase.co");
    }
    else if(res == 0)
    {
-      Print("❌ ERRO: Timeout ou sem conexão");
+      LogPrint(LOG_CRITICAL, "ERROR", "Timeout ou sem conexão");
    }
    else
    {
-      Print("❌ Erro HTTP: ", res);
+      LogPrint(LOG_CRITICAL, "ERROR", "Erro HTTP: " + IntegerToString(res));
       if(ArraySize(result) > 0)
       {
          string errorResponse = CharArrayToString(result);
-         Print("📋 Resposta de erro: ", errorResponse);
+         LogPrint(LOG_ALL, "DEBUG", "Resposta de erro: " + errorResponse);
       }
    }
-   
-   Print("🔍 === FIM DA VERIFICAÇÃO DE COMANDOS ===");
 }
 
 //+------------------------------------------------------------------+
@@ -353,14 +398,15 @@ void CheckPendingCommands()
 //+------------------------------------------------------------------+
 void ExecuteCloseAllCommand(string jsonResponse)
 {
-   Print("🚀 === EXECUTANDO CLOSE_ALL ===");
+   LogSubSeparator("EXECUÇÃO CLOSE_ALL");
+   LogPrint(LOG_CRITICAL, "EXECUTE", "Executando comando CLOSE_ALL");
    
    // Extrair ID do comando (parsing simples)
    string commandId = ExtractCommandId(jsonResponse);
-   Print("🆔 ID do comando extraído: ", commandId);
+   LogPrint(LOG_ESSENTIAL, "COMMAND", "ID do comando: " + commandId);
    
    int totalOrders = OrdersTotal();
-   Print("📊 Total de ordens antes do fechamento: ", totalOrders);
+   LogPrint(LOG_ESSENTIAL, "ORDERS", "Total de ordens antes do fechamento: " + IntegerToString(totalOrders));
    
    int closedCount = 0;
    int failedCount = 0;
@@ -368,63 +414,55 @@ void ExecuteCloseAllCommand(string jsonResponse)
    // Fechar todas as posições abertas
    for(int i = totalOrders - 1; i >= 0; i--)
    {
-      Print("🔄 Processando ordem índice: ", i);
+      LogPrint(LOG_ALL, "PROCESS", "Processando ordem índice: " + IntegerToString(i));
       
       if(OrderSelect(i, SELECT_BY_POS))
       {
-         Print("📋 Order selecionada:");
-         Print("   Ticket: ", OrderTicket());
-         Print("   Tipo: ", OrderType());
-         Print("   Symbol: ", OrderSymbol());
-         Print("   Volume: ", OrderLots());
+         LogPrint(LOG_ALL, "ORDER", "Ticket: " + IntegerToString(OrderTicket()) + " | Tipo: " + IntegerToString(OrderType()) + " | Symbol: " + OrderSymbol());
          
          if(OrderType() <= 1) // Only BUY/SELL
          {
-            Print("💼 Tentando fechar posição...");
+            LogPrint(LOG_ALL, "CLOSE", "Tentando fechar posição...");
             bool closed = false;
             
             if(OrderType() == OP_BUY)
             {
                double bid = MarketInfo(OrderSymbol(), MODE_BID);
-               Print("   Fechando BUY com BID: ", bid);
+               LogPrint(LOG_ALL, "CLOSE", "Fechando BUY com BID: " + DoubleToString(bid, 5));
                closed = OrderClose(OrderTicket(), OrderLots(), bid, 3);
             }
             else if(OrderType() == OP_SELL)
             {
                double ask = MarketInfo(OrderSymbol(), MODE_ASK);
-               Print("   Fechando SELL com ASK: ", ask);
+               LogPrint(LOG_ALL, "CLOSE", "Fechando SELL com ASK: " + DoubleToString(ask, 5));
                closed = OrderClose(OrderTicket(), OrderLots(), ask, 3);
             }
             
             if(closed)
             {
                closedCount++;
-               Print("✅ Posição fechada com sucesso: ", OrderTicket());
+               LogPrint(LOG_ESSENTIAL, "SUCCESS", "Posição fechada: " + IntegerToString(OrderTicket()));
             }
             else
             {
                failedCount++;
                int error = GetLastError();
-               Print("❌ ERRO ao fechar posição: ", OrderTicket());
-               Print("   Código do erro: ", error);
-               Print("   Descrição: ", ErrorDescription(error));
+               LogPrint(LOG_CRITICAL, "ERROR", "Falha ao fechar posição: " + IntegerToString(OrderTicket()));
+               LogPrint(LOG_CRITICAL, "ERROR", "Código: " + IntegerToString(error) + " | " + ErrorDescription(error));
             }
          }
          else
          {
-            Print("⏭️ Pulando ordem (não é BUY/SELL): tipo ", OrderType());
+            LogPrint(LOG_ALL, "SKIP", "Pulando ordem (não é BUY/SELL): tipo " + IntegerToString(OrderType()));
          }
       }
       else
       {
-         Print("❌ Erro ao selecionar ordem no índice: ", i);
+         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao selecionar ordem no índice: " + IntegerToString(i));
       }
    }
    
-   Print("📊 === RESULTADO FINAL CLOSE_ALL ===");
-   Print("✅ Posições fechadas: ", closedCount);
-   Print("❌ Posições falharam: ", failedCount);
-   Print("📊 Total processado: ", closedCount + failedCount);
+   LogPrint(LOG_ESSENTIAL, "RESULT", "Posições fechadas: " + IntegerToString(closedCount) + " | Falharam: " + IntegerToString(failedCount));
    
    // Atualizar status do comando
    if(commandId != "")
@@ -440,7 +478,7 @@ void ExecuteCloseAllCommand(string jsonResponse)
    }
    else
    {
-      Print("⚠️ ID do comando não encontrado - status não será atualizado");
+      LogPrint(LOG_CRITICAL, "ERROR", "ID do comando não encontrado - status não será atualizado");
    }
 }
 
@@ -449,30 +487,30 @@ void ExecuteCloseAllCommand(string jsonResponse)
 //+------------------------------------------------------------------+
 string ExtractCommandId(string jsonResponse)
 {
-   Print("🔍 Extraindo ID do comando...");
-   Print("📋 JSON para análise: ", jsonResponse);
+   LogPrint(LOG_ALL, "PARSE", "Extraindo ID do comando...");
+   LogPrint(LOG_ALL, "PARSE", "JSON: " + jsonResponse);
    
    // Buscar por "id":"..." no JSON
    int idPos = StringFind(jsonResponse, "\"id\":\"");
    if(idPos >= 0)
    {
-      Print("✅ Padrão 'id' encontrado na posição: ", idPos);
+      LogPrint(LOG_ALL, "PARSE", "Padrão 'id' encontrado na posição: " + IntegerToString(idPos));
       idPos += 6; // Pular "id":"
       int endPos = StringFind(jsonResponse, "\"", idPos);
       if(endPos > idPos)
       {
          string commandId = StringSubstr(jsonResponse, idPos, endPos - idPos);
-         Print("🆔 ID extraído: ", commandId);
+         LogPrint(LOG_ALL, "PARSE", "ID extraído: " + commandId);
          return commandId;
       }
       else
       {
-         Print("❌ Não foi possível encontrar o fim do ID");
+         LogPrint(LOG_CRITICAL, "ERROR", "Não foi possível encontrar o fim do ID");
       }
    }
    else
    {
-      Print("❌ Padrão 'id' não encontrado no JSON");
+      LogPrint(LOG_CRITICAL, "ERROR", "Padrão 'id' não encontrado no JSON");
    }
    return "";
 }
@@ -482,10 +520,8 @@ string ExtractCommandId(string jsonResponse)
 //+------------------------------------------------------------------+
 void UpdateCommandStatus(string commandId, string status, string errorMessage)
 {
-   Print("📤 === ATUALIZANDO STATUS DO COMANDO ===");
-   Print("🆔 Command ID: ", commandId);
-   Print("📊 Status: ", status);
-   Print("❌ Error Message: ", errorMessage);
+   LogSubSeparator("ATUALIZAÇÃO STATUS");
+   LogPrint(LOG_ESSENTIAL, "UPDATE", "Command ID: " + commandId + " | Status: " + status);
    
    string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/update-command-status";
    string headers = "Content-Type: application/json\r\n";
@@ -499,7 +535,7 @@ void UpdateCommandStatus(string commandId, string status, string errorMessage)
    }
    jsonData += "}";
    
-   Print("📦 Dados a enviar: ", jsonData);
+   LogPrint(LOG_ALL, "POST", "Dados: " + jsonData);
    
    char post[];
    char result[];
@@ -510,21 +546,21 @@ void UpdateCommandStatus(string commandId, string status, string errorMessage)
    
    int res = WebRequest("POST", url, headers, 5000, post, result, resultHeaders);
    
-   Print("📡 Código de resposta: ", res);
+   LogPrint(LOG_ESSENTIAL, "POST", "Código de resposta: " + IntegerToString(res));
    
    if(res == 200)
    {
       string response = CharArrayToString(result);
-      Print("✅ Status atualizado com sucesso!");
-      Print("📋 Resposta: ", response);
+      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Status atualizado com sucesso!");
+      LogPrint(LOG_ALL, "RESPONSE", "Resposta: " + response);
    }
    else
    {
-      Print("❌ Erro ao atualizar status. Código: ", res);
+      LogPrint(LOG_CRITICAL, "ERROR", "Erro ao atualizar status. Código: " + IntegerToString(res));
       if(ArraySize(result) > 0)
       {
          string errorResponse = CharArrayToString(result);
-         Print("📋 Resposta de erro: ", errorResponse);
+         LogPrint(LOG_ALL, "DEBUG", "Resposta de erro: " + errorResponse);
       }
    }
 }

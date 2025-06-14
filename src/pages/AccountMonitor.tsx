@@ -1,12 +1,12 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useTradingAccounts } from '@/hooks/useTradingData';
+import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import ConnectionStatus from '@/components/ConnectionStatus';
 
 const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
@@ -70,11 +70,20 @@ const AccountMonitor = () => {
       .reduce((sum, trade) => sum + Number(trade.profit || 0), 0);
   };
 
-  // Calcular estatísticas com base nos dados reais
+  // Calcular estatísticas com base nos dados reais e status de conexão
   const totalAccounts = accounts.length;
   const totalTrades = allOpenPositions.length;
   const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
-  const totalClients = accounts.length; // Assumindo 1 cliente por conta
+  const totalClients = accounts.length;
+
+  // Calcular contas por status
+  const accountsByStatus = accounts.reduce((acc, account) => {
+    const status = getConnectionStatus(account.updated_at);
+    acc[status.status] = (acc[status.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,7 +103,7 @@ const AccountMonitor = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Accounts</p>
                   <p className="text-2xl font-bold">{totalAccounts}</p>
-                  <p className="text-xs text-green-500">Contas conectadas</p>
+                  <p className="text-xs text-green-500">{connectedAccounts} conectadas</p>
                 </div>
                 <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 text-xl">📊</span>
@@ -149,6 +158,41 @@ const AccountMonitor = () => {
           </Card>
         </div>
 
+        {/* Status Summary Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Connection Status Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{accountsByStatus['Live'] || 0}</div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <span>🟢</span> Live
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{accountsByStatus['Slow Connection'] || 0}</div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <span>🟡</span> Slow Connection
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">{accountsByStatus['Delayed'] || 0}</div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <span>🟠</span> Delayed
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{accountsByStatus['Disconnected'] || 0}</div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <span>🔴</span> Disconnected
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tabela de Contas */}
         <Card>
           <CardHeader>
@@ -181,12 +225,7 @@ const AccountMonitor = () => {
                     return (
                       <TableRow key={account.id}>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span>🟢</span>
-                            <span className="text-sm font-medium text-green-600">
-                              Live
-                            </span>
-                          </div>
+                          <ConnectionStatus lastUpdate={account.updated_at} />
                         </TableCell>
                         <TableCell className="font-medium">
                           {account.name || `Account ${account.account_number}`}

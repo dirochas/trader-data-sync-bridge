@@ -3,6 +3,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
+// Função para calcular o status da conexão baseado na última atualização
+export const getConnectionStatus = (lastUpdate: string) => {
+  const now = new Date();
+  const lastUpdateTime = new Date(lastUpdate);
+  const diffInMinutes = (now.getTime() - lastUpdateTime.getTime()) / (1000 * 60);
+
+  if (diffInMinutes <= 2) {
+    return { status: 'Live', color: 'text-green-600', icon: '🟢' };
+  } else if (diffInMinutes <= 5) {
+    return { status: 'Slow Connection', color: 'text-yellow-600', icon: '🟡' };
+  } else if (diffInMinutes <= 10) {
+    return { status: 'Delayed', color: 'text-orange-600', icon: '🟠' };
+  } else {
+    return { status: 'Disconnected', color: 'text-red-600', icon: '🔴' };
+  }
+};
+
 // Hook para buscar TODAS as contas de trading
 export const useTradingAccounts = () => {
   return useQuery({

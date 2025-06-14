@@ -30,6 +30,10 @@ datetime lastIdleLog = 0;
 bool lastHadOrders = false; // Para detectar mudanças de estado
 int lastOrderCount = -1;    // Para detectar mudanças na quantidade de ordens
 
+// NOVA FLAG INTELIGENTE PARA CONTROLAR LOGS REPETITIVOS
+bool idleLogAlreadyShown = false; // Flag para evitar logs repetitivos quando idle
+bool activeLogAlreadyShown = false; // Flag para evitar logs repetitivos quando ativo
+
 //+------------------------------------------------------------------+
 // SISTEMA DE LOGGING MELHORADO
 //+------------------------------------------------------------------+
@@ -140,7 +144,7 @@ bool HasOpenOrdersOrPendingOrders()
 }
 
 //+------------------------------------------------------------------+
-// NOVA FUNÇÃO INTELIGENTE: Envio de dados com verificação prévia
+// FUNÇÃO INTELIGENTE CORRIGIDA: Envio de dados com verificação prévia
 //+------------------------------------------------------------------+
 void SendTradingDataIntelligent()
 {
@@ -152,34 +156,53 @@ void SendTradingDataIntelligent()
    
    if(!hasOrders)
    {
-      // SEM ORDENS - Modo econômico
-      if(stateChanged || TimeCurrent() - lastIdleLog >= 300) // Log a cada 5 minutos quando idle
+      // SEM ORDENS - Modo econômico MAS SEMPRE ENVIA DADOS PARA SERVIDOR
+      
+      // Log apenas na primeira vez que entra em modo idle ou a cada 5 minutos
+      if(stateChanged || !idleLogAlreadyShown || TimeCurrent() - lastIdleLog >= 300)
       {
-         LogSubSeparator("STATUS IDLE");
-         LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountNumber()) + " sem ordens abertas");
-         LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
-         LogPrint(LOG_ALL, "IDLE", "Modo econômico ativo - reduzindo verificações");
-         
-         // Enviar status "idle" para o servidor (dados mínimos)
-         SendIdleStatusToSupabase();
+         if(stateChanged || !idleLogAlreadyShown)
+         {
+            LogSubSeparator("MODO IDLE ATIVADO");
+            LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountNumber()) + " sem ordens abertas");
+            LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
+            LogPrint(LOG_ALL, "IDLE", "Logs reduzidos ativados - dados continuam sendo enviados");
+            idleLogAlreadyShown = true;
+            activeLogAlreadyShown = false; // Reset flag do modo ativo
+         }
+         else
+         {
+            // Log periódico (a cada 5 minutos)
+            LogPrint(LOG_ESSENTIAL, "IDLE", "Status idle - Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
+         }
          lastIdleLog = TimeCurrent();
       }
+      
+      // CORREÇÃO: SEMPRE enviar status para o servidor, mesmo sem ordens
+      SendIdleStatusToSupabase();
    }
    else
    {
       // COM ORDENS - Modo ativo completo
-      if(stateChanged)
+      if(stateChanged || !activeLogAlreadyShown)
       {
-         LogPrint(LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - ativando modo completo");
+         LogSubSeparator("MODO ATIVO REATIVADO");
+         LogPrint(LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - logs completos reativados");
+         activeLogAlreadyShown = true;
+         idleLogAlreadyShown = false; // Reset flag do modo idle
       }
       
-      LogSubSeparator("COLETA DE DADOS COMPLETA");
-      LogPrint(LOG_ALL, "DATA", "Iniciando coleta completa de dados");
+      // Logs detalhados apenas se mudou de estado ou se está em nível ALL
+      if(stateChanged || LoggingLevel >= LOG_ALL)
+      {
+         LogSubSeparator("COLETA DE DADOS COMPLETA");
+         LogPrint(LOG_ALL, "DATA", "Iniciando coleta completa de dados");
+      }
       
       string jsonData = BuildJsonData();
       
       // Debug - salvar em arquivo apenas quando necessário
-      if(LoggingLevel >= LOG_ALL)
+      if(LoggingLevel >= LOG_ALL && (stateChanged || TimeCurrent() - lastSendTime >= 30))
       {
          int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
          if(file != INVALID_HANDLE)
@@ -200,11 +223,15 @@ void SendTradingDataIntelligent()
 }
 
 //+------------------------------------------------------------------+
-// NOVA FUNÇÃO: Enviar status "idle" para o servidor (dados mínimos)
+// FUNÇÃO CORRIGIDA: Enviar status "idle" para o servidor (dados mínimos)
 //+------------------------------------------------------------------+
 void SendIdleStatusToSupabase()
 {
-   LogPrint(LOG_ALL, "IDLE", "Enviando status idle para servidor...");
+   // Log apenas se não foi mostrado ainda ou se está em nível ALL
+   if(!idleLogAlreadyShown || LoggingLevel >= LOG_ALL)
+   {
+      LogPrint(LOG_ALL, "IDLE", "Enviando status idle para servidor (mantendo conexão)...");
+   }
    
    string jsonData = "{";
    jsonData += "\"account\":{";
@@ -229,13 +256,14 @@ void SendToSupabase(string jsonData)
 {
    bool isIdle = (StringFind(jsonData, "\"status\":\"IDLE\"") >= 0);
    
-   if(!isIdle)
+   // Logs do envio apenas se necessário
+   if(!isIdle || LoggingLevel >= LOG_ALL)
    {
-      LogSubSeparator("ENVIO SUPABASE");
+      if(!isIdle) LogSubSeparator("ENVIO SUPABASE");
+      LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "URL: " + ServerURL);
+      LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " caracteres");
+      LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Fazendo requisição HTTP POST...");
    }
-   
-   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "URL: " + ServerURL);
-   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " caracteres");
    
    string headers = "Content-Type: application/json\r\n";
    
@@ -247,19 +275,27 @@ void SendToSupabase(string jsonData)
    StringToCharArray(jsonData, post, 0, WHOLE_ARRAY);
    ArrayResize(post, ArraySize(post) - 1); // Remove null terminator
    
-   LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "Fazendo requisição HTTP POST...");
-   
    // Fazer requisição HTTP POST
    int timeout = 10000; // 10 segundos
    int res = WebRequest("POST", ServerURL, headers, timeout, post, result, resultHeaders);
    
-   LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
+   // Log do resultado apenas se necessário
+   if(!isIdle || res != 200 || LoggingLevel >= LOG_ALL)
+   {
+      LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
+   }
    
    if(res == 200)
    {
-      LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
-      string response = CharArrayToString(result);
-      LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
+      if(!isIdle || LoggingLevel >= LOG_ALL)
+      {
+         LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
+         if(LoggingLevel >= LOG_ALL)
+         {
+            string response = CharArrayToString(result);
+            LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
+         }
+      }
    }
    else if(res == -1)
    {
@@ -375,28 +411,42 @@ void OnTimer()
    // Só funciona se UseTimer = true
    if(UseTimer)
    {
-      LogSeparator("EXECUÇÃO TIMER");
-      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
+      // Log reduzido do timer
+      bool hasOrders = HasOpenOrdersOrPendingOrders();
+      
+      // Log do timer apenas se mudou de estado ou se está em modo ativo com ordens
+      if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
+      {
+         LogSeparator("EXECUÇÃO TIMER");
+         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
+      }
+      
       SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
       
       // NOVA FUNCIONALIDADE INTELIGENTE: Verificar comandos com intervalos dinâmicos
       if(EnableCommandPolling)
       {
-         bool hasOrders = HasOpenOrdersOrPendingOrders();
          int intervalToUse = hasOrders ? CommandCheckIntervalSeconds : IdleCommandCheckIntervalSeconds;
          
          if(TimeCurrent() - lastCommandCheck >= intervalToUse)
          {
-            LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
-            LogPrint(LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+            // Log apenas se necessário
+            if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
+            {
+               LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
+               LogPrint(LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+            }
             CheckPendingCommands();
             lastCommandCheck = TimeCurrent();
          }
          else
          {
-            int remaining = intervalToUse - (TimeCurrent() - lastCommandCheck);
-            LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
+            if(LoggingLevel >= LOG_ALL)
+            {
+               int remaining = intervalToUse - (TimeCurrent() - lastCommandCheck);
+               LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
+            }
          }
       }
    }

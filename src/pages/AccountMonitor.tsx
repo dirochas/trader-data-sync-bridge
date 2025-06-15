@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -172,12 +173,11 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Função para criar cabeçalho clicável - VERSÃO FINAL
+  // Função para criar cabeçalho clicável
   const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`🎯 COLUMN CLICK DETECTED: "${label}" with sortKey: "${sortKey}"`);
       requestSort(sortKey);
     };
 

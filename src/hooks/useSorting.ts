@@ -15,7 +15,6 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
 
   // Função para atualizar o estado de ordenação
   const setSortConfig = (newConfig: SortConfig | null) => {
-    console.log('🔄 setSortConfig called with:', newConfig);
     sortConfigRef.current = newConfig;
     setSortConfigState(newConfig);
   };
@@ -66,8 +65,6 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
   }, [data, sortConfig, customSortFunctions]);
 
   const requestSort = (key: string) => {
-    console.log('🎯 requestSort called for key:', key);
-    
     let direction: SortDirection = 'asc';
     
     if (sortConfigRef.current && sortConfigRef.current.key === key) {
@@ -79,7 +76,6 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     }
     
     const newConfig = direction ? { key, direction } : null;
-    console.log('💫 Setting new config:', newConfig);
     setSortConfig(newConfig);
   };
 

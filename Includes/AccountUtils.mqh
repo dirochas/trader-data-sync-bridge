@@ -1,10 +1,9 @@
-
 //+------------------------------------------------------------------+
 //|                                                 AccountUtils.mqh |
 //| Utilitários para informações de conta                           |
 //+------------------------------------------------------------------+
 
-#include "Logger.mqh"
+#include "Logger.mqh" // update to Version 2.12
 
 //+------------------------------------------------------------------+
 // Verificar se há necessidade de processar (MQL5)
@@ -36,7 +35,9 @@ string BuildJsonData()
    json += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
    json += "},";
    
-   LogPrint(LOG_ESSENTIAL, "ACCOUNT", "Conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " | Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2));
+   // LOG INTELIGENTE DA CONTA
+   string accountInfo = "Conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " | Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2);
+   LogAccountSmart(accountInfo);
    
    // Margin Info
    json += "\"margin\":{";
@@ -139,3 +140,4 @@ string BuildIdleJsonData()
    
    return jsonData;
 }
+

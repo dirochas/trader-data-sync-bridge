@@ -1,8 +1,8 @@
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
-//|                                                                  |
+//|                                                    Versão 2.11  |
 //+------------------------------------------------------------------+
-#property version   "2.08"
+#property version   "2.11"
 #property strict
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
@@ -14,28 +14,34 @@ input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
 input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
-// SISTEMA DE LOGS MELHORADO
+// SISTEMA DE LOGS MELHORADO - VERSÃO 2.11
 enum LogLevel {
-   LOG_NONE = 0,        // Sem logs
-   LOG_ESSENTIAL = 1,   // Apenas logs essenciais
-   LOG_CRITICAL = 2,    // Logs críticos + essenciais
-   LOG_ALL = 3          // Todos os logs
+   LOG_NONE = 0,           // Sem logs
+   LOG_ERRORS_ONLY = 1,    // Apenas erros críticos e comandos remotos
+   LOG_ESSENTIAL = 2,      // Logs essenciais
+   LOG_CRITICAL = 3,       // Logs críticos + essenciais
+   LOG_ALL = 4             // Todos os logs
 };
 
-input LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
+input LogLevel LoggingLevel = LOG_ERRORS_ONLY; // Nível de logging
 
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
 datetime lastIdleLog = 0;
+datetime lastConnectionLog = 0;
+datetime lastHeartbeat = 0;
 bool lastHadOrders = false; // Para detectar mudanças de estado
 int lastOrderCount = -1;    // Para detectar mudanças na quantidade de ordens
 
-// NOVA FLAG INTELIGENTE PARA CONTROLAR LOGS REPETITIVOS
-bool idleLogAlreadyShown = false; // Flag para evitar logs repetitivos quando idle
-bool activeLogAlreadyShown = false; // Flag para evitar logs repetitivos quando ativo
+// SISTEMA INTELIGENTE ANTI-SPAM
+bool idleLogAlreadyShown = false;
+bool activeLogAlreadyShown = false;
+bool connectionEstablished = false;
+int consecutiveSuccessfulSends = 0;
+int consecutiveFailures = 0;
 
 //+------------------------------------------------------------------+
-// SISTEMA DE LOGGING MELHORADO
+// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.11
 //+------------------------------------------------------------------+
 void LogPrint(LogLevel level, string category, string message)
 {
@@ -44,9 +50,10 @@ void LogPrint(LogLevel level, string category, string message)
    
    string prefix = "";
    switch(level) {
-      case LOG_ESSENTIAL: prefix = "📌 "; break;
-      case LOG_CRITICAL:  prefix = "🚨 "; break;
-      case LOG_ALL:       prefix = "💬 "; break;
+      case LOG_ERRORS_ONLY: prefix = "🚨 "; break;
+      case LOG_ESSENTIAL:   prefix = "📌 "; break;
+      case LOG_CRITICAL:    prefix = "🚨 "; break;
+      case LOG_ALL:         prefix = "💬 "; break;
    }
    
    Print(prefix + "[" + category + "] " + message);
@@ -54,7 +61,7 @@ void LogPrint(LogLevel level, string category, string message)
 
 void LogSeparator(string category)
 {
-   if(LoggingLevel == LOG_NONE) return;
+   if(LoggingLevel <= LOG_ERRORS_ONLY) return;
    Print("═══════════════════════════════════════════════════════════");
    Print("                    " + category);
    Print("═══════════════════════════════════════════════════════════");
@@ -62,16 +69,80 @@ void LogSeparator(string category)
 
 void LogSubSeparator(string subcategory)
 {
-   if(LoggingLevel == LOG_NONE) return;
+   if(LoggingLevel <= LOG_ERRORS_ONLY) return;
    Print("─────────────── " + subcategory + " ───────────────");
+}
+
+// FUNÇÕES INTELIGENTES PARA LOGS ESPECÍFICOS
+void LogConnectionSmart(bool success, int responseCode, string operation)
+{
+   if(success && responseCode == 200)
+   {
+      consecutiveSuccessfulSends++;
+      consecutiveFailures = 0;
+      
+      if(!connectionEstablished)
+      {
+         LogPrint(LOG_ERRORS_ONLY, "INIT", "Conexão status: Envio e recebimento OK");
+         LogPrint(LOG_ERRORS_ONLY, "SYSTEM", "✅ A partir de agora apenas erros críticos e comandos remotos serão exibidos");
+         connectionEstablished = true;
+         lastConnectionLog = TimeCurrent();
+      }
+      else if(LoggingLevel >= LOG_ALL)
+      {
+         LogPrint(LOG_ALL, "HTTP", "Código de resposta: " + IntegerToString(responseCode));
+      }
+   }
+   else
+   {
+      consecutiveFailures++;
+      consecutiveSuccessfulSends = 0;
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "❌ " + operation + " FALHOU - Código: " + IntegerToString(responseCode));
+      
+      if(consecutiveFailures >= 3)
+      {
+         LogPrint(LOG_ERRORS_ONLY, "ERROR", "❌ " + IntegerToString(consecutiveFailures) + " falhas consecutivas - verificar conexão");
+      }
+   }
+   
+   // Heartbeat a cada 10 minutos se tudo OK
+   if(connectionEstablished && TimeCurrent() - lastHeartbeat >= 600 && consecutiveSuccessfulSends >= 200)
+   {
+      LogPrint(LOG_ERRORS_ONLY, "HEARTBEAT", "💓 Sistema ativo - " + IntegerToString(consecutiveSuccessfulSends) + " envios consecutivos OK");
+      lastHeartbeat = TimeCurrent();
+   }
+}
+
+void LogRemoteCloseCommand(string commandId, int totalOrders)
+{
+   LogPrint(LOG_ERRORS_ONLY, "COMMAND", "🎯 Fechamento remoto detectado");
+   LogPrint(LOG_ERRORS_ONLY, "COMMAND", "Fechando " + IntegerToString(totalOrders) + " ordens");
+   if(commandId != "")
+      LogPrint(LOG_ERRORS_ONLY, "COMMAND", "ID do comando: " + commandId);
+}
+
+void LogRemoteCloseResult(int closed, int failed, int total)
+{
+   if(failed == 0)
+   {
+      LogPrint(LOG_ERRORS_ONLY, "SUCCESS", "✅ Fechamento concluído com " + IntegerToString(closed) + "/" + IntegerToString(total) + " ordens - TODAS FECHADAS!");
+   }
+   else if(closed > 0)
+   {
+      LogPrint(LOG_ERRORS_ONLY, "PARTIAL", "⚠️ Fechamento parcialmente concluído com " + IntegerToString(closed) + "/" + IntegerToString(total) + " ordens");
+   }
+   else
+   {
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "❌ Fechamento falhou - 0/" + IntegerToString(total) + " ordens fechadas");
+   }
 }
 
 //+------------------------------------------------------------------+
 int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.08 - Sistema Inteligente");
+   LogPrint(LOG_ERRORS_ONLY, "INIT", "EA TRADING DATA SENDER INICIADO");
+   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.11 - Sistema Inteligente MQL4");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
@@ -82,7 +153,7 @@ int OnInit()
    if(UseTimer)
    {
       EventSetTimer(SendIntervalSeconds);
-      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
+      LogPrint(LOG_ERRORS_ONLY, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
       LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
    }
    else
@@ -91,7 +162,7 @@ int OnInit()
    }
    
    // Enviar dados imediatamente na inicialização
-   LogPrint(LOG_ESSENTIAL, "INIT", "Enviando dados iniciais...");
+   LogPrint(LOG_ALL, "INIT", "Enviando dados iniciais...");
    SendTradingDataIntelligent();
    
    return INIT_SUCCEEDED;
@@ -279,11 +350,8 @@ void SendToSupabase(string jsonData)
    int timeout = 10000; // 10 segundos
    int res = WebRequest("POST", ServerURL, headers, timeout, post, result, resultHeaders);
    
-   // Log do resultado apenas se necessário
-   if(!isIdle || res != 200 || LoggingLevel >= LOG_ALL)
-   {
-      LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
-   }
+   // LOG INTELIGENTE DE CONEXÃO
+   LogConnectionSmart(res == 200, res, "Envio para Supabase");
    
    if(res == 200)
    {
@@ -299,18 +367,18 @@ void SendToSupabase(string jsonData)
    }
    else if(res == -1)
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "URL não permitida no WebRequest!");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "Adicione esta URL nas configurações:");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "URL: https://kgrlcsimdszbrkcwjpke.supabase.co");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "URL não permitida no WebRequest!");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "Adicione esta URL nas configurações:");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "URL: https://kgrlcsimdszbrkcwjpke.supabase.co");
    }
    else if(res == 0)
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "Timeout ou sem conexão com internet");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Timeout ou sem conexão com internet");
    }
    else
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "Erro HTTP: " + IntegerToString(res));
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Erro HTTP: " + IntegerToString(res));
       LogPrint(LOG_ALL, "DEBUG", "Headers de resposta: " + resultHeaders);
       if(ArraySize(result) > 0)
       {
@@ -337,7 +405,11 @@ string BuildJsonData()
    json += "\"leverage\":" + IntegerToString(AccountLeverage());
    json += "},";
    
-   LogPrint(LOG_ESSENTIAL, "ACCOUNT", "Conta: " + IntegerToString(AccountNumber()) + " | Balance: $" + DoubleToString(AccountBalance(), 2));
+   // LOG INTELIGENTE DA CONTA
+   if(!connectionEstablished || LoggingLevel >= LOG_ESSENTIAL)
+   {
+      LogPrint(LOG_ESSENTIAL, "ACCOUNT", "Conta: " + IntegerToString(AccountNumber()) + " | Balance: $" + DoubleToString(AccountBalance(), 2));
+   }
    
    // Margin Info
    json += "\"margin\":{";
@@ -371,7 +443,11 @@ string BuildJsonData()
    }
    json += "],";
    
-   LogPrint(LOG_ESSENTIAL, "POSITIONS", "Posições abertas: " + IntegerToString(posCount));
+   // LOG INTELIGENTE DAS POSIÇÕES
+   if(!connectionEstablished || LoggingLevel >= LOG_ESSENTIAL)
+   {
+      LogPrint(LOG_ESSENTIAL, "POSITIONS", "Posições abertas: " + IntegerToString(posCount));
+   }
    
    // Trade History (últimos 10)
    json += "\"history\":[";
@@ -457,7 +533,6 @@ void OnTimer()
 //+------------------------------------------------------------------+
 void CheckPendingCommands()
 {
-   LogSubSeparator("VERIFICAÇÃO DE COMANDOS");
    LogPrint(LOG_ESSENTIAL, "COMMANDS", "Verificando comandos para conta: " + IntegerToString(AccountNumber()));
    
    string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/get-commands?accountNumber=" + IntegerToString(AccountNumber());
@@ -474,15 +549,13 @@ void CheckPendingCommands()
    LogPrint(LOG_ALL, "GET", "Fazendo requisição GET...");
    int res = WebRequest("GET", url, headers, 5000, emptyPost, result, resultHeaders);
    
-   LogPrint(LOG_ESSENTIAL, "GET", "Código de resposta: " + IntegerToString(res));
-   LogPrint(LOG_ALL, "GET", "Headers de resposta: " + resultHeaders);
+   // LOG INTELIGENTE DE CONEXÃO
+   LogConnectionSmart(res == 200, res, "Verificação de comandos");
    
    if(res == 200)
    {
       string response = CharArrayToString(result);
-      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Comandos recebidos com sucesso!");
       LogPrint(LOG_ALL, "RESPONSE", "Resposta completa: " + response);
-      LogPrint(LOG_ALL, "RESPONSE", "Tamanho: " + IntegerToString(StringLen(response)) + " caracteres");
       
       // Verificar se existe o campo "commands" na resposta
       if(StringFind(response, "\"commands\"") >= 0)
@@ -492,16 +565,16 @@ void CheckPendingCommands()
          // Verificar se existem comandos
          if(StringFind(response, "\"commands\":[]") >= 0)
          {
-            LogPrint(LOG_ESSENTIAL, "COMMANDS", "Nenhum comando pendente");
+            LogPrint(LOG_ALL, "COMMANDS", "Nenhum comando pendente");
          }
          else
          {
-            LogPrint(LOG_CRITICAL, "COMMANDS", "Comandos encontrados! Processando...");
+            LogPrint(LOG_ERRORS_ONLY, "COMMANDS", "Comandos encontrados! Processando...");
             
             // Verificar especificamente por CLOSE_ALL
             if(StringFind(response, "CLOSE_ALL") >= 0)
             {
-               LogPrint(LOG_CRITICAL, "COMMAND", "COMANDO CLOSE_ALL ENCONTRADO!");
+               LogPrint(LOG_ERRORS_ONLY, "COMMAND", "COMANDO CLOSE_ALL ENCONTRADO!");
                ExecuteCloseAllCommand(response);
             }
             else
@@ -512,23 +585,23 @@ void CheckPendingCommands()
       }
       else
       {
-         LogPrint(LOG_CRITICAL, "ERROR", "Campo 'commands' não encontrado na resposta");
+         LogPrint(LOG_ERRORS_ONLY, "ERROR", "Campo 'commands' não encontrado na resposta");
       }
    }
    else if(res == -1)
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "URL não permitida no WebRequest!");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "Adicione estas URLs nas configurações:");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
-      LogPrint(LOG_CRITICAL, "SOLUTION", "URLs: https://kgrlcsimdszbrkcwjpke.supabase.co e *.supabase.co");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "URL não permitida no WebRequest!");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "Adicione estas URLs nas configurações:");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "Ferramentas → Opções → Expert Advisors → WebRequest");
+      LogPrint(LOG_ERRORS_ONLY, "SOLUTION", "URLs: https://kgrlcsimdszbrkcwjpke.supabase.co e *.supabase.co");
    }
    else if(res == 0)
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "Timeout ou sem conexão");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Timeout ou sem conexão");
    }
    else
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "Erro HTTP: " + IntegerToString(res));
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Erro HTTP: " + IntegerToString(res));
       if(ArraySize(result) > 0)
       {
          string errorResponse = CharArrayToString(result);
@@ -542,15 +615,13 @@ void CheckPendingCommands()
 //+------------------------------------------------------------------+
 void ExecuteCloseAllCommand(string jsonResponse)
 {
-   LogSubSeparator("EXECUÇÃO CLOSE_ALL");
-   LogPrint(LOG_CRITICAL, "EXECUTE", "Executando comando CLOSE_ALL");
-   
    // Extrair ID do comando (parsing simples)
    string commandId = ExtractCommandId(jsonResponse);
-   LogPrint(LOG_ESSENTIAL, "COMMAND", "ID do comando: " + commandId);
    
    int totalOrders = OrdersTotal();
-   LogPrint(LOG_ESSENTIAL, "ORDERS", "Total de ordens antes do fechamento: " + IntegerToString(totalOrders));
+   
+   // ✅ LOG REMOTO DETECTADO (sempre visível)
+   LogRemoteCloseCommand(commandId, totalOrders);
    
    int closedCount = 0;
    int failedCount = 0;
@@ -591,8 +662,8 @@ void ExecuteCloseAllCommand(string jsonResponse)
             {
                failedCount++;
                int error = GetLastError();
-               LogPrint(LOG_CRITICAL, "ERROR", "Falha ao fechar posição: " + IntegerToString(OrderTicket()));
-               LogPrint(LOG_CRITICAL, "ERROR", "Código: " + IntegerToString(error) + " | " + ErrorDescription(error));
+               LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha ao fechar posição: " + IntegerToString(OrderTicket()));
+               LogPrint(LOG_ERRORS_ONLY, "ERROR", "Código: " + IntegerToString(error) + " | " + ErrorDescription(error));
             }
          }
          else
@@ -602,84 +673,70 @@ void ExecuteCloseAllCommand(string jsonResponse)
       }
       else
       {
-         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao selecionar ordem no índice: " + IntegerToString(i));
+         LogPrint(LOG_ERRORS_ONLY, "ERROR", "Erro ao selecionar ordem no índice: " + IntegerToString(i));
+         failedCount++;
       }
    }
    
-   LogPrint(LOG_ESSENTIAL, "RESULT", "Posições fechadas: " + IntegerToString(closedCount) + " | Falharam: " + IntegerToString(failedCount));
+   // ✅ LOG RESULTADO DO FECHAMENTO (sempre visível)
+   LogRemoteCloseResult(closedCount, failedCount, totalOrders);
    
    // Atualizar status do comando
    if(commandId != "")
    {
       if(failedCount == 0)
       {
-         UpdateCommandStatus(commandId, "EXECUTED", "");
+         UpdateCommandStatus(commandId, "EXECUTED", "Todas as " + IntegerToString(closedCount) + " posições foram fechadas com sucesso");
+      }
+      else if(closedCount > 0)
+      {
+         UpdateCommandStatus(commandId, "PARTIAL", IntegerToString(closedCount) + " posições fechadas, " + IntegerToString(failedCount) + " falharam");
       }
       else
       {
-         UpdateCommandStatus(commandId, "FAILED", "Algumas posições falharam ao fechar");
+         UpdateCommandStatus(commandId, "FAILED", "Nenhuma posição foi fechada. Total de falhas: " + IntegerToString(failedCount));
       }
    }
    else
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "ID do comando não encontrado - status não será atualizado");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "ID do comando não encontrado - status não será atualizado");
    }
 }
 
 //+------------------------------------------------------------------+
-// FUNÇÃO MELHORADA: Extrair ID do comando
+// Extrair ID do comando do JSON
 //+------------------------------------------------------------------+
 string ExtractCommandId(string jsonResponse)
 {
-   LogPrint(LOG_ALL, "PARSE", "Extraindo ID do comando...");
-   LogPrint(LOG_ALL, "PARSE", "JSON: " + jsonResponse);
-   
-   // Buscar por "id":"..." no JSON
-   int idPos = StringFind(jsonResponse, "\"id\":\"");
-   if(idPos >= 0)
+   string searchStr = "\"id\":\"";
+   int startPos = StringFind(jsonResponse, searchStr);
+   if(startPos >= 0)
    {
-      LogPrint(LOG_ALL, "PARSE", "Padrão 'id' encontrado na posição: " + IntegerToString(idPos));
-      idPos += 6; // Pular "id":"
-      int endPos = StringFind(jsonResponse, "\"", idPos);
-      if(endPos > idPos)
+      startPos += StringLen(searchStr);
+      int endPos = StringFind(jsonResponse, "\"", startPos);
+      if(endPos > startPos)
       {
-         string commandId = StringSubstr(jsonResponse, idPos, endPos - idPos);
-         LogPrint(LOG_ALL, "PARSE", "ID extraído: " + commandId);
-         return commandId;
+         return StringSubstr(jsonResponse, startPos, endPos - startPos);
       }
-      else
-      {
-         LogPrint(LOG_CRITICAL, "ERROR", "Não foi possível encontrar o fim do ID");
-      }
-   }
-   else
-   {
-      LogPrint(LOG_CRITICAL, "ERROR", "Padrão 'id' não encontrado no JSON");
    }
    return "";
 }
 
 //+------------------------------------------------------------------+
-// FUNÇÃO MELHORADA: Atualizar status do comando
+// Atualizar status do comando
 //+------------------------------------------------------------------+
-void UpdateCommandStatus(string commandId, string status, string errorMessage)
+void UpdateCommandStatus(string commandId, string status, string message)
 {
-   LogSubSeparator("ATUALIZAÇÃO STATUS");
-   LogPrint(LOG_ESSENTIAL, "UPDATE", "Command ID: " + commandId + " | Status: " + status);
+   LogPrint(LOG_ALL, "UPDATE", "Atualizando status do comando: " + commandId + " para " + status);
    
    string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/update-command-status";
    string headers = "Content-Type: application/json\r\n";
    
    string jsonData = "{";
    jsonData += "\"commandId\":\"" + commandId + "\",";
-   jsonData += "\"status\":\"" + status + "\"";
-   if(errorMessage != "")
-   {
-      jsonData += ",\"errorMessage\":\"" + errorMessage + "\"";
-   }
+   jsonData += "\"status\":\"" + status + "\",";
+   jsonData += "\"message\":\"" + message + "\"";
    jsonData += "}";
-   
-   LogPrint(LOG_ALL, "POST", "Dados: " + jsonData);
    
    char post[];
    char result[];
@@ -690,27 +747,20 @@ void UpdateCommandStatus(string commandId, string status, string errorMessage)
    
    int res = WebRequest("POST", url, headers, 5000, post, result, resultHeaders);
    
-   LogPrint(LOG_ESSENTIAL, "POST", "Código de resposta: " + IntegerToString(res));
+   LogPrint(LOG_ALL, "POST", "Código de resposta: " + IntegerToString(res));
    
    if(res == 200)
    {
-      string response = CharArrayToString(result);
       LogPrint(LOG_ESSENTIAL, "SUCCESS", "Status atualizado com sucesso!");
-      LogPrint(LOG_ALL, "RESPONSE", "Resposta: " + response);
    }
    else
    {
-      LogPrint(LOG_CRITICAL, "ERROR", "Erro ao atualizar status. Código: " + IntegerToString(res));
-      if(ArraySize(result) > 0)
-      {
-         string errorResponse = CharArrayToString(result);
-         LogPrint(LOG_ALL, "DEBUG", "Resposta de erro: " + errorResponse);
-      }
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha ao atualizar status: " + IntegerToString(res));
    }
 }
 
 //+------------------------------------------------------------------+
-// FUNÇÃO AUXILIAR: Descrição de erros
+// Descrição de erros
 //+------------------------------------------------------------------+
 string ErrorDescription(int error_code)
 {
@@ -720,32 +770,33 @@ string ErrorDescription(int error_code)
       case 1:    return "Sem erro, mas resultado desconhecido";
       case 2:    return "Erro comum";
       case 3:    return "Parâmetros inválidos";
-      case 4:    return "Servidor de negociação ocupado";
+      case 4:    return "Servidor de trade ocupado";
       case 5:    return "Versão antiga do terminal cliente";
-      case 6:    return "Sem conexão com o servidor de negociação";
+      case 6:    return "Sem conexão com servidor de trade";
       case 7:    return "Não há direitos suficientes";
-      case 8:    return "Frequência muito alta de solicitações";
+      case 8:    return "Muita frequência de requisições";
       case 9:    return "Operação malformada";
       case 64:   return "Conta desabilitada";
       case 65:   return "Número de conta inválido";
-      case 128:  return "Tempo limite de negociação expirado";
+      case 128:  return "Timeout de trade";
       case 129:  return "Preço inválido";
       case 130:  return "Stops inválidos";
       case 131:  return "Volume inválido";
       case 132:  return "Mercado fechado";
-      case 133:  return "Negociação desabilitada";
+      case 133:  return "Trade desabilitado";
       case 134:  return "Dinheiro insuficiente";
       case 135:  return "Preço mudou";
-      case 136:  return "Broker ocupado";
+      case 136:  return "Sem preços";
       case 137:  return "Broker ocupado";
       case 138:  return "Nova cotação";
-      case 139:  return "Ordem bloqueada";
-      case 140:  return "Permitido apenas compra";
-      case 141:  return "Muitas solicitações";
+      case 139:  return "Ordem travada";
+      case 140:  return "Apenas compra permitida";
+      case 141:  return "Muitas requisições";
       case 145:  return "Modificação negada porque ordem muito próxima ao mercado";
-      case 146:  return "Sistema de negociação ocupado";
-      case 147:  return "Uso de data de expiração de ordem negado pelo broker";
-      case 148:  return "Número de ordens abertas e pendentes chegou ao limite";
-      default:   return "Erro desconhecido #" + IntegerToString(error_code);
+      case 146:  return "Subsistema de trade ocupado";
+      case 147:  return "Uso de data de expiração negado pelo broker";
+      case 148:  return "Quantidade de ordens abertas e pendentes atingiu o limite";
+      default:   return "Erro desconhecido: " + IntegerToString(error_code);
    }
 }
+

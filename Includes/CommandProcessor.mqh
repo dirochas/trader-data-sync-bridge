@@ -1,18 +1,16 @@
-
 //+------------------------------------------------------------------+
 //|                                              CommandProcessor.mqh |
 //| Processador de comandos recebidos via API                       |
 //+------------------------------------------------------------------+
 
 #include "Logger.mqh"
-#include "HttpClient.mqh"
+#include "HttpClient.mqh" // update to Version 2.12
 
 //+------------------------------------------------------------------+
 // Verificar comandos pendentes
 //+------------------------------------------------------------------+
 void CheckPendingCommands()
 {
-   LogSubSeparator("VERIFICAÇÃO DE COMANDOS");
    LogPrint(LOG_ESSENTIAL, "COMMANDS", "Verificando comandos para conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)));
    
    string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/get-commands?accountNumber=" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN));
@@ -29,25 +27,22 @@ void CheckPendingCommands()
    LogPrint(LOG_ALL, "GET", "Fazendo requisição GET...");
    int res = WebRequest("GET", url, headers, 5000, emptyPost, result, resultHeaders);
    
-   LogPrint(LOG_ESSENTIAL, "GET", "Código de resposta: " + IntegerToString(res));
-   LogPrint(LOG_ALL, "GET", "Headers de resposta: " + resultHeaders);
+   // LOG INTELIGENTE DE CONEXÃO
+   LogConnectionSmart(res == 200, res, "Verificação de comandos");
    
    if(res == 200)
    {
       string response = CharArrayToString(result);
-      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Comandos recebidos com sucesso!");
       LogPrint(LOG_ALL, "RESPONSE", "Resposta completa: " + response);
-      LogPrint(LOG_ALL, "RESPONSE", "Tamanho: " + IntegerToString(StringLen(response)) + " caracteres");
       
       // Verificar se existe o campo "commands" na resposta
       if(StringFind(response, "\"commands\"") >= 0)
       {
          LogPrint(LOG_ALL, "PARSE", "Campo 'commands' encontrado");
          
-         // Verificar se existem comandos
          if(StringFind(response, "\"commands\":[]") >= 0)
          {
-            LogPrint(LOG_ESSENTIAL, "COMMANDS", "Nenhum comando pendente");
+            LogCommandSmart("Nenhum comando pendente");
          }
          else
          {
@@ -93,78 +88,151 @@ void CheckPendingCommands()
 }
 
 //+------------------------------------------------------------------+
-// Executar comando CLOSE_ALL (MQL5)
+// Executar comando CLOSE_ALL (MQL5) - VERSÃO CORRIGIDA COM LOGS
 //+------------------------------------------------------------------+
 void ExecuteCloseAllCommand(string jsonResponse)
 {
-   LogSubSeparator("EXECUÇÃO CLOSE_ALL");
-   LogPrint(LOG_CRITICAL, "EXECUTE", "Executando comando CLOSE_ALL");
-   
    // Extrair ID do comando (parsing simples)
    string commandId = ExtractCommandId(jsonResponse);
-   LogPrint(LOG_ESSENTIAL, "COMMAND", "ID do comando: " + commandId);
    
    int totalPositions = PositionsTotal();
-   LogPrint(LOG_ESSENTIAL, "POSITIONS", "Total de posições antes do fechamento: " + IntegerToString(totalPositions));
+   
+   // ✅ ADICIONADO: LOG REMOTO DETECTADO (sempre visível)
+   LogRemoteCloseCommand(commandId, totalPositions);
    
    int closedCount = 0;
    int failedCount = 0;
    
-   // Fechar todas as posições abertas (MQL5)
+   // Fechar todas as posições abertas (MQL5) - CORRIGIDO
    for(int i = totalPositions - 1; i >= 0; i--)
    {
       LogPrint(LOG_ALL, "PROCESS", "Processando posição índice: " + IntegerToString(i));
       
-      if(PositionGetTicket(i) > 0)
+      ulong positionTicket = PositionGetTicket(i);
+      if(positionTicket > 0)
       {
          string symbol = PositionGetString(POSITION_SYMBOL);
          double volume = PositionGetDouble(POSITION_VOLUME);
-         ulong ticket = PositionGetInteger(POSITION_IDENTIFIER);
          ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
          
-         LogPrint(LOG_ALL, "POSITION", "Ticket: " + IntegerToString(ticket) + " | Tipo: " + (posType == POSITION_TYPE_BUY ? "BUY" : "SELL") + " | Symbol: " + symbol);
+         LogPrint(LOG_ALL, "POSITION", "Ticket: " + IntegerToString(positionTicket) + " | Tipo: " + (posType == POSITION_TYPE_BUY ? "BUY" : "SELL") + " | Symbol: " + symbol + " | Volume: " + DoubleToString(volume, 2));
          
+         // Preparar requisição de fechamento
          MqlTradeRequest request = {};
          MqlTradeResult result = {};
          
+         // Configurar requisição básica
          request.action = TRADE_ACTION_DEAL;
          request.symbol = symbol;
          request.volume = volume;
-         request.type = posType == POSITION_TYPE_BUY ? ORDER_TYPE_SELL : ORDER_TYPE_BUY;
-         request.position = ticket;
-         request.deviation = 3;
+         request.position = positionTicket; // Usar ticket da posição
+         request.deviation = 10; // Aumentar slippage para 10 pontos
          request.magic = 0;
+         request.comment = "CLOSE_ALL_COMMAND";
          
-         if(OrderSend(request, result))
+         // CORREÇÃO CRÍTICA: Definir modo de preenchimento
+         request.type_filling = ORDER_FILLING_FOK; // Fill or Kill - tenta preencher completamente ou cancela
+         
+         // Verificar se o símbolo suporta FOK, senão usar IOC
+         int filling_mode = (int)SymbolInfoInteger(symbol, SYMBOL_FILLING_MODE);
+         if((filling_mode & SYMBOL_FILLING_FOK) == 0)
+         {
+            if((filling_mode & SYMBOL_FILLING_IOC) != 0)
+            {
+               request.type_filling = ORDER_FILLING_IOC; // Immediate or Cancel
+               LogPrint(LOG_ALL, "FILLING", "Usando IOC para " + symbol);
+            }
+            else
+            {
+               request.type_filling = ORDER_FILLING_RETURN; // Return - modo padrão
+               LogPrint(LOG_ALL, "FILLING", "Usando RETURN para " + symbol);
+            }
+         }
+         else
+         {
+            LogPrint(LOG_ALL, "FILLING", "Usando FOK para " + symbol);
+         }
+         
+         // Definir tipo de ordem e preço baseado no tipo da posição
+         if(posType == POSITION_TYPE_BUY)
+         {
+            request.type = ORDER_TYPE_SELL;
+            request.price = SymbolInfoDouble(symbol, SYMBOL_BID);
+            LogPrint(LOG_ALL, "CLOSE", "Fechando BUY com BID: " + DoubleToString(request.price, 5));
+         }
+         else if(posType == POSITION_TYPE_SELL)
+         {
+            request.type = ORDER_TYPE_BUY;
+            request.price = SymbolInfoDouble(symbol, SYMBOL_ASK);
+            LogPrint(LOG_ALL, "CLOSE", "Fechando SELL com ASK: " + DoubleToString(request.price, 5));
+         }
+         
+         // Verificar se o preço é válido
+         if(request.price <= 0)
+         {
+            LogPrint(LOG_CRITICAL, "ERROR", "Preço inválido para " + symbol + ": " + DoubleToString(request.price, 5));
+            failedCount++;
+            continue;
+         }
+         
+         // Executar ordem de fechamento
+         bool success = OrderSend(request, result);
+         
+         LogPrint(LOG_ALL, "RESULT", "OrderSend retornou: " + (success ? "true" : "false"));
+         LogPrint(LOG_ALL, "RESULT", "Código de retorno: " + IntegerToString(result.retcode));
+         LogPrint(LOG_ALL, "RESULT", "Comentário: " + result.comment);
+         
+         if(success && (result.retcode == TRADE_RETCODE_DONE || result.retcode == TRADE_RETCODE_PLACED))
          {
             closedCount++;
-            LogPrint(LOG_ESSENTIAL, "SUCCESS", "Posição fechada: " + IntegerToString(ticket));
+            LogPrint(LOG_ESSENTIAL, "SUCCESS", "Posição fechada com sucesso: " + IntegerToString(positionTicket));
+            LogPrint(LOG_ALL, "SUCCESS", "Deal: " + IntegerToString(result.deal) + " | Order: " + IntegerToString(result.order));
          }
          else
          {
             failedCount++;
-            LogPrint(LOG_CRITICAL, "ERROR", "Falha ao fechar posição: " + IntegerToString(ticket));
+            LogPrint(LOG_CRITICAL, "ERROR", "Falha ao fechar posição: " + IntegerToString(positionTicket));
             LogPrint(LOG_CRITICAL, "ERROR", "Código: " + IntegerToString(result.retcode) + " | " + result.comment);
+            LogPrint(LOG_CRITICAL, "ERROR", "Descrição: " + ErrorDescription(result.retcode));
+            
+            // Log adicional para debugging
+            LogPrint(LOG_ALL, "DEBUG", "Request - Action: " + IntegerToString(request.action));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Symbol: " + request.symbol);
+            LogPrint(LOG_ALL, "DEBUG", "Request - Volume: " + DoubleToString(request.volume, 2));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Type: " + IntegerToString(request.type));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Price: " + DoubleToString(request.price, 5));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Position: " + IntegerToString(request.position));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Type_filling: " + IntegerToString(request.type_filling));
+            LogPrint(LOG_ALL, "DEBUG", "Request - Deviation: " + IntegerToString(request.deviation));
          }
+         
+         // Pequena pausa entre fechamentos apenas se necessário (removido para velocidade)
+         // Sleep(100); // REMOVIDO - estava causando lentidão
       }
       else
       {
-         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao selecionar posição no índice: " + IntegerToString(i));
+         LogPrint(LOG_CRITICAL, "ERROR", "Erro ao obter ticket da posição no índice: " + IntegerToString(i));
+         failedCount++;
       }
    }
    
-   LogPrint(LOG_ESSENTIAL, "RESULT", "Posições fechadas: " + IntegerToString(closedCount) + " | Falharam: " + IntegerToString(failedCount));
+   // ✅ ADICIONADO: LOG RESULTADO DO FECHAMENTO (sempre visível)
+   LogRemoteCloseResult(closedCount, failedCount, totalPositions);
    
    // Atualizar status do comando
    if(commandId != "")
    {
       if(failedCount == 0)
       {
-         UpdateCommandStatus(commandId, "EXECUTED", "");
+         UpdateCommandStatus(commandId, "EXECUTED", "Todas as " + IntegerToString(closedCount) + " posições foram fechadas com sucesso");
+      }
+      else if(closedCount > 0)
+      {
+         UpdateCommandStatus(commandId, "PARTIAL", IntegerToString(closedCount) + " posições fechadas, " + IntegerToString(failedCount) + " falharam");
       }
       else
       {
-         UpdateCommandStatus(commandId, "FAILED", "Algumas posições falharam ao fechar");
+         UpdateCommandStatus(commandId, "FAILED", "Nenhuma posição foi fechada. Total de falhas: " + IntegerToString(failedCount));
       }
    }
    else
@@ -172,6 +240,7 @@ void ExecuteCloseAllCommand(string jsonResponse)
       LogPrint(LOG_CRITICAL, "ERROR", "ID do comando não encontrado - status não será atualizado");
    }
 }
+
 
 //+------------------------------------------------------------------+
 // Extrair ID do comando
@@ -292,3 +361,4 @@ string ErrorDescription(int error_code)
       default:   return "Erro desconhecido #" + IntegerToString(error_code);
    }
 }
+

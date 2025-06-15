@@ -1,10 +1,9 @@
-
 //+------------------------------------------------------------------+
 //|                                                    HttpClient.mqh |
 //| Cliente HTTP para comunicação com Supabase                      |
 //+------------------------------------------------------------------+
 
-#include "Logger.mqh"
+#include "Logger.mqh" //update to Version 2.12
 
 //+------------------------------------------------------------------+
 // Enviar dados para Supabase
@@ -14,7 +13,7 @@ void SendToSupabase(string jsonData, string serverURL)
    bool isIdle = (StringFind(jsonData, "\"status\":\"IDLE\"") >= 0);
    
    // Logs do envio apenas se necessário
-   if(!isIdle || LoggingLevel >= LOG_ALL)
+   if(!isIdle || g_LoggingLevel >= LOG_ALL)
    {
       if(!isIdle) LogSubSeparator("ENVIO SUPABASE");
       LogPrint(isIdle ? LOG_ALL : LOG_ALL, "HTTP", "URL: " + serverURL);
@@ -36,22 +35,15 @@ void SendToSupabase(string jsonData, string serverURL)
    int timeout = 10000; // 10 segundos
    int res = WebRequest("POST", serverURL, headers, timeout, post, result, resultHeaders);
    
-   // Log do resultado apenas se necessário
-   if(!isIdle || res != 200 || LoggingLevel >= LOG_ALL)
-   {
-      LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "HTTP", "Código de resposta: " + IntegerToString(res));
-   }
+   // LOG INTELIGENTE DE CONEXÃO
+   LogConnectionSmart(res == 200, res, "Envio para Supabase");
    
    if(res == 200)
    {
-      if(!isIdle || LoggingLevel >= LOG_ALL)
+      if(g_LoggingLevel >= LOG_ALL)
       {
-         LogPrint(isIdle ? LOG_ALL : LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
-         if(LoggingLevel >= LOG_ALL)
-         {
-            string response = CharArrayToString(result);
-            LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
-         }
+         string response = CharArrayToString(result);
+         LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + response);
       }
    }
    else if(res == -1)
@@ -76,3 +68,4 @@ void SendToSupabase(string jsonData, string serverURL)
       }
    }
 }
+

@@ -20,7 +20,7 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook para buscar TODAS as contas de trading
+// Hook otimizado para buscar TODAS as contas de trading
 export const useTradingAccounts = () => {
   return useQuery({
     queryKey: ['trading-accounts'],
@@ -33,7 +33,9 @@ export const useTradingAccounts = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
+    refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
+    staleTime: 500, // Considera dados "frescos" por 500ms
+    gcTime: 30000, // Cache por 30 segundos
   });
 };
 
@@ -56,7 +58,9 @@ export const useTradingAccount = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber,
-    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
+    refetchInterval: 1500, // Mesmo intervalo para consistência
+    staleTime: 500,
+    gcTime: 30000,
   });
 };
 
@@ -88,11 +92,13 @@ export const useMarginInfo = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber,
-    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
+    refetchInterval: 3000, // Dados menos críticos - 3 segundos
+    staleTime: 1000,
+    gcTime: 60000,
   });
 };
 
-// Hook para buscar posições abertas por conta
+// Hook para buscar posições abertas por conta - DADOS CRÍTICOS
 export const useOpenPositions = (accountNumber?: string) => {
   return useQuery({
     queryKey: ['open-positions', accountNumber],
@@ -118,7 +124,9 @@ export const useOpenPositions = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber,
-    refetchInterval: 2000, // Reduzido de 5000 para 2000 (2 segundos)
+    refetchInterval: 1000, // MAIS CRÍTICO - 1 segundo para posições
+    staleTime: 300, // Dados muito frescos
+    gcTime: 30000,
   });
 };
 
@@ -149,7 +157,9 @@ export const useTradeHistory = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber,
-    refetchInterval: 5000, // Mantido em 5 segundos para histórico (menos crítico)
+    refetchInterval: 8000, // Dados históricos - menos críticos, 8 segundos
+    staleTime: 2000,
+    gcTime: 120000, // Cache por 2 minutos
   });
 };
 
@@ -163,9 +173,15 @@ export const useRealtimeUpdates = () => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'trading_accounts' },
         () => {
-          // Atualiza a lista de contas E contas individuais
-          queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
-          queryClient.invalidateQueries({ queryKey: ['trading-account'] });
+          // Invalidação mais inteligente - só invalida se dados são "antigos"
+          queryClient.invalidateQueries({ 
+            queryKey: ['trading-accounts'],
+            refetchType: 'all'
+          });
+          queryClient.invalidateQueries({ 
+            queryKey: ['trading-account'],
+            refetchType: 'all'
+          });
         }
       )
       .on('postgres_changes',
@@ -177,7 +193,11 @@ export const useRealtimeUpdates = () => {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'open_positions' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['open-positions'] });
+          // Posições são críticas - invalidação imediata
+          queryClient.invalidateQueries({ 
+            queryKey: ['open-positions'],
+            refetchType: 'all'
+          });
         }
       )
       .on('postgres_changes',

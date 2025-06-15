@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -94,7 +93,7 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Dados enriquecidos com estabilização melhorada
+  // Dados enriquecidos com validação aprimorada
   const enrichedAccounts = useMemo(() => {
     return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
@@ -104,13 +103,12 @@ const AccountMonitor = () => {
       
       return {
         ...account,
-        // Propriedades estáveis para ordenação com validação
         status: connectionStatus.status,
         name: account.name || `Account ${account.account_number}`,
         vps: account.vps_name || 'N/A',
-        openTrades: Math.max(0, openTradeCount), // Garante que nunca seja negativo
-        openPnL: isFinite(openPnLValue) ? openPnLValue : 0, // Garante valor válido
-        dayProfit: isFinite(dayProfitValue) ? dayProfitValue : 0, // Garante valor válido
+        openTrades: Math.max(0, openTradeCount),
+        openPnL: isFinite(openPnLValue) ? openPnLValue : 0,
+        dayProfit: isFinite(dayProfitValue) ? dayProfitValue : 0,
         connectionStatus: connectionStatus,
       };
     });

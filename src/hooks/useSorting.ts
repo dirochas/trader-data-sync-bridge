@@ -12,9 +12,9 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
   const sortConfigRef = useRef<SortConfig | null>(initialSort || null);
   const [sortConfig, setSortConfigState] = useState<SortConfig | null>(initialSort || null);
   
-  // Cache dos dados anteriores para evitar oscilações
-  const previousDataRef = useRef<T[]>([]);
-  const stableDataRef = useRef<T[]>([]);
+  // Cache inteligente para manter dados estáveis
+  const stableDataCache = useRef<T[]>([]);
+  const lastValidDataRef = useRef<T[]>([]);
 
   const setSortConfig = (newConfig: SortConfig | null) => {
     sortConfigRef.current = newConfig;
@@ -25,54 +25,63 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     sortConfigRef.current = sortConfig;
   }, [sortConfig]);
 
-  // Função para verificar se os dados são válidos (não zerados temporariamente)
-  const isDataStable = (currentData: T[], previousData: T[]) => {
-    if (currentData.length !== previousData.length) return true;
-    
-    // Verifica se há muitos valores zerados suspeitos comparado aos dados anteriores
-    let zeroedFields = 0;
+  // Função para validar se os dados são confiáveis
+  const isDataReliable = (currentData: T[], previousData: T[]) => {
+    if (currentData.length === 0) return false;
+    if (previousData.length === 0) return true; // Primeira carga sempre aceita
+    if (currentData.length !== previousData.length) return true; // Mudança no número de contas
+
+    // Verifica se muitos campos críticos foram zerados simultaneamente
+    let suspiciousZeros = 0;
     let totalComparisons = 0;
-    
+
     currentData.forEach((current, index) => {
       const previous = previousData[index];
       if (previous) {
         const currentObj = current as any;
         const previousObj = previous as any;
         
-        // Verifica campos numéricos que podem ter sido zerados temporariamente
-        ['openTrades', 'openPnL', 'dayProfit', 'balance', 'equity'].forEach(field => {
+        // Campos críticos que não devem zerar simultaneamente
+        const criticalFields = ['openTrades', 'openPnL', 'balance', 'equity'];
+        
+        criticalFields.forEach(field => {
           if (currentObj[field] !== undefined && previousObj[field] !== undefined) {
             totalComparisons++;
-            if (currentObj[field] === 0 && previousObj[field] !== 0) {
-              zeroedFields++;
+            // Se campo anterior tinha valor e agora é zero, marca como suspeito
+            if (previousObj[field] !== 0 && currentObj[field] === 0) {
+              suspiciousZeros++;
             }
           }
         });
       }
     });
-    
-    // Se mais de 30% dos campos foram zerados, considera instável
-    return totalComparisons === 0 || (zeroedFields / totalComparisons) < 0.3;
+
+    // Se mais de 25% dos campos críticos foram zerados, considera não confiável
+    const suspiciousRate = totalComparisons > 0 ? suspiciousZeros / totalComparisons : 0;
+    return suspiciousRate < 0.25;
   };
 
   const sortedData = useMemo(() => {
     const currentSortConfig = sortConfigRef.current;
     
-    // Usa dados estáveis se os atuais parecem temporariamente inconsistentes
-    let dataToSort = data;
-    if (previousDataRef.current.length > 0 && !isDataStable(data, previousDataRef.current)) {
-      dataToSort = stableDataRef.current.length > 0 ? stableDataRef.current : data;
+    // Validar se os dados atuais são confiáveis
+    let dataToUse: T[];
+    
+    if (isDataReliable(data, lastValidDataRef.current)) {
+      // Dados são confiáveis - atualizar cache
+      dataToUse = data;
+      stableDataCache.current = [...data];
+      lastValidDataRef.current = [...data];
     } else {
-      // Atualiza os dados estáveis apenas quando os dados atuais são confiáveis
-      stableDataRef.current = [...data];
-      previousDataRef.current = [...data];
+      // Dados parecem temporariamente instáveis - usar cache
+      dataToUse = stableDataCache.current.length > 0 ? stableDataCache.current : data;
     }
     
     if (!currentSortConfig || !currentSortConfig.key) {
-      return dataToSort;
+      return dataToUse;
     }
 
-    const result = [...dataToSort].sort((a, b) => {
+    const result = [...dataToUse].sort((a, b) => {
       if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
         const customResult = customSortFunctions[currentSortConfig.key](a, b);
         if (customResult !== 0) {
@@ -90,7 +99,7 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
         }
       }
 
-      // Tie-breaker estável usando ID da conta
+      // Tie-breaker usando ID da conta para estabilidade
       const aId = getNestedValue(a, 'id') || getNestedValue(a, 'account_number') || '';
       const bId = getNestedValue(b, 'id') || getNestedValue(b, 'account_number') || '';
       

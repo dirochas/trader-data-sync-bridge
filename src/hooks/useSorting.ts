@@ -9,38 +9,76 @@ export interface SortConfig {
 }
 
 export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFunctions?: Record<string, (a: T, b: T) => number>) => {
-  // Usar useRef para manter o estado de ordenação persistente
   const sortConfigRef = useRef<SortConfig | null>(initialSort || null);
   const [sortConfig, setSortConfigState] = useState<SortConfig | null>(initialSort || null);
+  
+  // Cache dos dados anteriores para evitar oscilações
+  const previousDataRef = useRef<T[]>([]);
+  const stableDataRef = useRef<T[]>([]);
 
-  // Função para atualizar o estado de ordenação
   const setSortConfig = (newConfig: SortConfig | null) => {
     sortConfigRef.current = newConfig;
     setSortConfigState(newConfig);
   };
 
-  // Manter a referência sincronizada com o estado
   useEffect(() => {
     sortConfigRef.current = sortConfig;
   }, [sortConfig]);
 
+  // Função para verificar se os dados são válidos (não zerados temporariamente)
+  const isDataStable = (currentData: T[], previousData: T[]) => {
+    if (currentData.length !== previousData.length) return true;
+    
+    // Verifica se há muitos valores zerados suspeitos comparado aos dados anteriores
+    let zeroedFields = 0;
+    let totalComparisons = 0;
+    
+    currentData.forEach((current, index) => {
+      const previous = previousData[index];
+      if (previous) {
+        const currentObj = current as any;
+        const previousObj = previous as any;
+        
+        // Verifica campos numéricos que podem ter sido zerados temporariamente
+        ['openTrades', 'openPnL', 'dayProfit', 'balance', 'equity'].forEach(field => {
+          if (currentObj[field] !== undefined && previousObj[field] !== undefined) {
+            totalComparisons++;
+            if (currentObj[field] === 0 && previousObj[field] !== 0) {
+              zeroedFields++;
+            }
+          }
+        });
+      }
+    });
+    
+    // Se mais de 30% dos campos foram zerados, considera instável
+    return totalComparisons === 0 || (zeroedFields / totalComparisons) < 0.3;
+  };
+
   const sortedData = useMemo(() => {
     const currentSortConfig = sortConfigRef.current;
     
+    // Usa dados estáveis se os atuais parecem temporariamente inconsistentes
+    let dataToSort = data;
+    if (previousDataRef.current.length > 0 && !isDataStable(data, previousDataRef.current)) {
+      dataToSort = stableDataRef.current.length > 0 ? stableDataRef.current : data;
+    } else {
+      // Atualiza os dados estáveis apenas quando os dados atuais são confiáveis
+      stableDataRef.current = [...data];
+      previousDataRef.current = [...data];
+    }
+    
     if (!currentSortConfig || !currentSortConfig.key) {
-      return data;
+      return dataToSort;
     }
 
-    const result = [...data].sort((a, b) => {
-      // Usar função customizada se disponível
+    const result = [...dataToSort].sort((a, b) => {
       if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
         const customResult = customSortFunctions[currentSortConfig.key](a, b);
         if (customResult !== 0) {
           return currentSortConfig.direction === 'asc' ? customResult : -customResult;
         }
-        // Se valores são iguais na comparação customizada, usar tie-breaker
       } else {
-        // Usar ordenação padrão
         const aValue = getNestedValue(a, currentSortConfig.key);
         const bValue = getNestedValue(b, currentSortConfig.key);
 
@@ -50,14 +88,12 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
         if (aValue > bValue) {
           return currentSortConfig.direction === 'asc' ? 1 : -1;
         }
-        // Se valores são iguais, continuar para tie-breaker
       }
 
-      // TIE-BREAKER: Usar ID da conta para garantir ordem estável
+      // Tie-breaker estável usando ID da conta
       const aId = getNestedValue(a, 'id') || getNestedValue(a, 'account_number') || '';
       const bId = getNestedValue(b, 'id') || getNestedValue(b, 'account_number') || '';
       
-      // Ordenação sempre crescente para o tie-breaker (para consistência)
       return aId < bId ? -1 : aId > bId ? 1 : 0;
     });
 
@@ -94,7 +130,6 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
   };
 };
 
-// Helper function to get nested object values
 const getNestedValue = (obj: any, path: string) => {
   const result = path.split('.').reduce((current, key) => {
     return current && current[key] !== undefined ? current[key] : '';

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,15 +18,11 @@ const AccountMonitor = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Estado para controlar o modal de edição
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
-
-  // Estado para controlar o modal de fechar todas as posições
   const [closeAllModalOpen, setCloseAllModalOpen] = useState(false);
   const [selectedAccountForClose, setSelectedAccountForClose] = useState<any>(null);
 
-  // Buscar todas as posições abertas para calcular totais
   const { data: allOpenPositions = [] } = useQuery({
     queryKey: ['all-open-positions'],
     queryFn: async () => {
@@ -39,7 +36,6 @@ const AccountMonitor = () => {
     refetchInterval: 2000,
   });
 
-  // Buscar histórico de trades do dia atual para calcular Day
   const { data: todayTrades = [] } = useQuery({
     queryKey: ['todays-trades'],
     queryFn: async () => {
@@ -57,40 +53,32 @@ const AccountMonitor = () => {
     refetchInterval: 5000,
   });
 
-  // Função para contar trades abertas por conta
   const getOpenTradesCount = (accountId: string) => {
     return allOpenPositions.filter(pos => pos.account_id === accountId).length;
   };
 
-  // Função para calcular Open PnL por conta (usando o profit da conta)
   const getOpenPnL = (account: any) => {
     return Number(account.profit || 0);
   };
 
-  // Função para calcular Day (saldo fechado no dia) por conta
   const getDayProfit = (accountId: string) => {
     return todayTrades
       .filter(trade => trade.account_id === accountId)
       .reduce((sum, trade) => sum + Number(trade.profit || 0), 0);
   };
 
-  // Função para extrair nome do broker do server ou usar o campo broker
   const getBrokerName = (account: any) => {
-    // Se já temos o broker definido, usar ele
     if (account.broker && account.broker !== 'N/A' && account.broker.trim() !== '') {
       return account.broker;
     }
     
-    // Caso contrário, tentar extrair do server name
     if (account.server) {
-      // Remover prefixos comuns como "MT4-", "MT5-", etc.
       let brokerName = account.server.replace(/^(MT[45]-?)/i, '');
       
-      // Extrair nome do broker de patterns comuns
       const patterns = [
-        /^([A-Za-z]+)(-|\.|_)/,  // Nome antes de separador
-        /^([A-Za-z\s]+)\d/,      // Nome antes de números
-        /^([A-Za-z]+)/           // Apenas letras iniciais
+        /^([A-Za-z]+)(-|\.|_)/,
+        /^([A-Za-z\s]+)\d/,
+        /^([A-Za-z]+)/
       ];
       
       for (const pattern of patterns) {
@@ -106,7 +94,7 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Enriquecer os dados das contas com propriedades calculadas - VERSÃO ESTÁVEL
+  // Dados enriquecidos com estabilização melhorada
   const enrichedAccounts = useMemo(() => {
     return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
@@ -116,20 +104,18 @@ const AccountMonitor = () => {
       
       return {
         ...account,
-        // Propriedades estáveis para ordenação
+        // Propriedades estáveis para ordenação com validação
         status: connectionStatus.status,
         name: account.name || `Account ${account.account_number}`,
         vps: account.vps_name || 'N/A',
-        openTrades: openTradeCount,
-        openPnL: openPnLValue,
-        dayProfit: dayProfitValue,
-        // Manter objeto completo para exibição
+        openTrades: Math.max(0, openTradeCount), // Garante que nunca seja negativo
+        openPnL: isFinite(openPnLValue) ? openPnLValue : 0, // Garante valor válido
+        dayProfit: isFinite(dayProfitValue) ? dayProfitValue : 0, // Garante valor válido
         connectionStatus: connectionStatus,
       };
     });
   }, [accounts, allOpenPositions, todayTrades]);
 
-  // Hook de ordenação - agora com dados estáveis
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(enrichedAccounts);
 
   const handleViewAccount = (accountNumber: string) => {
@@ -154,17 +140,14 @@ const AccountMonitor = () => {
   };
 
   const handleAccountUpdated = () => {
-    // Atualizar os dados das contas após edição
     queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
   };
 
-  // Calcular estatísticas com base nos dados reais e status de conexão
   const totalAccounts = accounts.length;
   const totalTrades = allOpenPositions.length;
   const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
   const totalClients = accounts.length;
 
-  // Calcular contas por status
   const accountsByStatus = accounts.reduce((acc, account) => {
     const status = getConnectionStatus(account.updated_at);
     acc[status.status] = (acc[status.status] || 0) + 1;
@@ -173,7 +156,6 @@ const AccountMonitor = () => {
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
-  // Função para criar cabeçalho clicável
   const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -405,7 +387,6 @@ const AccountMonitor = () => {
         </Card>
       </div>
 
-      {/* Modal de Edição */}
       <EditAccountModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
@@ -413,7 +394,6 @@ const AccountMonitor = () => {
         onAccountUpdated={handleAccountUpdated}
       />
 
-      {/* Modal de Fechar Todas as Posições */}
       <CloseAllPositionsModal
         isOpen={closeAllModalOpen}
         onClose={() => setCloseAllModalOpen(false)}

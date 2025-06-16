@@ -48,44 +48,44 @@
   }
 
   .dark {
-    /* Cyberpunk Dark Theme */
-    --background: 224 71% 4%;
+    /* Softer Dark Theme - More harmonious colors */
+    --background: 222 47% 8%;
     --foreground: 213 31% 91%;
 
-    --card: 224 71% 4%;
+    --card: 222 47% 9%;
     --card-foreground: 213 31% 91%;
 
-    --popover: 224 71% 4%;
+    --popover: 222 47% 9%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary: 217 91% 65%;
+    --primary-foreground: 222 47% 8%;
 
-    --secondary: 215 25% 12%;
+    --secondary: 215 25% 15%;
     --secondary-foreground: 213 31% 91%;
 
-    --muted: 215 25% 12%;
+    --muted: 215 25% 15%;
     --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 215 25% 12%;
+    --accent: 215 25% 15%;
     --accent-foreground: 213 31% 91%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 50% 50%;
     --destructive-foreground: 213 31% 91%;
 
-    --border: 215 25% 12%;
-    --input: 215 25% 12%;
-    --ring: 217 91% 60%;
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 217 91% 65%;
 
-    /* Sidebar Dark Theme */
-    --sidebar-background: 224 71% 3%;
-    --sidebar-foreground: 213 31% 91%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 224 71% 4%;
-    --sidebar-accent: 215 25% 8%;
-    --sidebar-accent-foreground: 213 31% 91%;
-    --sidebar-border: 215 25% 10%;
-    --sidebar-ring: 217 91% 60%;
+    /* Softer Sidebar Dark Theme */
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 213 31% 85%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 222 47% 7%;
+    --sidebar-accent: 215 25% 12%;
+    --sidebar-accent-foreground: 213 31% 85%;
+    --sidebar-border: 215 25% 15%;
+    --sidebar-ring: 217 91% 65%;
   }
 }
 
@@ -100,25 +100,55 @@
   }
 }
 
-/* Custom cyberpunk glows and effects */
+/* Softer tech effects */
 @layer components {
   .glow-blue {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3), 0 0 10px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.15), 0 0 16px rgba(59, 130, 246, 0.1);
   }
   
   .glow-cyan {
-    box-shadow: 0 0 5px rgba(6, 182, 212, 0.3), 0 0 10px rgba(6, 182, 212, 0.2);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.15), 0 0 16px rgba(6, 182, 212, 0.1);
   }
   
   .tech-border {
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    background: rgba(59, 130, 246, 0.02);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    background: rgba(59, 130, 246, 0.03);
   }
   
   .tech-gradient {
     background: linear-gradient(135deg, 
-      rgba(59, 130, 246, 0.1) 0%, 
-      rgba(6, 182, 212, 0.1) 100%
+      rgba(59, 130, 246, 0.08) 0%, 
+      rgba(6, 182, 212, 0.08) 100%
     );
+  }
+
+  /* Softer status colors */
+  .status-live {
+    @apply text-emerald-400 dark:text-emerald-300;
+  }
+  
+  .status-slow {
+    @apply text-amber-500 dark:text-amber-400;
+  }
+  
+  .status-delayed {
+    @apply text-orange-500 dark:text-orange-400;
+  }
+  
+  .status-disconnected {
+    @apply text-rose-400 dark:text-rose-300;
+  }
+
+  /* Improved number readability */
+  .number-positive {
+    @apply text-emerald-600 dark:text-emerald-400 font-medium;
+  }
+  
+  .number-negative {
+    @apply text-rose-500 dark:text-rose-400 font-medium;
+  }
+  
+  .number-neutral {
+    @apply text-slate-700 dark:text-slate-300 font-medium;
   }
 }

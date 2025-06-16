@@ -49,10 +49,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl`} 
+      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r border-gray-800 bg-gray-900 backdrop-blur-xl`} 
       collapsible="icon"
+      style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}
     >
-      <div className="p-4 border-b border-sidebar-border/50 bg-sidebar/50">
+      <div className="p-4 border-b border-gray-800 bg-gray-900/80" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
             <img 
@@ -68,15 +69,15 @@ export function AppSidebar() {
                 alt="TRADERLAB" 
                 className="h-6 object-contain"
               />
-              <p className="text-caption text-muted-foreground/80 mt-1">Trading System</p>
+              <p className="text-xs text-gray-400 mt-1">Trading System</p>
             </div>
           )}
         </div>
       </div>
 
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent className="px-3 py-4" style={{ backgroundColor: 'rgb(17, 24, 39)' }}>
         <SidebarGroup>
-          <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-caption text-muted-foreground/70 uppercase tracking-wider mb-2`}>
+          <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-xs text-gray-400 uppercase tracking-wider mb-2`}>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -89,15 +90,15 @@ export function AppSidebar() {
                       end 
                       className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
                         isActive(item.url)
-                          ? 'sidebar-active font-semibold' 
-                          : 'hover:bg-sidebar-accent/50 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:translate-x-1'
+                          ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30' 
+                          : 'hover:bg-gray-800 text-gray-300 hover:text-white hover:translate-x-1'
                       }`}
                     >
                       <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
                         isActive(item.url) ? 'text-sky-400' : 'group-hover:text-sky-400'
                       }`} />
                       {!isCollapsed && (
-                        <span className="text-body font-medium truncate">
+                        <span className="text-sm font-medium truncate">
                           {item.title}
                         </span>
                       )}
@@ -111,15 +112,15 @@ export function AppSidebar() {
 
         {/* User Profile Section */}
         <div className="mt-auto p-3">
-          <div className={`tech-card p-3 ${isCollapsed ? 'justify-center' : ''}`}>
+          <div className={`bg-gray-800/50 border border-gray-700 rounded-xl p-3 backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0 shadow-lg">
                 <User className="w-4 h-4 text-white" />
               </div>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-body font-medium text-sidebar-foreground">Admin User</p>
-                  <p className="text-caption text-muted-foreground/70">admin@traderlab.com</p>
+                  <p className="text-sm font-medium text-white">Admin User</p>
+                  <p className="text-xs text-gray-400">admin@traderlab.com</p>
                 </div>
               )}
             </div>
@@ -127,8 +128,8 @@ export function AppSidebar() {
         </div>
       </SidebarContent>
 
-      <div className="p-3 border-t border-sidebar-border/50">
-        <SidebarTrigger className="w-full h-11 tech-card-hover transition-all duration-200" />
+      <div className="p-3 border-t border-gray-800" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
+        <SidebarTrigger className="w-full h-11 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-300 hover:text-white" />
       </div>
     </Sidebar>
   );

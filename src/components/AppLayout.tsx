@@ -15,17 +15,17 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppSidebar />
         
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header - Refined technological design */}
-          <header className="h-16 tech-card border-b flex items-center px-4 md:px-6 gap-4">
-            <SidebarTrigger className="lg:hidden tech-card-hover p-2 rounded-lg" />
+          {/* Header - Melhorado para tema claro */}
+          <header className="h-16 border-b bg-card/80 backdrop-blur-sm flex items-center px-4 md:px-6 gap-4 shadow-sm">
+            <SidebarTrigger className="lg:hidden bg-card border border-border hover:bg-accent p-2 rounded-lg transition-colors" />
             <div className="flex-1 min-w-0">
-              <h1 className="text-heading text-lg md:text-xl text-white">
+              <h1 className="text-heading text-lg md:text-xl font-bold text-foreground">
                 TRADERLAB Trading System
               </h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-4">
-                <div className="text-caption text-white">
+                <div className="text-caption text-muted-foreground font-medium">
                   {new Date().toLocaleDateString('pt-BR', { 
                     weekday: 'long', 
                     year: 'numeric', 

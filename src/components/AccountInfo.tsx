@@ -67,7 +67,7 @@ const AccountInfo = ({ accountNumber }: AccountInfoProps) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-blue-600 font-medium">Conta</span>
-            <span className="font-mono text-sm">{accountData.account_number}</span>
+            <span className="font-mono text-sm">{accountData.account}</span>
           </div>
           
           <div className="flex justify-between items-center">

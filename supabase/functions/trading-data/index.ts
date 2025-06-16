@@ -44,12 +44,12 @@ serve(async (req) => {
       history: history?.length 
     })
 
-    // Upsert trading account
+    // Upsert trading account (usando novos nomes)
     console.log('=== SALVANDO CONTA ===')
     const { data: accountData, error: accountError } = await supabase
-      .from('trading_accounts')
+      .from('accounts')
       .upsert({
-        account_number: account.accountNumber,
+        account: account.accountNumber,
         server: account.server,
         balance: account.balance,
         equity: account.equity,
@@ -57,7 +57,7 @@ serve(async (req) => {
         leverage: account.leverage,
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'account_number'
+        onConflict: 'account'
       })
       .select()
       .single()
@@ -70,12 +70,12 @@ serve(async (req) => {
     console.log('Conta salva:', accountData?.id)
     const accountId = accountData.id
 
-    // Delete old margin info and insert new one
+    // Delete old margin info and insert new one (usando novos nomes)
     console.log('=== ATUALIZANDO MARGEM ===')
     
     // First delete existing margin info for this account
     const { error: deleteMarginError } = await supabase
-      .from('margin_info')
+      .from('margin')
       .delete()
       .eq('account_id', accountId)
 
@@ -83,14 +83,14 @@ serve(async (req) => {
       console.log('Info: Nenhuma margem anterior para deletar ou erro:', deleteMarginError.message)
     }
 
-    // Insert new margin info
+    // Insert new margin info (usando novos nomes)
     const { error: marginError } = await supabase
-      .from('margin_info')
+      .from('margin')
       .insert({
         account_id: accountId,
-        used_margin: margin.used,
-        free_margin: margin.free,
-        margin_level: margin.level,
+        used: margin.used,
+        free: margin.free,
+        level: margin.level,
         updated_at: new Date().toISOString()
       })
 
@@ -101,10 +101,10 @@ serve(async (req) => {
 
     console.log('Margem salva com sucesso')
 
-    // Clear old positions and insert new ones
+    // Clear old positions and insert new ones (usando novos nomes)
     console.log('=== LIMPANDO POSIÇÕES ANTIGAS ===')
     const { error: deleteError } = await supabase
-      .from('open_positions')
+      .from('positions')
       .delete()
       .eq('account_id', accountId)
 
@@ -114,7 +114,7 @@ serve(async (req) => {
       console.log('Posições antigas removidas')
     }
 
-    // Insert current positions
+    // Insert current positions (usando novos nomes)
     if (positions && positions.length > 0) {
       console.log('=== SALVANDO', positions.length, 'POSIÇÕES ===')
       const positionsData = positions.map((pos: any) => ({
@@ -123,15 +123,15 @@ serve(async (req) => {
         symbol: pos.symbol,
         type: pos.type,
         volume: pos.volume,
-        open_price: pos.openPrice,
-        current_price: pos.currentPrice,
+        price: pos.openPrice,
+        current: pos.currentPrice,
         profit: pos.profit,
-        open_time: new Date(pos.openTime).toISOString(),
+        time: new Date(pos.openTime).toISOString(),
         updated_at: new Date().toISOString()
       }))
 
       const { error: positionsError } = await supabase
-        .from('open_positions')
+        .from('positions')
         .insert(positionsData)
 
       if (positionsError) {
@@ -144,23 +144,23 @@ serve(async (req) => {
       console.log('Nenhuma posição aberta para salvar')
     }
 
-    // Insert trade history (avoid duplicates)
+    // Insert trade history (avoid duplicates) (usando novos nomes)
     if (history && history.length > 0) {
       console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
       for (const trade of history) {
         try {
           const { error: historyError } = await supabase
-            .from('trade_history')
+            .from('history')
             .upsert({
               account_id: accountId,
               ticket: trade.ticket,
               symbol: trade.symbol,
               type: trade.type,
               volume: trade.volume,
-              open_price: trade.openPrice,
-              close_price: trade.closePrice,
+              price: trade.openPrice,
+              close: trade.closePrice,
               profit: trade.profit,
-              open_time: new Date(trade.openTime).toISOString(),
+              time: new Date(trade.openTime).toISOString(),
               close_time: new Date(trade.closeTime).toISOString()
             }, {
               onConflict: 'account_id,ticket'

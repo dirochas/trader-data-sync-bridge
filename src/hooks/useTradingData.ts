@@ -23,10 +23,10 @@ export const getConnectionStatus = (lastUpdate: string) => {
 // Hook otimizado para buscar TODAS as contas de trading
 export const useTradingAccounts = () => {
   return useQuery({
-    queryKey: ['trading-accounts'],
+    queryKey: ['accounts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .select('*')
         .order('updated_at', { ascending: false });
       
@@ -42,14 +42,14 @@ export const useTradingAccounts = () => {
 // Hook para buscar UMA conta específica
 export const useTradingAccount = (accountNumber?: string) => {
   return useQuery({
-    queryKey: ['trading-account', accountNumber],
+    queryKey: ['account', accountNumber],
     queryFn: async () => {
       if (!accountNumber) return null;
       
       const { data, error } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .select('*')
-        .eq('account_number', accountNumber)
+        .eq('account', accountNumber)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -73,15 +73,15 @@ export const useMarginInfo = (accountNumber?: string) => {
       
       // Primeiro busca o ID da conta
       const { data: accountData, error: accountError } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .select('id')
-        .eq('account_number', accountNumber)
+        .eq('account', accountNumber)
         .single();
       
       if (accountError || !accountData) return null;
       
       const { data, error } = await supabase
-        .from('margin_info')
+        .from('margin')
         .select('*')
         .eq('account_id', accountData.id)
         .order('updated_at', { ascending: false })
@@ -101,24 +101,24 @@ export const useMarginInfo = (accountNumber?: string) => {
 // Hook para buscar posições abertas por conta - DADOS CRÍTICOS
 export const useOpenPositions = (accountNumber?: string) => {
   return useQuery({
-    queryKey: ['open-positions', accountNumber],
+    queryKey: ['positions', accountNumber],
     queryFn: async () => {
       if (!accountNumber) return [];
       
       // Primeiro busca o ID da conta
       const { data: accountData, error: accountError } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .select('id')
-        .eq('account_number', accountNumber)
+        .eq('account', accountNumber)
         .single();
       
       if (accountError || !accountData) return [];
       
       const { data, error } = await supabase
-        .from('open_positions')
+        .from('positions')
         .select('*')
         .eq('account_id', accountData.id)
-        .order('open_time', { ascending: false });
+        .order('time', { ascending: false });
       
       if (error) throw error;
       return data || [];
@@ -133,21 +133,21 @@ export const useOpenPositions = (accountNumber?: string) => {
 // Hook para buscar histórico de trades por conta
 export const useTradeHistory = (accountNumber?: string) => {
   return useQuery({
-    queryKey: ['trade-history', accountNumber],
+    queryKey: ['history', accountNumber],
     queryFn: async () => {
       if (!accountNumber) return [];
       
       // Primeiro busca o ID da conta
       const { data: accountData, error: accountError } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .select('id')
-        .eq('account_number', accountNumber)
+        .eq('account', accountNumber)
         .single();
       
       if (accountError || !accountData) return [];
       
       const { data, error } = await supabase
-        .from('trade_history')
+        .from('history')
         .select('*')
         .eq('account_id', accountData.id)
         .order('close_time', { ascending: false })
@@ -171,39 +171,39 @@ export const useRealtimeUpdates = () => {
     const channel = supabase
       .channel('trading-updates')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'trading_accounts' },
+        { event: '*', schema: 'public', table: 'accounts' },
         () => {
           // Invalidação mais inteligente - só invalida se dados são "antigos"
           queryClient.invalidateQueries({ 
-            queryKey: ['trading-accounts'],
+            queryKey: ['accounts'],
             refetchType: 'all'
           });
           queryClient.invalidateQueries({ 
-            queryKey: ['trading-account'],
+            queryKey: ['account'],
             refetchType: 'all'
           });
         }
       )
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'margin_info' },
+        { event: '*', schema: 'public', table: 'margin' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['margin-info'] });
         }
       )
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'open_positions' },
+        { event: '*', schema: 'public', table: 'positions' },
         () => {
           // Posições são críticas - invalidação imediata
           queryClient.invalidateQueries({ 
-            queryKey: ['open-positions'],
+            queryKey: ['positions'],
             refetchType: 'all'
           });
         }
       )
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'trade_history' },
+        { event: '*', schema: 'public', table: 'history' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['trade-history'] });
+          queryClient.invalidateQueries({ queryKey: ['history'] });
         }
       )
       .subscribe();

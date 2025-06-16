@@ -44,13 +44,13 @@ serve(async (req) => {
       );
     }
 
-    console.log(`🔍 GET-COMMANDS: Buscando conta para account_number: ${accountNumber}`);
+    console.log(`🔍 GET-COMMANDS: Buscando conta para account: ${accountNumber}`);
 
-    // Buscar account_id pelo account_number
+    // Buscar account_id pelo account (novo nome da coluna)
     const { data: account, error: accountError } = await supabase
-      .from('trading_accounts')
+      .from('accounts')
       .select('id')
-      .eq('account_number', accountNumber)
+      .eq('account', accountNumber)
       .single();
 
     if (accountError) {
@@ -83,9 +83,9 @@ serve(async (req) => {
 
     console.log(`✅ GET-COMMANDS: Conta encontrada - ID: ${account.id}`);
 
-    // Buscar comandos pendentes
+    // Buscar comandos pendentes (usando novos nomes)
     const { data: commands, error: commandsError } = await supabase
-      .from('pending_commands')
+      .from('commands')
       .select('*')
       .eq('account_id', account.id)
       .eq('status', 'PENDING')

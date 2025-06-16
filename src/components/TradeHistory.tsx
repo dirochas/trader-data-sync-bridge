@@ -81,8 +81,8 @@ const TradeHistory = ({ accountNumber }: TradeHistoryProps) => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">{Number(trade.volume).toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-mono">{Number(trade.open_price).toFixed(5)}</TableCell>
-                  <TableCell className="text-right font-mono">{Number(trade.close_price).toFixed(5)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(trade.price).toFixed(5)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(trade.close).toFixed(5)}</TableCell>
                   <TableCell className={`text-right font-bold ${
                     Number(trade.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>

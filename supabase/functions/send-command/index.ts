@@ -22,11 +22,11 @@ serve(async (req) => {
 
     console.log(`📨 Recebendo comando: ${commandType} para conta: ${accountNumber}`);
 
-    // Buscar account_id pelo account_number
+    // Buscar account_id pelo account (novo nome da coluna)
     const { data: account, error: accountError } = await supabase
-      .from('trading_accounts')
+      .from('accounts')
       .select('id')
-      .eq('account_number', accountNumber)
+      .eq('account', accountNumber)
       .single();
 
     if (accountError || !account) {
@@ -40,13 +40,13 @@ serve(async (req) => {
       );
     }
 
-    // Inserir comando na tabela
+    // Inserir comando na tabela (usando novos nomes)
     const { data: command, error: commandError } = await supabase
-      .from('pending_commands')
+      .from('commands')
       .insert({
         account_id: account.id,
-        command_type: commandType,
-        command_data: commandData
+        type: commandType,
+        data: commandData
       })
       .select()
       .single();

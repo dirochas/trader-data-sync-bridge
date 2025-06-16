@@ -24,16 +24,16 @@ serve(async (req) => {
 
     const updateData: any = {
       status,
-      executed_at: new Date().toISOString()
+      executed: new Date().toISOString()
     };
 
     if (errorMessage) {
-      updateData.error_message = errorMessage;
+      updateData.error = errorMessage;
     }
 
-    // Atualizar status do comando
+    // Atualizar status do comando (usando novos nomes)
     const { data: command, error: updateError } = await supabase
-      .from('pending_commands')
+      .from('commands')
       .update(updateData)
       .eq('id', commandId)
       .select()

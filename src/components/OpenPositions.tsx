@@ -81,8 +81,8 @@ const OpenPositions = ({ accountNumber }: OpenPositionsProps) => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">{Number(position.volume).toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-mono">{Number(position.open_price).toFixed(5)}</TableCell>
-                  <TableCell className="text-right font-mono">{Number(position.current_price).toFixed(5)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(position.price).toFixed(5)}</TableCell>
+                  <TableCell className="text-right font-mono">{Number(position.current).toFixed(5)}</TableCell>
                   <TableCell className={`text-right font-bold ${
                     Number(position.profit) >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>

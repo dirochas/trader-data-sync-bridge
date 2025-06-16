@@ -54,9 +54,9 @@ const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
     );
   }
 
-  const usedMargin = Number(marginData.used_margin);
-  const freeMargin = Number(marginData.free_margin);
-  const marginLevel = Number(marginData.margin_level);
+  const usedMargin = Number(marginData.used);
+  const freeMargin = Number(marginData.free);
+  const marginLevel = Number(marginData.level);
   const totalAvailable = usedMargin + freeMargin;
   const marginUsagePercentage = totalAvailable > 0 ? (usedMargin / totalAvailable) * 100 : 0;
 

@@ -13,8 +13,8 @@ interface EditAccountModalProps {
   account: {
     id: string;
     name: string | null;
-    account_number: string;
-    vps_name: string | null;
+    account: string;
+    vps: string | null;
     broker: string | null;
     server: string;
   } | null;
@@ -24,7 +24,7 @@ interface EditAccountModalProps {
 const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
   const [formData, setFormData] = useState({
     name: account?.name || '',
-    vps_name: account?.vps_name || '',
+    vps: account?.vps || '',
     broker: account?.broker || '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     if (account) {
       setFormData({
         name: account.name || '',
-        vps_name: account.vps_name || '',
+        vps: account.vps || '',
         broker: account.broker || '',
       });
     }
@@ -47,10 +47,10 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('trading_accounts')
+        .from('accounts')
         .update({
           name: formData.name.trim() || null,
-          vps_name: formData.vps_name.trim() || null,
+          vps: formData.vps.trim() || null,
           broker: formData.broker.trim() || null,
         })
         .eq('id', account.id);
@@ -86,10 +86,10 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         {account && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="account_number">Número da Conta</Label>
+              <Label htmlFor="account">Número da Conta</Label>
               <Input
-                id="account_number"
-                value={account.account_number}
+                id="account"
+                value={account.account}
                 disabled
                 className="bg-gray-100"
               />
@@ -107,11 +107,11 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vps_name">Nome do VPS</Label>
+              <Label htmlFor="vps">Nome do VPS</Label>
               <Input
-                id="vps_name"
-                value={formData.vps_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, vps_name: e.target.value }))}
+                id="vps"
+                value={formData.vps}
+                onChange={(e) => setFormData(prev => ({ ...prev, vps: e.target.value }))}
                 placeholder="Digite o nome do VPS"
               />
             </div>

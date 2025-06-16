@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -232,8 +231,8 @@ const AccountMonitor = () => {
           <Card className="tech-card tech-card-hover border-sky-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
-              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
-                <Users className="h-8 w-8 text-sky-400" />
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Users className="h-7 w-7 text-sky-400" />
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-6">
@@ -251,8 +250,8 @@ const AccountMonitor = () => {
           <Card className="tech-card tech-card-hover border-purple-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Open Trades</CardTitle>
-              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-                <Activity className="h-8 w-8 text-purple-400" />
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+                <Activity className="h-7 w-7 text-purple-400" />
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-6">
@@ -270,8 +269,8 @@ const AccountMonitor = () => {
           <Card className="tech-card tech-card-hover border-emerald-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Total Earnings</CardTitle>
-              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                <DollarSign className="h-8 w-8 text-emerald-400" />
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <DollarSign className="h-7 w-7 text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-6">
@@ -291,8 +290,8 @@ const AccountMonitor = () => {
           <Card className="tech-card tech-card-hover border-amber-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Active Clients</CardTitle>
-              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                <TrendingUp className="h-8 w-8 text-amber-400" />
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                <TrendingUp className="h-7 w-7 text-amber-400" />
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-6">

@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -16,7 +15,7 @@ export const getConnectionStatus = (lastUpdate: string) => {
   } else if (diffInSeconds <= 120) { // 2 minutos
     return { status: 'Delayed', color: 'text-orange-600', icon: '🟠' };
   } else {
-    return { status: 'Disconnected', color: 'text-red-600', icon: '🔴' };
+    return { status: 'Disconnected', color: 'text-rose-300', icon: '🔴' };
   }
 };
 

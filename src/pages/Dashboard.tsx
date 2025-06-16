@@ -35,11 +35,12 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Stats Cards with Tech Borders */}
+      {/* Stats Cards with Individual Color Borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="tech-border tech-card-hover">
+        {/* Card 1 - Azul */}
+        <Card className="tech-card tech-card-hover border-sky-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Accounts</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
             <Users className="h-4 w-4 text-sky-400" />
           </CardHeader>
           <CardContent>
@@ -50,9 +51,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="tech-border tech-card-hover">
+        {/* Card 2 - Roxo */}
+        <Card className="tech-card tech-card-hover border-purple-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active VPS</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Active VPS</CardTitle>
             <Server className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
@@ -63,9 +65,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="tech-border tech-card-hover">
+        {/* Card 3 - Verde */}
+        <Card className="tech-card tech-card-hover border-emerald-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total P&L</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Total P&L</CardTitle>
             <DollarSign className="h-4 w-4 text-emerald-400" />
           </CardHeader>
           <CardContent>
@@ -76,9 +79,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="tech-border tech-card-hover">
+        {/* Card 4 - Amarelo */}
+        <Card className="tech-card tech-card-hover border-amber-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Trades</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Active Trades</CardTitle>
             <Activity className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
@@ -93,7 +97,7 @@ const Dashboard = () => {
       {/* Performance Chart */}
       <Card className="performance-chart-container">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <TrendingUp className="h-5 w-5 text-emerald-400" />
             Performance Acumulada (24h)
           </CardTitle>
@@ -147,7 +151,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <CheckCircle className="h-5 w-5 text-emerald-400" />
               System Status
             </CardTitle>
@@ -174,7 +178,7 @@ const Dashboard = () => {
 
         <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <BarChart3 className="h-5 w-5 text-sky-400" />
               Performance Overview
             </CardTitle>
@@ -214,7 +218,7 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <Card className="tech-card">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="text-white">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

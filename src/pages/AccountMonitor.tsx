@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,7 +27,7 @@ const AccountMonitor = () => {
     queryKey: ['all-open-positions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('open_positions')
+        .from('positions')
         .select('*');
       
       if (error) throw error;
@@ -45,7 +46,7 @@ const AccountMonitor = () => {
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       
       const { data, error } = await supabase
-        .from('trade_history')
+        .from('history')
         .select('*')
         .gte('close_time', startOfDay.toISOString());
       
@@ -113,8 +114,8 @@ const AccountMonitor = () => {
       return {
         ...account,
         status: connectionStatus.status,
-        name: account.name || `Account ${account.account_number}`,
-        vps: account.vps_name || 'N/A',
+        name: account.name || `Account ${account.account}`,
+        vps: account.vps || 'N/A',
         openTrades: Math.max(0, openTradeCount),
         openPnL: isFinite(openPnLValue) ? openPnLValue : 0,
         dayProfit: isFinite(dayProfitValue) ? dayProfitValue : 0,
@@ -157,8 +158,8 @@ const AccountMonitor = () => {
     setSelectedAccount({
       id: account.id,
       name: account.name,
-      account_number: account.account_number,
-      vps_name: account.vps_name,
+      account_number: account.account,
+      vps_name: account.vps,
       broker: account.broker,
       server: account.server,
     });
@@ -328,7 +329,7 @@ const AccountMonitor = () => {
                   <TableRow>
                     {createSortableHeader("Status", "status")}
                     {createSortableHeader("Name", "name")}
-                    {createSortableHeader("Account Number", "account_number")}
+                    {createSortableHeader("Account Number", "account")}
                     {createSortableHeader("VPS", "vps")}
                     {createSortableHeader("Balance", "balance", "text-right")}
                     {createSortableHeader("Equity", "equity", "text-right")}
@@ -348,7 +349,7 @@ const AccountMonitor = () => {
                       <TableCell className="font-medium">
                         {account.name}
                       </TableCell>
-                      <TableCell className="font-mono">{account.account_number}</TableCell>
+                      <TableCell className="font-mono">{account.account}</TableCell>
                       <TableCell>{account.vps}</TableCell>
                       <TableCell className="text-right font-mono">
                         US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -389,7 +390,7 @@ const AccountMonitor = () => {
                             variant="outline"
                             size="sm"
                             className="text-blue-600 hover:text-blue-700"
-                            onClick={() => handleViewAccount(account.account_number)}
+                            onClick={() => handleViewAccount(account.account)}
                           >
                             VIEW
                           </Button>
@@ -429,7 +430,7 @@ const AccountMonitor = () => {
       <CloseAllPositionsModal
         isOpen={closeAllModalOpen}
         onClose={() => setCloseAllModalOpen(false)}
-        accountNumber={selectedAccountForClose?.account_number || ''}
+        accountNumber={selectedAccountForClose?.account || ''}
         accountName={selectedAccountForClose?.name || ''}
         openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
       />

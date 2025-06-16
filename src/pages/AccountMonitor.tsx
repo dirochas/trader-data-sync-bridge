@@ -11,6 +11,12 @@ import { supabase } from '@/integrations/supabase/client';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import EditAccountModal from '@/components/EditAccountModal';
 import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
+import { 
+  TrendingUp, 
+  Users, 
+  DollarSign, 
+  Activity
+} from 'lucide-react';
 
 const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
@@ -213,7 +219,7 @@ const AccountMonitor = () => {
       <div className="p-4 md:p-6 space-y-6">
         {/* Header Section */}
         <div className="space-y-3">
-          <h1 className="text-display text-2xl md:text-3xl tech-gradient-text">
+          <h1 className="text-display text-2xl md:text-3xl text-white">
             Account Monitor
           </h1>
           <p className="text-caption text-muted-foreground/80">
@@ -221,115 +227,115 @@ const AccountMonitor = () => {
           </p>
         </div>
 
-        {/* Summary Cards - Refined design */}
+        {/* Summary Cards - Following Dashboard Pattern */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <Card className="tech-card tech-card-hover">
+          <Card className="tech-card tech-card-hover border-sky-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Users className="h-8 w-8 text-sky-400" />
+              </div>
+            </CardHeader>
             <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-caption text-muted-foreground/90">Total Accounts</p>
-                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalAccounts}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="status-indicator status-live">
-                      {connectedAccounts} conectadas
-                    </span>
-                  </div>
-                </div>
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
-                  <span className="text-xl">📊</span>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalAccounts}</div>
+                <div className="flex items-center gap-2">
+                  <span className="status-indicator status-live">
+                    {connectedAccounts} conectadas
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover">
+          <Card className="tech-card tech-card-hover border-purple-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Open Trades</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+                <Activity className="h-8 w-8 text-purple-400" />
+              </div>
+            </CardHeader>
             <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-caption text-muted-foreground/90">Open Trades</p>
-                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalTrades}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="status-indicator status-live">
-                      Posições ativas
-                    </span>
-                  </div>
-                </div>
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                  <span className="text-xl">⚡</span>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalTrades}</div>
+                <div className="flex items-center gap-2">
+                  <span className="status-indicator status-live">
+                    Posições ativas
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover">
+          <Card className="tech-card tech-card-hover border-emerald-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Earnings</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <DollarSign className="h-8 w-8 text-emerald-400" />
+              </div>
+            </CardHeader>
             <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-caption text-muted-foreground/90">Total Earnings</p>
-                  <p className="text-display text-lg md:text-2xl metric-positive">
-                    US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="status-indicator status-live">
-                      Lucro total
-                    </span>
-                  </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="text-display text-lg md:text-2xl metric-positive">
+                  US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                  <span className="text-xl">💰</span>
+                <div className="flex items-center gap-2">
+                  <span className="status-indicator status-live">
+                    Lucro total
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover">
+          <Card className="tech-card tech-card-hover border-amber-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Active Clients</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                <TrendingUp className="h-8 w-8 text-amber-400" />
+              </div>
+            </CardHeader>
             <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-caption text-muted-foreground/90">Active Clients</p>
-                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalClients}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="status-indicator status-live">
-                      Contas gerenciadas
-                    </span>
-                  </div>
-                </div>
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-                  <span className="text-xl">👥</span>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalClients}</div>
+                <div className="flex items-center gap-2">
+                  <span className="status-indicator status-live">
+                    Contas gerenciadas
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Connection Status Summary */}
+        {/* Connection Status Summary - Compact Version */}
         <Card className="tech-card">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-heading text-lg md:text-xl">Connection Status Overview</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-heading text-lg text-white">Connection Status Overview</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center space-y-3">
-                <div className="text-display text-2xl md:text-3xl metric-positive">{accountsByStatus['Live'] || 0}</div>
-                <div className="status-indicator status-live mx-auto">
-                  🟢 Live Connection
+          <CardContent className="py-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center space-y-2">
+                <div className="text-display text-xl metric-positive">{accountsByStatus['Live'] || 0}</div>
+                <div className="status-indicator status-live mx-auto text-xs">
+                  🟢 Live
                 </div>
               </div>
-              <div className="text-center space-y-3">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{accountsByStatus['Slow Connection'] || 0}</div>
-                <div className="status-indicator status-slow mx-auto">
-                  🟡 Slow Connection
+              <div className="text-center space-y-2">
+                <div className="text-display text-xl metric-neutral">{accountsByStatus['Slow Connection'] || 0}</div>
+                <div className="status-indicator status-slow mx-auto text-xs">
+                  🟡 Slow
                 </div>
               </div>
-              <div className="text-center space-y-3">
-                <div className="text-display text-2xl md:text-3xl metric-negative">{accountsByStatus['Delayed'] || 0}</div>
-                <div className="status-indicator status-delayed mx-auto">
+              <div className="text-center space-y-2">
+                <div className="text-display text-xl metric-negative">{accountsByStatus['Delayed'] || 0}</div>
+                <div className="status-indicator status-delayed mx-auto text-xs">
                   🟠 Delayed
                 </div>
               </div>
-              <div className="text-center space-y-3">
-                <div className="text-display text-2xl md:text-3xl metric-negative">{accountsByStatus['Disconnected'] || 0}</div>
-                <div className="status-indicator status-disconnected mx-auto">
+              <div className="text-center space-y-2">
+                <div className="text-display text-xl metric-negative">{accountsByStatus['Disconnected'] || 0}</div>
+                <div className="status-indicator status-disconnected mx-auto text-xs">
                   🔴 Disconnected
                 </div>
               </div>
@@ -340,7 +346,7 @@ const AccountMonitor = () => {
         {/* Accounts Table */}
         <Card className="tech-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-heading text-lg md:text-xl">Trading Accounts</CardTitle>
+            <CardTitle className="text-heading text-lg md:text-xl text-white">Trading Accounts</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">

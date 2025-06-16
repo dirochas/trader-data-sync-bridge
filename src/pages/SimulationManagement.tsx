@@ -98,7 +98,7 @@ export default function SimulationManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Simulation Management</h1>
+          <h1 className="text-3xl font-bold text-white">Simulation Management</h1>
           <p className="text-muted-foreground">Manage your hedge trading simulations</p>
         </div>
         
@@ -121,7 +121,7 @@ export default function SimulationManagement() {
       </div>
       
       {/* Search */}
-      <Card>
+      <Card className="tech-card">
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -135,65 +135,69 @@ export default function SimulationManagement() {
         </CardContent>
       </Card>
       
-      {/* Statistics */}
+      {/* Statistics - Following Dashboard Pattern */}
       {simulations && simulations.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Simulations</p>
-                  <p className="text-2xl font-bold">{simulations.length}</p>
-                </div>
-                <Calculator className="w-8 h-8 text-blue-500" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="tech-card tech-card-hover border-sky-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Simulations</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Calculator className="h-8 w-8 text-sky-400" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold number-display text-foreground">{simulations.length}</div>
+              <p className="text-xs text-muted-foreground">Simulações criadas</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Account Size</p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(simulations.reduce((sum, sim) => sum + (sim.account_size || 0), 0) / simulations.length)}
-                  </p>
-                </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+          <Card className="tech-card tech-card-hover border-emerald-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Avg Account Size</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <DollarSign className="h-8 w-8 text-emerald-400" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold number-display text-foreground">
+                {formatCurrency(simulations.reduce((sum, sim) => sum + (sim.account_size || 0), 0) / simulations.length)}
+              </div>
+              <p className="text-xs text-muted-foreground">Valor médio das contas</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg ROI</p>
-                  <p className="text-2xl font-bold">
-                    {formatPercentage(
-                      simulations
-                        .filter(sim => sim.roi_percentage)
-                        .reduce((sum, sim) => sum + (sim.roi_percentage || 0), 0) / 
-                      simulations.filter(sim => sim.roi_percentage).length
-                    )}
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-purple-500" />
+          <Card className="tech-card tech-card-hover border-purple-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Avg ROI</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+                <TrendingUp className="h-8 w-8 text-purple-400" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold number-display text-purple-400">
+                {formatPercentage(
+                  simulations
+                    .filter(sim => sim.roi_percentage)
+                    .reduce((sum, sim) => sum + (sim.roi_percentage || 0), 0) / 
+                  simulations.filter(sim => sim.roi_percentage).length
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Retorno médio</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">In Progress</p>
-                  <p className="text-2xl font-bold">
-                    {simulations.filter(sim => sim.implementation_status === 'in_progress').length}
-                  </p>
-                </div>
-                <FileText className="w-8 h-8 text-orange-500" />
+          <Card className="tech-card tech-card-hover border-amber-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">In Progress</CardTitle>
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                <FileText className="h-8 w-8 text-amber-400" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold number-display text-foreground">
+                {simulations.filter(sim => sim.implementation_status === 'in_progress').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Simulações ativas</p>
             </CardContent>
           </Card>
         </div>
@@ -202,10 +206,10 @@ export default function SimulationManagement() {
       {/* Simulations List */}
       <div className="space-y-4">
         {filteredSimulations.length === 0 ? (
-          <Card>
+          <Card className="tech-card">
             <CardContent className="p-12 text-center">
               <Calculator className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No simulations found</h3>
+              <h3 className="text-lg font-semibold mb-2 text-white">No simulations found</h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Try adjusting your search terms' : 'Create your first hedge simulation to get started'}
               </p>
@@ -232,11 +236,11 @@ export default function SimulationManagement() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredSimulations.map((simulation) => (
-              <Card key={simulation.id} className="hover:shadow-lg transition-shadow">
+              <Card key={simulation.id} className="tech-card tech-card-hover">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-lg truncate">
+                      <CardTitle className="text-lg truncate text-white">
                         {simulation.simulation_name || 'Unnamed Simulation'}
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
@@ -291,19 +295,19 @@ export default function SimulationManagement() {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-muted-foreground">Account Size</p>
-                      <p className="font-semibold">{formatCurrency(simulation.account_size)}</p>
+                      <p className="font-semibold text-white">{formatCurrency(simulation.account_size)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Test Cost</p>
-                      <p className="font-semibold">{formatCurrency(simulation.test_cost)}</p>
+                      <p className="font-semibold text-white">{formatCurrency(simulation.test_cost)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Total Used</p>
-                      <p className="font-semibold text-red-600">{formatCurrency(simulation.total_used)}</p>
+                      <p className="font-semibold text-red-400">{formatCurrency(simulation.total_used)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Net Profit</p>
-                      <p className="font-semibold text-green-600">{formatCurrency(simulation.total_profit)}</p>
+                      <p className="font-semibold text-emerald-400">{formatCurrency(simulation.total_profit)}</p>
                     </div>
                   </div>
                   

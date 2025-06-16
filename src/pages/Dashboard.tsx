@@ -29,18 +29,18 @@ const Dashboard = () => {
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">
           Visão geral do sistema de trading TRADERLAB
         </p>
       </div>
 
-      {/* Stats Cards with Individual Color Borders and Optimized Icons */}
+      {/* Stats Cards with Individual Color Borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1 - Azul */}
         <Card className="tech-card tech-card-hover border-sky-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Total Accounts</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
               <Users className="h-7 w-7 text-sky-400" />
             </div>
@@ -56,7 +56,7 @@ const Dashboard = () => {
         {/* Card 2 - Roxo */}
         <Card className="tech-card tech-card-hover border-purple-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Active VPS</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Active VPS</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
               <Server className="h-7 w-7 text-purple-400" />
             </div>
@@ -72,7 +72,7 @@ const Dashboard = () => {
         {/* Card 3 - Verde */}
         <Card className="tech-card tech-card-hover border-emerald-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Total P&L</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Total P&L</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
               <DollarSign className="h-7 w-7 text-emerald-400" />
             </div>
@@ -88,7 +88,7 @@ const Dashboard = () => {
         {/* Card 4 - Amarelo */}
         <Card className="tech-card tech-card-hover border-amber-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Active Trades</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Active Trades</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
               <Activity className="h-7 w-7 text-amber-400" />
             </div>
@@ -103,9 +103,9 @@ const Dashboard = () => {
       </div>
 
       {/* Performance Chart */}
-      <Card className="performance-chart-container">
+      <Card className="tech-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <TrendingUp className="h-5 w-5 text-emerald-400" />
             Performance Acumulada (24h)
           </CardTitle>
@@ -159,7 +159,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <CheckCircle className="h-5 w-5 text-emerald-400" />
               System Status
             </CardTitle>
@@ -186,7 +186,7 @@ const Dashboard = () => {
 
         <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <BarChart3 className="h-5 w-5 text-sky-400" />
               Performance Overview
             </CardTitle>
@@ -226,7 +226,7 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <Card className="tech-card">
         <CardHeader>
-          <CardTitle className="text-white">Recent Activity</CardTitle>
+          <CardTitle className="text-foreground">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

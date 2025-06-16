@@ -49,11 +49,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r border-gray-800 bg-gray-900 backdrop-blur-xl`} 
+      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r bg-gray-900 backdrop-blur-xl`} 
       collapsible="icon"
       style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}
     >
-      <div className="p-4 border-b border-gray-800 bg-gray-900/80" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
+      <div className="p-4 border-b bg-gray-900/80" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
             <img 
@@ -128,7 +128,7 @@ export function AppSidebar() {
         </div>
       </SidebarContent>
 
-      <div className="p-3 border-t border-gray-800" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
+      <div className="p-3 border-t" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
         <SidebarTrigger className="w-full h-11 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-300 hover:text-white" />
       </div>
     </Sidebar>

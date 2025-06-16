@@ -19,13 +19,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-16 tech-card border-b flex items-center px-4 md:px-6 gap-4">
             <SidebarTrigger className="lg:hidden tech-card-hover p-2 rounded-lg" />
             <div className="flex-1 min-w-0">
-              <h1 className="text-heading text-lg md:text-xl tech-gradient-text">
+              <h1 className="text-heading text-lg md:text-xl text-white">
                 TRADERLAB Trading System
               </h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-4">
-                <div className="text-caption text-muted-foreground/80">
+                <div className="text-caption text-white">
                   {new Date().toLocaleDateString('pt-BR', { 
                     weekday: 'long', 
                     year: 'numeric', 

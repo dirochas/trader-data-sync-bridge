@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -29,7 +28,7 @@ const Dashboard = () => {
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tech-gradient-text">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
         <p className="text-muted-foreground">
           Visão geral do sistema de trading TRADERLAB
         </p>

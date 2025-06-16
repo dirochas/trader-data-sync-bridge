@@ -54,13 +54,21 @@ export function AppSidebar() {
     >
       <div className="p-4 border-b border-sidebar-border/50 bg-sidebar/50">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-            <Monitor className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+            <img 
+              src="/lovable-uploads/39ba8fe9-453c-4813-8fc2-4add8c8536b2.png" 
+              alt="TraderLab Logo" 
+              className="w-8 h-8 object-contain"
+            />
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <h2 className="text-heading text-lg tech-gradient-text">Hedge Matrix</h2>
-              <p className="text-caption text-muted-foreground/80">Trading System</p>
+              <img 
+                src="/lovable-uploads/9a7101c2-5cb9-4ab1-a575-4a699474138e.png" 
+                alt="TRADERLAB" 
+                className="h-6 object-contain"
+              />
+              <p className="text-caption text-muted-foreground/80 mt-1">Trading System</p>
             </div>
           )}
         </div>
@@ -86,7 +94,7 @@ export function AppSidebar() {
                       }`}
                     >
                       <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                        isActive(item.url) ? 'text-indigo-400' : 'group-hover:text-indigo-400'
+                        isActive(item.url) ? 'text-sky-400' : 'group-hover:text-sky-400'
                       }`} />
                       {!isCollapsed && (
                         <span className="text-body font-medium truncate">
@@ -105,13 +113,13 @@ export function AppSidebar() {
         <div className="mt-auto p-3">
           <div className={`tech-card p-3 ${isCollapsed ? 'justify-center' : ''}`}>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0 shadow-lg">
                 <User className="w-4 h-4 text-white" />
               </div>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-body font-medium text-sidebar-foreground">Admin User</p>
-                  <p className="text-caption text-muted-foreground/70">admin@hedgematrix.com</p>
+                  <p className="text-caption text-muted-foreground/70">admin@traderlab.com</p>
                 </div>
               )}
             </div>

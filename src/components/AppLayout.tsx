@@ -20,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <SidebarTrigger className="lg:hidden tech-card-hover p-2 rounded-lg" />
             <div className="flex-1 min-w-0">
               <h1 className="text-heading text-lg md:text-xl tech-gradient-text">
-                Hedge Matrix Trading System
+                TRADERLAB Trading System
               </h1>
             </div>
             <div className="flex items-center gap-4">

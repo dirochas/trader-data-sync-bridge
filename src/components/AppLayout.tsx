@@ -15,17 +15,17 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppSidebar />
         
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header - Responsivo com design tecnológico */}
-          <header className="h-16 border-b bg-card/50 backdrop-blur-sm flex items-center px-4 md:px-6 gap-4 tech-border">
-            <SidebarTrigger className="lg:hidden" />
+          {/* Header - Refined technological design */}
+          <header className="h-16 tech-card border-b flex items-center px-4 md:px-6 gap-4">
+            <SidebarTrigger className="lg:hidden tech-card-hover p-2 rounded-lg" />
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-semibold truncate bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-heading text-lg md:text-xl tech-gradient-text">
                 Hedge Matrix Trading System
               </h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-4">
-                <div className="text-sm text-muted-foreground/80">
+                <div className="text-caption text-muted-foreground/80">
                   {new Date().toLocaleDateString('pt-BR', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -39,7 +39,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto bg-background">
             {children}
           </main>
         </div>

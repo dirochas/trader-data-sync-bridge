@@ -197,10 +197,10 @@ const AccountMonitor = () => {
 
     return (
       <TableHead 
-        className={`cursor-pointer hover:bg-gray-50 select-none ${className}`}
+        className={`cursor-pointer select-none text-caption ${className}`}
         onClick={handleClick}
       >
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {label}
           <span className="text-xs opacity-60">{getSortIcon(sortKey)}</span>
         </div>
@@ -210,172 +210,190 @@ const AccountMonitor = () => {
 
   return (
     <>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Sistema otimizado info */}
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">Account Monitor</h1>
-          <p className="text-xs md:text-sm text-muted-foreground/70">
-            Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 8s
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Header Section */}
+        <div className="space-y-3">
+          <h1 className="text-display text-2xl md:text-3xl tech-gradient-text">
+            Account Monitor
+          </h1>
+          <p className="text-caption text-muted-foreground/80">
+            Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
           </p>
         </div>
 
-        {/* Cards de Resumo - Grid responsivo com cores mais suaves */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+        {/* Summary Cards - Refined design */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <Card className="tech-card tech-card-hover">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm font-medium text-muted-foreground/80 truncate">Accounts</p>
-                  <p className="text-lg md:text-2xl font-bold number-neutral">{totalAccounts}</p>
-                  <p className="text-xs status-live truncate">{connectedAccounts} conectadas</p>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="text-caption text-muted-foreground/90">Total Accounts</p>
+                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalAccounts}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="status-indicator status-live">
+                      {connectedAccounts} conectadas
+                    </span>
+                  </div>
                 </div>
-                <div className="h-8 w-8 md:h-12 md:w-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 dark:text-blue-400 text-sm md:text-xl">📊</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
+                  <span className="text-xl">📊</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="tech-card tech-card-hover">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm font-medium text-muted-foreground/80 truncate">Trades</p>
-                  <p className="text-lg md:text-2xl font-bold number-neutral">{totalTrades}</p>
-                  <p className="text-xs status-live truncate">Posições abertas</p>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="text-caption text-muted-foreground/90">Open Trades</p>
+                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalTrades}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="status-indicator status-live">
+                      Posições ativas
+                    </span>
+                  </div>
                 </div>
-                <div className="h-8 w-8 md:h-12 md:w-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 dark:text-green-400 text-sm md:text-xl">⏰</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                  <span className="text-xl">⚡</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="tech-card tech-card-hover">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm font-medium text-muted-foreground/80 truncate">Earnings</p>
-                  <p className="text-sm md:text-2xl font-bold number-positive">US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  <p className="text-xs status-live truncate">Lucro total</p>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="text-caption text-muted-foreground/90">Total Earnings</p>
+                  <p className="text-display text-lg md:text-2xl metric-positive">
+                    US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="status-indicator status-live">
+                      Lucro total
+                    </span>
+                  </div>
                 </div>
-                <div className="h-8 w-8 md:h-12 md:w-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-yellow-600 dark:text-yellow-400 text-sm md:text-xl">💰</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                  <span className="text-xl">💰</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="tech-card tech-card-hover">
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm font-medium text-muted-foreground/80 truncate">Clients</p>
-                  <p className="text-lg md:text-2xl font-bold number-neutral">{totalClients}</p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400 truncate">Contas ativas</p>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="text-caption text-muted-foreground/90">Active Clients</p>
+                  <p className="text-display text-2xl md:text-3xl metric-neutral">{totalClients}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="status-indicator status-live">
+                      Contas gerenciadas
+                    </span>
+                  </div>
                 </div>
-                <div className="h-8 w-8 md:h-12 md:w-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-600 dark:text-purple-400 text-sm md:text-xl">👥</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+                  <span className="text-xl">👥</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Status Summary Card com cores mais suaves */}
-        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl text-foreground/90">Connection Status Summary</CardTitle>
+        {/* Connection Status Summary */}
+        <Card className="tech-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-heading text-lg md:text-xl">Connection Status Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-lg md:text-2xl font-bold status-live">{accountsByStatus['Live'] || 0}</div>
-                <div className="text-xs md:text-sm text-muted-foreground/70 flex items-center justify-center gap-1">
-                  <span>🟢</span> Live
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center space-y-3">
+                <div className="text-display text-2xl md:text-3xl metric-positive">{accountsByStatus['Live'] || 0}</div>
+                <div className="status-indicator status-live mx-auto">
+                  🟢 Live Connection
                 </div>
               </div>
-              <div className="text-center">
-                <div className="text-lg md:text-2xl font-bold status-slow">{accountsByStatus['Slow Connection'] || 0}</div>
-                <div className="text-xs md:text-sm text-muted-foreground/70 flex items-center justify-center gap-1">
-                  <span>🟡</span> Slow Connection
+              <div className="text-center space-y-3">
+                <div className="text-display text-2xl md:text-3xl metric-neutral">{accountsByStatus['Slow Connection'] || 0}</div>
+                <div className="status-indicator status-slow mx-auto">
+                  🟡 Slow Connection
                 </div>
               </div>
-              <div className="text-center">
-                <div className="text-lg md:text-2xl font-bold status-delayed">{accountsByStatus['Delayed'] || 0}</div>
-                <div className="text-xs md:text-sm text-muted-foreground/70 flex items-center justify-center gap-1">
-                  <span>🟠</span> Delayed
+              <div className="text-center space-y-3">
+                <div className="text-display text-2xl md:text-3xl metric-negative">{accountsByStatus['Delayed'] || 0}</div>
+                <div className="status-indicator status-delayed mx-auto">
+                  🟠 Delayed
                 </div>
               </div>
-              <div className="text-center">
-                <div className="text-lg md:text-2xl font-bold status-disconnected">{accountsByStatus['Disconnected'] || 0}</div>
-                <div className="text-xs md:text-sm text-muted-foreground/70 flex items-center justify-center gap-1">
-                  <span>🔴</span> Disconnected
+              <div className="text-center space-y-3">
+                <div className="text-display text-2xl md:text-3xl metric-negative">{accountsByStatus['Disconnected'] || 0}</div>
+                <div className="status-indicator status-disconnected mx-auto">
+                  🔴 Disconnected
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tabela de Contas - Com cores mais suaves */}
-        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl text-foreground/90">Accounts monitor</CardTitle>
+        {/* Accounts Table */}
+        <Card className="tech-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-heading text-lg md:text-xl">Trading Accounts</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 md:p-6">
-            {/* Container com scroll horizontal para mobile */}
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <div className="min-w-[800px]">
+              <div className="min-w-[1000px]">
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-muted/30">
+                    <TableRow className="border-border/50">
                       {createSortableHeader("Status", "status")}
-                      {createSortableHeader("Name", "name")}
-                      {createSortableHeader("Account Number", "account")}
+                      {createSortableHeader("Account Name", "name")}
+                      {createSortableHeader("Number", "account")}
                       {createSortableHeader("VPS", "vps")}
                       {createSortableHeader("Balance", "balance", "text-right")}
                       {createSortableHeader("Equity", "equity", "text-right")}
-                      {createSortableHeader("Open Trades", "openTrades", "text-right")}
-                      {createSortableHeader("Open PnL", "openPnL", "text-right")}
-                      {createSortableHeader("Day", "dayProfit", "text-right")}
-                      {createSortableHeader("SERVIDOR", "server")}
-                      <TableHead className="min-w-[200px]">ACTIONS</TableHead>
+                      {createSortableHeader("Trades", "openTrades", "text-right")}
+                      {createSortableHeader("Open P&L", "openPnL", "text-right")}
+                      {createSortableHeader("Day P&L", "dayProfit", "text-right")}
+                      {createSortableHeader("Server", "server")}
+                      <TableHead className="min-w-[220px] text-caption">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedAccounts.map((account) => (
-                      <TableRow key={account.id} className="hover:bg-muted/20">
-                        <TableCell>
+                      <TableRow key={account.id} className="table-row-hover border-border/30">
+                        <TableCell className="py-4">
                           <ConnectionStatus lastUpdate={account.updated_at} />
                         </TableCell>
-                        <TableCell className="font-medium text-foreground/90">
+                        <TableCell className="text-body font-medium">
                           {account.name}
                         </TableCell>
-                        <TableCell className="font-mono text-foreground/80">{account.account}</TableCell>
-                        <TableCell className="text-foreground/80">{account.vps}</TableCell>
-                        <TableCell className="text-right font-mono number-neutral">
+                        <TableCell className="text-body font-mono">{account.account}</TableCell>
+                        <TableCell className="text-body">{account.vps}</TableCell>
+                        <TableCell className="text-right text-body font-mono metric-neutral">
                           US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right font-mono number-neutral">
+                        <TableCell className="text-right text-body font-mono metric-neutral">
                           US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-foreground/90">
+                        <TableCell className="text-right text-body font-bold">
                           {account.openTrades}
                         </TableCell>
-                        <TableCell className={`text-right font-bold ${account.openPnL >= 0 ? 'number-positive' : 'number-negative'}`}>
+                        <TableCell className={`text-right text-body font-mono ${account.openPnL >= 0 ? 'metric-positive' : 'metric-negative'}`}>
                           US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className={`text-right font-bold ${account.dayProfit >= 0 ? 'number-positive' : 'number-negative'}`}>
+                        <TableCell className={`text-right text-body font-mono ${account.dayProfit >= 0 ? 'metric-positive' : 'metric-negative'}`}>
                           US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="font-medium text-foreground/80">{account.server || 'N/A'}</TableCell>
+                        <TableCell className="text-body font-medium">{account.server || 'N/A'}</TableCell>
                         <TableCell>
-                          {/* Botões com cores mais suaves */}
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 min-h-[36px] text-xs border-rose-200 dark:border-rose-800"
+                              className="action-button action-button-danger text-xs h-8"
                               onClick={() => handleCloseAllPositions(account)}
                               disabled={account.openTrades === 0}
                             >
@@ -384,7 +402,7 @@ const AccountMonitor = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[36px] text-xs border-amber-200 dark:border-amber-800"
+                              className="action-button action-button-warning text-xs h-8"
                               onClick={() => handleEditAccount(account)}
                             >
                               EDIT
@@ -392,7 +410,7 @@ const AccountMonitor = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[36px] text-xs border-blue-200 dark:border-blue-800"
+                              className="action-button action-button-primary text-xs h-8"
                               onClick={() => handleViewAccount(account.account)}
                             >
                               VIEW
@@ -407,17 +425,17 @@ const AccountMonitor = () => {
             </div>
 
             {accounts.length === 0 && !isLoading && (
-              <div className="text-center py-8 text-muted-foreground/60 px-4">
-                <div className="text-4xl mb-2">📊</div>
-                <p>Nenhuma conta conectada</p>
-                <p className="text-sm text-muted-foreground/50 mt-1">Configure seus EAs para começar a monitorar contas</p>
+              <div className="text-center py-12 text-muted-foreground/70">
+                <div className="text-4xl mb-4">📊</div>
+                <p className="text-body">Nenhuma conta conectada</p>
+                <p className="text-caption text-muted-foreground/60 mt-2">Configure seus EAs para começar a monitorar contas</p>
               </div>
             )}
 
             {isLoading && (
-              <div className="text-center py-8 text-muted-foreground/60 px-4">
-                <div className="text-4xl mb-2">⏳</div>
-                <p>Carregando contas...</p>
+              <div className="text-center py-12 text-muted-foreground/70">
+                <div className="text-4xl mb-4">⏳</div>
+                <p className="text-body">Carregando contas...</p>
               </div>
             )}
           </CardContent>

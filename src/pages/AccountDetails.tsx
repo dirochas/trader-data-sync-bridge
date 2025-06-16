@@ -83,12 +83,12 @@ const AccountDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Card 4 - P&L - Amarelo */}
-        <Card className="tech-card tech-card-hover border-amber-400/30">
+        {/* Card 4 - P&L - Vermelho claro refinado */}
+        <Card className="tech-card tech-card-hover border-rose-400/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">P&L</CardTitle>
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-              <Activity className="h-7 w-7 text-amber-400" />
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-600/20 flex items-center justify-center flex-shrink-0 border border-rose-500/20">
+              <Activity className="h-7 w-7 text-rose-400" />
             </div>
           </CardHeader>
           <CardContent>
@@ -112,20 +112,32 @@ const AccountDetails = () => {
         <TradeHistory accountNumber={accountId} />
       </div>
       
-      {/* Footer com informação sobre integração */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="text-center">
-          <p className="text-sm text-green-700">
-            🟢 <strong>Status:</strong> Integração Supabase ATIVA - Dados em tempo real
-          </p>
-          <p className="text-xs text-green-600 mt-1">
-            <strong>Endpoint MT4/MT5:</strong> https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            Configure seu Expert Advisor com este endpoint para começar a enviar dados reais
-          </p>
-        </div>
-      </div>
+      {/* Footer moderno com padrão tech-card */}
+      <Card className="tech-card border-emerald-400/20">
+        <CardContent className="p-4">
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-emerald-400">Status: Integração Supabase ATIVA</span>
+              </div>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs text-white">Dados em tempo real</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs">
+              <div className="flex items-center gap-1">
+                <span className="text-sky-400 font-medium">Endpoint MT4/MT5:</span>
+                <code className="bg-muted/20 px-2 py-1 rounded text-xs text-muted-foreground">
+                  https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data
+                </code>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configure seu Expert Advisor com este endpoint para começar a enviar dados reais
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -26,11 +26,10 @@ import {
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Account Monitor', url: '/', icon: Monitor },
+  { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
   { title: 'User Management', url: '/users', icon: Users },
   { title: 'Expert Management', url: '/experts', icon: Brain },
-  { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
-  { title: 'Account Monitor', url: '/', icon: Monitor },
-  { title: 'VPS Management', url: '/vps', icon: Server },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
@@ -43,7 +42,9 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? 'bg-primary/10 text-primary font-medium border-r-2 border-primary' : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground';
+    isActive 
+      ? 'bg-primary/10 text-primary font-semibold border-r-2 border-primary shadow-sm' 
+      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors';
 
   return (
     <Sidebar 

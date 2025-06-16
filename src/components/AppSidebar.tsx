@@ -35,22 +35,24 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  
+  const isCollapsed = state === 'collapsed';
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-primary/10 text-primary font-medium border-r-2 border-primary' : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground';
 
   return (
-    <Sidebar className={`${collapsed ? 'w-16' : 'w-64'} border-r bg-card`} collapsible>
+    <Sidebar className={`${isCollapsed ? 'w-16' : 'w-64'} border-r bg-card`} collapsible="icon">
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Monitor className="w-4 h-4 text-primary-foreground" />
           </div>
-          {!collapsed && (
+          {!isCollapsed && (
             <div>
               <h2 className="font-bold text-lg">Hedge Matrix</h2>
               <p className="text-xs text-muted-foreground">Trading System</p>
@@ -61,7 +63,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? 'sr-only' : ''}>
+          <SidebarGroupLabel className={isCollapsed ? 'sr-only' : ''}>
             Main Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -75,7 +77,7 @@ export function AppSidebar() {
                       className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${getNavCls({ isActive })}`}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && <span className="font-medium">{item.title}</span>}
+                      {!isCollapsed && <span className="font-medium">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -86,11 +88,11 @@ export function AppSidebar() {
 
         {/* User Profile Section */}
         <div className="mt-auto p-2">
-          <div className={`flex items-center gap-3 p-3 rounded-lg bg-muted/50 ${collapsed ? 'justify-center' : ''}`}>
+          <div className={`flex items-center gap-3 p-3 rounded-lg bg-muted/50 ${isCollapsed ? 'justify-center' : ''}`}>
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-primary-foreground" />
             </div>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">Admin User</p>
                 <p className="text-xs text-muted-foreground truncate">admin@hedgematrix.com</p>

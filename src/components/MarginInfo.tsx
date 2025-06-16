@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { BarChart3 } from 'lucide-react';
 import { useMarginInfo } from '@/hooks/useTradingData';
 
 interface MarginInfoProps {
@@ -13,10 +14,10 @@ const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
+      <Card className="tech-card h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="text-gray-600">⏱️</span>
+          <CardTitle className="flex items-center gap-2 text-lg text-white">
+            <BarChart3 className="text-purple-400" />
             Informações de Margem
           </CardTitle>
         </CardHeader>
@@ -36,10 +37,10 @@ const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
 
   if (!marginData) {
     return (
-      <Card className="h-full">
+      <Card className="tech-card h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="text-gray-600">⏱️</span>
+          <CardTitle className="flex items-center gap-2 text-lg text-white">
+            <BarChart3 className="text-purple-400" />
             Informações de Margem
           </CardTitle>
         </CardHeader>
@@ -61,33 +62,33 @@ const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
   const marginUsagePercentage = totalAvailable > 0 ? (usedMargin / totalAvailable) * 100 : 0;
 
   return (
-    <Card className="h-full">
+    <Card className="tech-card h-full">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <span className="text-gray-600">⏱️</span>
+        <CardTitle className="flex items-center gap-2 text-lg text-white">
+          <BarChart3 className="text-purple-400" />
           Informações de Margem
-          <span className="text-xs text-green-600">🟢 LIVE</span>
+          <span className="text-xs text-emerald-400">🟢 LIVE</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Margem Usada</p>
-            <p className="text-lg font-bold text-red-600">
+            <p className="text-sm text-muted-foreground mb-1">Margem Usada</p>
+            <p className="text-lg font-bold text-rose-300">
               US$ {usedMargin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
           
           <div>
-            <p className="text-sm text-gray-600 mb-1">Margem Livre</p>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-sm text-muted-foreground mb-1">Margem Livre</p>
+            <p className="text-lg font-bold text-emerald-400">
               US$ {freeMargin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
           
           <div>
-            <p className="text-sm text-gray-600 mb-1">Nível de Margem</p>
-            <p className="text-lg font-bold text-blue-600">
+            <p className="text-sm text-muted-foreground mb-1">Nível de Margem</p>
+            <p className="text-lg font-bold text-sky-400">
               {marginLevel.toFixed(2)}%
             </p>
           </div>
@@ -95,11 +96,11 @@ const MarginInfo = ({ accountNumber }: MarginInfoProps) => {
         
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>Uso da Margem</span>
-            <span>{marginUsagePercentage.toFixed(1)}%</span>
+            <span className="text-white">Uso da Margem</span>
+            <span className="text-white">{marginUsagePercentage.toFixed(1)}%</span>
           </div>
           <Progress value={marginUsagePercentage} className="h-2" />
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Total disponível: US$ {totalAvailable.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         </div>

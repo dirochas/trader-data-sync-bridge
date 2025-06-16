@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User } from 'lucide-react';
 import { useTradingAccount } from '@/hooks/useTradingData';
 
 interface AccountInfoProps {
@@ -12,10 +13,10 @@ const AccountInfo = ({ accountNumber }: AccountInfoProps) => {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
+      <Card className="tech-card h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="text-gray-600">👤</span>
+          <CardTitle className="flex items-center gap-2 text-lg text-white">
+            <User className="text-sky-400" />
             Informações da Conta
           </CardTitle>
         </CardHeader>
@@ -32,10 +33,10 @@ const AccountInfo = ({ accountNumber }: AccountInfoProps) => {
 
   if (!accountData) {
     return (
-      <Card className="h-full">
+      <Card className="tech-card h-full">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="text-gray-600">👤</span>
+          <CardTitle className="flex items-center gap-2 text-lg text-white">
+            <User className="text-sky-400" />
             Informações da Conta
           </CardTitle>
         </CardHeader>
@@ -55,50 +56,50 @@ const AccountInfo = ({ accountNumber }: AccountInfoProps) => {
   const profit = Number(accountData.profit);
 
   return (
-    <Card className="h-full">
+    <Card className="tech-card h-full">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <span className="text-gray-600">👤</span>
+        <CardTitle className="flex items-center gap-2 text-lg text-white">
+          <User className="text-sky-400" />
           Informações da Conta
-          <span className="text-xs text-green-600">🟢 LIVE</span>
+          <span className="text-xs text-emerald-400">🟢 LIVE</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-blue-600 font-medium">Conta</span>
-            <span className="font-mono text-sm">{accountData.account}</span>
+            <span className="text-sm text-sky-400 font-medium">Conta</span>
+            <span className="font-mono text-sm text-white">{accountData.account}</span>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Servidor</span>
-            <span className="text-sm">{accountData.server}</span>
+            <span className="text-sm text-muted-foreground">Servidor</span>
+            <span className="text-sm text-white">{accountData.server}</span>
           </div>
           
-          <div className="border-t pt-3 space-y-3">
+          <div className="border-t border-border/30 pt-3 space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium flex items-center gap-1">
+              <span className="text-sm font-medium flex items-center gap-1 text-white">
                 💰 Balance
               </span>
-              <span className="text-lg font-bold text-green-600">
+              <span className="text-lg font-bold text-emerald-400">
                 US$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium flex items-center gap-1">
+              <span className="text-sm font-medium flex items-center gap-1 text-white">
                 📈 Equity
               </span>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="text-lg font-bold text-sky-400">
                 US$ {equity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium flex items-center gap-1">
+              <span className="text-sm font-medium flex items-center gap-1 text-white">
                 📊 Lucro/Prejuízo
               </span>
-              <span className={`text-lg font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-lg font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-300'}`}>
                 US$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>

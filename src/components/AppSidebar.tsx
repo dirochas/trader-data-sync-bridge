@@ -28,7 +28,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'User Management', url: '/users', icon: Users },
   { title: 'Expert Management', url: '/experts', icon: Brain },
-  { title: 'Simulation Management', url: '/simulations', icon: Calculator },
+  { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
   { title: 'Account Monitor', url: '/', icon: Monitor },
   { title: 'VPS Management', url: '/vps', icon: Server },
   { title: 'Settings', url: '/settings', icon: Settings },

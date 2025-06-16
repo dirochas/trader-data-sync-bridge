@@ -95,6 +95,162 @@ export type Database = {
           },
         ]
       }
+      hedge_simulations: {
+        Row: {
+          account_size: number
+          additional_deposit_f2: number | null
+          calculated_at: string | null
+          created_at: string
+          extra_hedge_amount_f1: number | null
+          extra_hedge_amount_f2: number | null
+          extra_hedge_amount_funded: number | null
+          final_balance_real_account_f1_fail: number | null
+          final_balance_real_account_f2_fail: number | null
+          funded_target_amount: number | null
+          id: string
+          implementation_status: string | null
+          max_dd_pct: number
+          min_real_deposit_f1: number | null
+          min_real_deposit_f2: number | null
+          min_real_deposit_funded: number | null
+          notes: string | null
+          phase_cost_f1: number | null
+          phase_cost_f2: number | null
+          phase_cost_funded: number | null
+          profit_division_pct: number
+          profit_projection_f1: number | null
+          profit_projection_f2: number | null
+          profit_projection_funded: number | null
+          propfirm_breakeven: number | null
+          ratio_f1: number | null
+          ratio_f2: number | null
+          ratio_funded: number | null
+          recovery_amount_f1: number | null
+          recovery_amount_f2: number | null
+          recovery_amount_funded: number | null
+          remaining_balance_f1: number | null
+          remaining_balance_f2: number | null
+          roi_percentage: number | null
+          safety_multiplier_f1: number | null
+          safety_multiplier_f2: number | null
+          safety_multiplier_funded: number | null
+          simulation_name: string | null
+          target_pct_f1: number
+          target_pct_f2: number
+          test_cost: number
+          test_refund: boolean | null
+          test_refund_amount: number | null
+          total_profit: number | null
+          total_test_cost: number | null
+          total_used: number | null
+          total_withdraw: number | null
+          trader_profit_share: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_size?: number
+          additional_deposit_f2?: number | null
+          calculated_at?: string | null
+          created_at?: string
+          extra_hedge_amount_f1?: number | null
+          extra_hedge_amount_f2?: number | null
+          extra_hedge_amount_funded?: number | null
+          final_balance_real_account_f1_fail?: number | null
+          final_balance_real_account_f2_fail?: number | null
+          funded_target_amount?: number | null
+          id?: string
+          implementation_status?: string | null
+          max_dd_pct?: number
+          min_real_deposit_f1?: number | null
+          min_real_deposit_f2?: number | null
+          min_real_deposit_funded?: number | null
+          notes?: string | null
+          phase_cost_f1?: number | null
+          phase_cost_f2?: number | null
+          phase_cost_funded?: number | null
+          profit_division_pct?: number
+          profit_projection_f1?: number | null
+          profit_projection_f2?: number | null
+          profit_projection_funded?: number | null
+          propfirm_breakeven?: number | null
+          ratio_f1?: number | null
+          ratio_f2?: number | null
+          ratio_funded?: number | null
+          recovery_amount_f1?: number | null
+          recovery_amount_f2?: number | null
+          recovery_amount_funded?: number | null
+          remaining_balance_f1?: number | null
+          remaining_balance_f2?: number | null
+          roi_percentage?: number | null
+          safety_multiplier_f1?: number | null
+          safety_multiplier_f2?: number | null
+          safety_multiplier_funded?: number | null
+          simulation_name?: string | null
+          target_pct_f1?: number
+          target_pct_f2?: number
+          test_cost?: number
+          test_refund?: boolean | null
+          test_refund_amount?: number | null
+          total_profit?: number | null
+          total_test_cost?: number | null
+          total_used?: number | null
+          total_withdraw?: number | null
+          trader_profit_share?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_size?: number
+          additional_deposit_f2?: number | null
+          calculated_at?: string | null
+          created_at?: string
+          extra_hedge_amount_f1?: number | null
+          extra_hedge_amount_f2?: number | null
+          extra_hedge_amount_funded?: number | null
+          final_balance_real_account_f1_fail?: number | null
+          final_balance_real_account_f2_fail?: number | null
+          funded_target_amount?: number | null
+          id?: string
+          implementation_status?: string | null
+          max_dd_pct?: number
+          min_real_deposit_f1?: number | null
+          min_real_deposit_f2?: number | null
+          min_real_deposit_funded?: number | null
+          notes?: string | null
+          phase_cost_f1?: number | null
+          phase_cost_f2?: number | null
+          phase_cost_funded?: number | null
+          profit_division_pct?: number
+          profit_projection_f1?: number | null
+          profit_projection_f2?: number | null
+          profit_projection_funded?: number | null
+          propfirm_breakeven?: number | null
+          ratio_f1?: number | null
+          ratio_f2?: number | null
+          ratio_funded?: number | null
+          recovery_amount_f1?: number | null
+          recovery_amount_f2?: number | null
+          recovery_amount_funded?: number | null
+          remaining_balance_f1?: number | null
+          remaining_balance_f2?: number | null
+          roi_percentage?: number | null
+          safety_multiplier_f1?: number | null
+          safety_multiplier_f2?: number | null
+          safety_multiplier_funded?: number | null
+          simulation_name?: string | null
+          target_pct_f1?: number
+          target_pct_f2?: number
+          test_cost?: number
+          test_refund?: boolean | null
+          test_refund_amount?: number | null
+          total_profit?: number | null
+          total_test_cost?: number | null
+          total_used?: number | null
+          total_withdraw?: number | null
+          trader_profit_share?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       history: {
         Row: {
           account_id: string | null

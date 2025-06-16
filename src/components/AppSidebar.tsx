@@ -81,7 +81,7 @@ export function AppSidebar() {
                       end 
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all min-h-[44px] ${
                         isActive(item.url)
-                          ? 'bg-primary/10 text-primary font-semibold border-r-2 border-primary shadow-sm' 
+                          ? 'bg-blue-50 text-blue-600 font-semibold border-r-2 border-blue-400 shadow-sm' 
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors'
                       }`}
                     >

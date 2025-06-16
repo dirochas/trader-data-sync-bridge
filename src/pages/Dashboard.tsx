@@ -38,7 +38,7 @@ const Dashboard = () => {
       {/* Stats Cards with Individual Color Borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1 - Azul */}
-        <Card className="tech-card tech-card-hover border-sky-400/30">
+        <Card className="tech-card tech-card-hover card-blue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total Accounts</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
@@ -54,7 +54,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Card 2 - Roxo */}
-        <Card className="tech-card tech-card-hover border-purple-400/30">
+        <Card className="tech-card tech-card-hover card-purple">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Active VPS</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
@@ -70,7 +70,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Card 3 - Verde */}
-        <Card className="tech-card tech-card-hover border-emerald-400/30">
+        <Card className="tech-card tech-card-hover card-green">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total P&L</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
@@ -86,7 +86,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Card 4 - Amarelo */}
-        <Card className="tech-card tech-card-hover border-amber-400/30">
+        <Card className="tech-card tech-card-hover card-yellow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Active Trades</CardTitle>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">

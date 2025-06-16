@@ -45,11 +45,11 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 215 28% 8%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 215 28% 10%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 215 28% 10%;
     --popover-foreground: 210 40% 98%;
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 84% 4.9%;
@@ -129,7 +129,7 @@
   @apply hover:shadow-lg hover:scale-[1.01] transition-all duration-300;
 }
 
-/* Cards Tecnológicos - Tema Escuro (Design Original) */
+/* Cards Tecnológicos - Tema Escuro (Design Original Restaurado) */
 .dark .tech-card {
   position: relative;
   background: linear-gradient(135deg, rgba(14, 165, 233, 0.03), rgba(168, 85, 247, 0.03), rgba(59, 130, 246, 0.03) 70%, rgba(16, 185, 129, 0.03));
@@ -149,11 +149,55 @@
   background: linear-gradient(90deg, transparent 0%, rgba(14, 165, 233, 0.3) 20%, rgba(168, 85, 247, 0.3) 50%, rgba(14, 165, 233, 0.3) 80%, transparent 100%);
 }
 
+.dark .tech-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.2) 30%, rgba(59, 130, 246, 0.2) 70%, transparent 100%);
+}
+
 .dark .tech-card-hover:hover {
   transform: translateY(-1px);
   box-shadow: rgba(0, 0, 0, 0.08) 0px 8px 25px -5px, rgba(14, 165, 233, 0.08) 0px 4px 10px -2px, rgba(255, 255, 255, 0.08) 0px 1px inset;
   background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(168, 85, 247, 0.08), rgba(59, 130, 246, 0.08) 70%, rgba(16, 185, 129, 0.08));
   border-color: rgba(14, 165, 233, 0.25);
+}
+
+/* Cores específicas para cada card no tema escuro */
+.dark .card-blue {
+  border-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+.dark .card-purple {
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+.dark .card-green {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark .card-yellow {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Cores específicas para cada card no tema claro */
+.card-blue {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+.card-purple {
+  border-color: rgba(147, 51, 234, 0.4) !important;
+}
+
+.card-green {
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.card-yellow {
+  border-color: rgba(251, 191, 36, 0.4) !important;
 }
 
 /* Status Indicators */

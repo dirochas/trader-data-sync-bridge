@@ -49,11 +49,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r bg-gray-900 backdrop-blur-xl`} 
+      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r`}
       collapsible="icon"
       style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}
     >
-      <div className="p-4 border-b bg-gray-900/80" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
+      <div className="p-4 border-b" style={{ backgroundColor: 'rgb(17, 24, 39)', borderColor: 'rgb(31, 41, 55)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
             <img 

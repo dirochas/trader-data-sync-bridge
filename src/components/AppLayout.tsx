@@ -13,14 +13,14 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="h-16 border-b bg-card flex items-center px-6 gap-4">
-            <SidebarTrigger className="md:hidden" />
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold">Hedge Matrix Trading System</h1>
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header - Responsivo */}
+          <header className="h-16 border-b bg-card flex items-center px-4 md:px-6 gap-4">
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-xl font-semibold truncate">Hedge Matrix Trading System</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
                 {new Date().toLocaleDateString('pt-BR', { 
                   weekday: 'long', 

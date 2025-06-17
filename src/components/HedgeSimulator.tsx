@@ -124,7 +124,8 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Additional notes..."
-                rows={2}
+                rows={1}
+                className="resize-y min-h-[40px]"
               />
             </div>
           </div>

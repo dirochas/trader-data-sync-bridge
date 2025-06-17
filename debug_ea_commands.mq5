@@ -2,16 +2,19 @@
 //|                                           TradingDataSender.mq5 |
 //|                            EA para envio de dados de trading    |
 //+------------------------------------------------------------------+
-#property version   "2.12"
+#property version   "2.13"
 
 #include "Includes/Logger.mqh"
 #include "Includes/AccountUtils.mqh"
-#include "Includes/HttpClient.mqh"
+#include "Includes/HttpClient.mqh" 
 #include "Includes/CommandProcessor.mqh"
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
 input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
+
+// NOVA VARIÁVEL PARA IDENTIFICAÇÃO DO USUÁRIO
+input string UserEmail = "usuario@exemplo.com"; // Email do usuário para vinculação da conta
 
 // NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
@@ -39,13 +42,17 @@ int OnInit()
    
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.12 - Sistema Inteligente MQL5");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.13 - Sistema Inteligente MQL5");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
+   LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
+   
+   // TESTE DE COLETA DE DADOS DA MÁQUINA (para identificação única)
+   TestMachineDataCollection();
    
    if(UseTimer)
    {
@@ -63,6 +70,53 @@ int OnInit()
    SendTradingDataIntelligent();
    
    return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+// FUNÇÃO PARA TESTAR COLETA DE DADOS DA MÁQUINA
+//+------------------------------------------------------------------+
+void TestMachineDataCollection()
+{
+   Print("========== TESTE DE COLETA DE DADOS DA MÁQUINA ==========");
+   
+   // Informações do Terminal
+   Print("TERMINAL INFO:");
+   Print("Terminal Name: ", TerminalInfoString(TERMINAL_NAME));
+   Print("Terminal Company: ", TerminalInfoString(TERMINAL_COMPANY));
+   Print("Terminal Path: ", TerminalInfoString(TERMINAL_PATH));
+   Print("Terminal Data Path: ", TerminalInfoString(TERMINAL_DATA_PATH));
+   Print("Terminal Common Data Path: ", TerminalInfoString(TERMINAL_COMMONDATA_PATH));
+   Print("Terminal Language: ", TerminalInfoString(TERMINAL_LANGUAGE));
+   Print("Terminal Build: ", IntegerToString(TerminalInfoInteger(TERMINAL_BUILD)));
+   Print("Terminal CPU Cores: ", IntegerToString(TerminalInfoInteger(TERMINAL_CPU_CORES)));
+   Print("Terminal Memory Physical: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_PHYSICAL)), " MB");
+   Print("Terminal Memory Total: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_TOTAL)), " MB");
+   Print("Terminal Memory Available: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_AVAILABLE)), " MB");
+   Print("Terminal Memory Used: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_USED)), " MB");
+   Print("Terminal Disk Space: ", IntegerToString(TerminalInfoInteger(TERMINAL_DISK_SPACE)), " MB");
+   Print("Terminal Screen DPI: ", IntegerToString(TerminalInfoInteger(TERMINAL_SCREEN_DPI)));
+   Print("Terminal Ping Last: ", IntegerToString(TerminalInfoInteger(TERMINAL_PING_LAST)), " microseconds");
+   
+   // Conta e Servidor
+   Print("\nACCOUNT & SERVER INFO:");
+   Print("Account Number: ", IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)));
+   Print("Account Server: ", AccountInfoString(ACCOUNT_SERVER));
+   Print("Account Company: ", AccountInfoString(ACCOUNT_COMPANY));
+   Print("Account Name: ", AccountInfoString(ACCOUNT_NAME));
+   Print("Account Currency: ", AccountInfoString(ACCOUNT_CURRENCY));
+   
+   // Símbolo atual
+   Print("\nSYMBOL INFO:");
+   Print("Current Symbol: ", Symbol());
+   Print("Symbol Server: ", SymbolInfoString(Symbol(), SYMBOL_PATH));
+   
+   // Data e Hora
+   Print("\nTIME INFO:");
+   Print("Local Time: ", TimeToString(TimeLocal()));
+   Print("Server Time: ", TimeToString(TimeCurrent()));
+   Print("GMT Time: ", TimeToString(TimeGMT()));
+   
+   Print("========== FIM DO TESTE DE COLETA DE DADOS ==========");
 }
 
 //+------------------------------------------------------------------+
@@ -223,4 +277,3 @@ void OnTimer()
       MarkFirstRunCompleted();
    }
 }
-

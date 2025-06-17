@@ -1,20 +1,23 @@
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
-//|                                                    Versão 2.11  |
+//|                                                    Versão 2.12  |
 //+------------------------------------------------------------------+
-#property version   "2.11"
+#property version   "2.12"
 #property strict
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
 input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
 
+// NOVA VARIÁVEL PARA IDENTIFICAÇÃO DO USUÁRIO
+input string UserEmail = "usuario@exemplo.com"; // Email do usuário para vinculação da conta
+
 // NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
 input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
-// SISTEMA DE LOGS MELHORADO - VERSÃO 2.11
+// SISTEMA DE LOGS MELHORADO - VERSÃO 2.12
 enum LogLevel {
    LOG_NONE = 0,           // Sem logs
    LOG_ERRORS_ONLY = 1,    // Apenas erros críticos e comandos remotos
@@ -41,7 +44,48 @@ int consecutiveSuccessfulSends = 0;
 int consecutiveFailures = 0;
 
 //+------------------------------------------------------------------+
-// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.11
+// FUNÇÃO PARA TESTAR COLETA DE DADOS DA MÁQUINA (MQL4)
+//+------------------------------------------------------------------+
+void TestMachineDataCollection()
+{
+   Print("========== TESTE DE COLETA DE DADOS DA MÁQUINA (MQL4) ==========");
+   
+   // Informações do Terminal
+   Print("TERMINAL INFO:");
+   Print("Terminal Name: ", TerminalName());
+   Print("Terminal Company: ", TerminalCompany());
+   Print("Terminal Path: ", TerminalPath());
+   
+   // Conta e Servidor
+   Print("\nACCOUNT & SERVER INFO:");
+   Print("Account Number: ", IntegerToString(AccountNumber()));
+   Print("Account Server: ", AccountServer());
+   Print("Account Company: ", AccountCompany());
+   Print("Account Name: ", AccountName());
+   Print("Account Currency: ", AccountCurrency());
+   
+   // Símbolo atual
+   Print("\nSYMBOL INFO:");
+   Print("Current Symbol: ", Symbol());
+   
+   // Data e Hora
+   Print("\nTIME INFO:");
+   Print("Local Time: ", TimeToString(TimeLocal()));
+   Print("Server Time: ", TimeToString(TimeCurrent()));
+   
+   // Informações específicas do MQL4
+   Print("\nMQL4 SPECIFIC INFO:");
+   Print("Account Balance: $", DoubleToString(AccountBalance(), 2));
+   Print("Account Equity: $", DoubleToString(AccountEquity(), 2));
+   Print("Account Leverage: 1:", IntegerToString(AccountLeverage()));
+   Print("Account Margin: $", DoubleToString(AccountMargin(), 2));
+   Print("Account Free Margin: $", DoubleToString(AccountFreeMargin(), 2));
+   
+   Print("========== FIM DO TESTE DE COLETA DE DADOS ==========");
+}
+
+//+------------------------------------------------------------------+
+// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.12
 //+------------------------------------------------------------------+
 void LogPrint(LogLevel level, string category, string message)
 {
@@ -142,13 +186,17 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ERRORS_ONLY, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.11 - Sistema Inteligente MQL4");
+   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.12 - Sistema Inteligente MQL4");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
+   LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
+   
+   // TESTE DE COLETA DE DADOS DA MÁQUINA (para identificação única)
+   TestMachineDataCollection();
    
    if(UseTimer)
    {
@@ -316,6 +364,7 @@ void SendIdleStatusToSupabase()
    jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountFreeMargin(), 2) + ",\"level\":0.00},";
    jsonData += "\"positions\":[],";
    jsonData += "\"history\":[],";
+   jsonData += "\"userEmail\":\"" + UserEmail + "\",";
    jsonData += "\"status\":\"IDLE\"";
    jsonData += "}";
    
@@ -471,7 +520,10 @@ string BuildJsonData()
          histCount++;
       }
    }
-   json += "]";
+   json += "],";
+   
+   // ADICIONAR EMAIL DO USUÁRIO
+   json += "\"userEmail\":\"" + UserEmail + "\"";
    
    json += "}";
    
@@ -799,4 +851,3 @@ string ErrorDescription(int error_code)
       default:   return "Erro desconhecido: " + IntegerToString(error_code);
    }
 }
-

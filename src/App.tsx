@@ -54,7 +54,8 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              <Route path="/accounts/:accountId" element={
+              {/* Fixed route - now using /account/{accountId} to match the navigation */}
+              <Route path="/account/:accountId" element={
                 <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
                   <AccountDetails />
                 </ProtectedRoute>

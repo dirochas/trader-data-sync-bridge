@@ -33,6 +33,12 @@
     --chart-5: 27 87% 67%;
     --radius: 0.75rem;
     
+    /* Cores padronizadas para vermelho claro */
+    --red-light: 0 65% 65%;
+    --red-light-hover: 0 70% 60%;
+    --red-light-bg: 0 65% 97%;
+    --red-light-border: 0 65% 85%;
+    
     /* Sidebar sempre escura */
     --sidebar-background: 14 16% 6%;
     --sidebar-foreground: 210 40% 98%;
@@ -69,6 +75,12 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    
+    /* Cores padronizadas para vermelho claro no tema escuro */
+    --red-light: 0 60% 70%;
+    --red-light-hover: 0 65% 65%;
+    --red-light-bg: 0 60% 15%;
+    --red-light-border: 0 60% 25%;
     
     /* Sidebar sempre escura */
     --sidebar-background: 14 16% 6%;
@@ -287,11 +299,15 @@
 }
 
 .status-disconnected {
-  @apply bg-red-100 text-red-800 border border-red-200;
+  color: hsl(var(--red-light));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
 }
 
 .dark .status-disconnected {
-  @apply bg-red-900/30 text-rose-300 border-red-800/50;
+  color: hsl(var(--red-light));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
 }
 
 /* Métricas */
@@ -304,11 +320,12 @@
 }
 
 .metric-negative {
-  @apply text-red-700 font-semibold;
+  color: hsl(var(--red-light));
+  font-weight: 600;
 }
 
 .dark .metric-negative {
-  @apply text-rose-300;
+  color: hsl(var(--red-light));
 }
 
 .metric-neutral {
@@ -333,11 +350,29 @@
 }
 
 .action-button-danger {
-  @apply bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300;
+  color: hsl(var(--red-light));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
+}
+
+.action-button-danger:hover {
+  color: hsl(var(--red-light-hover));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
+  opacity: 0.9;
 }
 
 .dark .action-button-danger {
-  @apply bg-red-900/30 text-red-400 border-red-800/50 hover:bg-red-800/50 hover:border-red-700/50;
+  color: hsl(var(--red-light));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
+}
+
+.dark .action-button-danger:hover {
+  color: hsl(var(--red-light-hover));
+  background-color: hsl(var(--red-light-bg));
+  border-color: hsl(var(--red-light-border));
+  opacity: 0.9;
 }
 
 .action-button-warning {

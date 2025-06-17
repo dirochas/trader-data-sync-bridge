@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -484,10 +483,10 @@ const AccountMonitor = () => {
                       <TableCell className="text-right font-medium">
                         {account.openTrades}
                       </TableCell>
-                      <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
                         US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
                         US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
@@ -496,7 +495,7 @@ const AccountMonitor = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
+                            className="action-button-danger"
                             onClick={() => handleCloseAllPositions(account)}
                             disabled={account.openTrades === 0}
                           >

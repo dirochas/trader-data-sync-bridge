@@ -5,9 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { useTradingAccounts } from '@/hooks/useTradingData';
 import { AppLayout } from '@/components/AppLayout';
+import { useNavigate } from 'react-router-dom';
 import { 
   Server, 
-  Plus, 
   Monitor,
   Wifi,
   WifiOff,
@@ -17,6 +17,7 @@ import {
 
 const VPSManagement = () => {
   const { data: accounts = [] } = useTradingAccounts();
+  const navigate = useNavigate();
   
   // Agrupar contas por VPS
   const vpsGroups = accounts.reduce((acc, account) => {
@@ -60,12 +61,17 @@ const VPSManagement = () => {
     const diffInMinutes = (now.getTime() - vps.lastUpdate.getTime()) / (1000 * 60);
     
     if (diffInMinutes <= 2) {
-      return { status: 'Online', color: 'text-green-600', icon: Wifi };
+      return { status: 'Online', color: 'text-emerald-500', icon: Wifi };
     } else if (diffInMinutes <= 10) {
-      return { status: 'Delayed', color: 'text-yellow-600', icon: Wifi };
+      return { status: 'Delayed', color: 'text-amber-500', icon: Wifi };
     } else {
-      return { status: 'Offline', color: 'text-red-500', icon: WifiOff };
+      return { status: 'Offline', color: 'text-rose-400', icon: WifiOff };
     }
+  };
+
+  const handleViewVPS = (vpsName: string) => {
+    // Navigate to accounts page with VPS filter
+    navigate('/accounts', { state: { vpsFilter: vpsName } });
   };
 
   const totalVPS = vpsData.length;
@@ -78,7 +84,7 @@ const VPSManagement = () => {
       <div className="p-6 space-y-6">
         {/* Header Section */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
             VPS Management
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -88,52 +94,60 @@ const VPSManagement = () => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
+          <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total VPS</CardTitle>
-              <Server className="h-4 w-4 text-blue-600" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Server className="h-5 w-5 text-sky-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-gray-900 dark:text-white">{totalVPS}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalVPS}</div>
+              <p className="text-xs text-emerald-500">
                 {onlineVPS} online
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="tech-card tech-card-hover card-green">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Online VPS</CardTitle>
-              <Wifi className="h-4 w-4 text-green-600" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <Wifi className="h-5 w-5 text-emerald-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-green-600">{onlineVPS}</div>
+              <div className="text-2xl font-medium text-emerald-500">{onlineVPS}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {((onlineVPS / totalVPS) * 100).toFixed(0)}% uptime
+                {totalVPS > 0 ? ((onlineVPS / totalVPS) * 100).toFixed(0) : 0}% uptime
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="tech-card tech-card-hover card-purple">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
-              <Users className="h-4 w-4 text-purple-600" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+                <Users className="h-5 w-5 text-purple-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-gray-900 dark:text-white">{totalAccountsAcrossVPS}</div>
+              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccountsAcrossVPS}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Distribuídas nos VPS
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="tech-card tech-card-hover card-yellow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Equity</CardTitle>
-              <Activity className="h-4 w-4 text-amber-600" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+                <Activity className="h-5 w-5 text-amber-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <div className="text-2xl font-medium text-gray-900 dark:text-white">
                 US$ {totalEquityAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -144,23 +158,23 @@ const VPSManagement = () => {
         </div>
 
         {/* VPS Table */}
-        <Card>
+        <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">VPS Servers</CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">VPS Servers</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>VPS Name</TableHead>
-                    <TableHead className="text-right">Accounts</TableHead>
-                    <TableHead className="text-right">Connected</TableHead>
-                    <TableHead className="text-right">Total Balance</TableHead>
-                    <TableHead className="text-right">Total Equity</TableHead>
-                    <TableHead>Last Update</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="font-medium">Status</TableHead>
+                    <TableHead className="font-medium">VPS Name</TableHead>
+                    <TableHead className="text-right font-medium">Accounts</TableHead>
+                    <TableHead className="text-right font-medium">Connected</TableHead>
+                    <TableHead className="text-right font-medium">Total Balance</TableHead>
+                    <TableHead className="text-right font-medium">Total Equity</TableHead>
+                    <TableHead className="font-medium">Last Update</TableHead>
+                    <TableHead className="font-medium">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -179,29 +193,39 @@ const VPSManagement = () => {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">{vps.vpsName}</TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right font-medium">
                           {vps.totalAccounts}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className={vps.connectedAccounts > 0 ? 'text-green-600' : 'text-red-500'}>
+                          <span className={vps.connectedAccounts > 0 ? 'text-emerald-500 font-medium' : 'text-rose-400 font-medium'}>
                             {vps.connectedAccounts}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right font-mono text-sm">
                           US$ {vps.totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right font-mono text-sm">
                           US$ {vps.totalEquity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-gray-500">
+                        <TableCell className="text-gray-500 text-sm">
                           {vps.lastUpdate.toLocaleString('pt-BR')}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
+                              onClick={() => handleViewVPS(vps.vpsName)}
+                            >
+                              <Monitor className="h-4 w-4 mr-1" />
                               View
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                            >
                               Edit
                             </Button>
                           </div>

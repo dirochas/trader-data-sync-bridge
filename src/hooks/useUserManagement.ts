@@ -1,12 +1,24 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
 type UserRole = Database['public']['Enums']['user_role'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+
+// Create a service role client for admin operations
+const SUPABASE_URL = "https://kgrlcsimdszbrkcwjpke.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtncmxjc2ltZHN6YnJrY3dqcGtlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTg0NzQxOCwiZXhwIjoyMDY1NDIzNDE4fQ.kCmqZmY8gU-5Vhqe7x8F0_Gk-ZAGCGVb4VJR8eEHPBY";
+
+const supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 // Hook para listar todos os usuários (apenas admin/manager)
 export const useUsers = () => {
@@ -60,8 +72,10 @@ export const useCreateUser = () => {
       company?: string;
       notes?: string;
     }) => {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      console.log('Creating user with data:', userData);
+      
+      // First create the auth user using service role
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: userData.email,
         password: userData.password,
         email_confirm: true,
@@ -72,10 +86,15 @@ export const useCreateUser = () => {
         }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
       
-      // Then update the profile with additional data
-      const { data, error } = await supabase
+      console.log('Auth user created:', authData.user.id);
+      
+      // Then update the profile with additional data using service role
+      const { data, error } = await supabaseAdmin
         .from('profiles')
         .update({
           first_name: userData.first_name,
@@ -89,7 +108,12 @@ export const useCreateUser = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+      
+      console.log('Profile updated:', data);
       return data as Profile;
     },
     onSuccess: () => {
@@ -127,8 +151,8 @@ export const useDeleteUser = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      // First delete from auth (this will cascade to profiles)
-      const { error: authError } = await supabase.auth.admin.deleteUser(id);
+      // First delete from auth using service role (this will cascade to profiles)
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
       if (authError) throw authError;
       
       // The profile should be automatically deleted by the CASCADE constraint

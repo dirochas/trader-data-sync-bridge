@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,9 +37,9 @@ import type { Database } from '@/integrations/supabase/types';
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
 
-const userFormSchema = z.object({
+// Schema base para campos comuns
+const baseUserSchema = {
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional(),
   first_name: z.string().min(1, 'Nome é obrigatório'),
   last_name: z.string().min(1, 'Sobrenome é obrigatório'),
   role: z.enum(['admin', 'manager', 'client_trader', 'client_investor'] as const),
@@ -46,9 +47,21 @@ const userFormSchema = z.object({
   company: z.string().optional(),
   notes: z.string().optional(),
   is_active: z.boolean().default(true),
+};
+
+// Schema para criação (senha obrigatória)
+const createUserSchema = z.object({
+  ...baseUserSchema,
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
-type UserFormData = z.infer<typeof userFormSchema>;
+// Schema para edição (senha opcional)
+const editUserSchema = z.object({
+  ...baseUserSchema,
+  password: z.string().optional(),
+});
+
+type UserFormData = z.infer<typeof createUserSchema> | z.infer<typeof editUserSchema>;
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -69,8 +82,11 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
   const updateUser = useUpdateUser();
   const { toast } = useToast();
 
+  // Usar schema diferente baseado no modo
+  const schema = mode === 'create' ? createUserSchema : editUserSchema;
+  
   const form = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       email: user?.email || '',
       password: '',
@@ -120,27 +136,21 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
       console.log('onSubmit triggered with data:', data);
       console.log('Current form values:', form.getValues());
       console.log('Form errors:', form.formState.errors);
+      console.log('Form is valid:', form.formState.isValid);
       
       if (mode === 'create') {
         console.log('Creating new user...');
-        if (!data.password) {
-          toast({
-            title: "Erro",
-            description: "Senha é obrigatória para novos usuários.",
-            variant: "destructive",
-          });
-          return;
-        }
-
+        const createData = data as z.infer<typeof createUserSchema>;
+        
         await createUser.mutateAsync({
-          email: data.email,
-          password: data.password,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role,
-          phone: data.phone,
-          company: data.company,
-          notes: data.notes,
+          email: createData.email,
+          password: createData.password,
+          first_name: createData.first_name,
+          last_name: createData.last_name,
+          role: createData.role,
+          phone: createData.phone,
+          company: createData.company,
+          notes: createData.notes,
         });
 
         toast({
@@ -184,6 +194,11 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
 
   const handleSubmit = (e: React.FormEvent) => {
     console.log('Form submit event triggered');
+    console.log('Form state:', {
+      isValid: form.formState.isValid,
+      errors: form.formState.errors,
+      values: form.getValues()
+    });
     e.preventDefault();
     form.handleSubmit(onSubmit)(e);
   };
@@ -370,7 +385,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
               <Button 
                 type="submit" 
                 disabled={createUser.isPending || updateUser.isPending}
-                onClick={() => console.log('Save button clicked!')}
+                onClick={() => console.log('Save button clicked! Form valid:', form.formState.isValid)}
               >
                 {mode === 'create' ? 'Criar Usuário' : 'Salvar Alterações'}
               </Button>

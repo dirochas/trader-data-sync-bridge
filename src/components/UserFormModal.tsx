@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -86,8 +85,9 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
   });
 
   React.useEffect(() => {
+    console.log('UserFormModal useEffect triggered:', { user, mode });
     if (user && mode === 'edit') {
-      form.reset({
+      const resetData = {
         email: user.email,
         password: '',
         first_name: user.first_name || '',
@@ -97,7 +97,9 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
         company: user.company || '',
         notes: user.notes || '',
         is_active: user.is_active,
-      });
+      };
+      console.log('Resetting form with data:', resetData);
+      form.reset(resetData);
     } else if (mode === 'create') {
       form.reset({
         email: '',
@@ -115,9 +117,12 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
 
   const onSubmit = async (data: UserFormData) => {
     try {
-      console.log('Form data being submitted:', data);
+      console.log('onSubmit triggered with data:', data);
+      console.log('Current form values:', form.getValues());
+      console.log('Form errors:', form.formState.errors);
       
       if (mode === 'create') {
+        console.log('Creating new user...');
         if (!data.password) {
           toast({
             title: "Erro",
@@ -143,7 +148,8 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
           description: "Usuário criado com sucesso.",
         });
       } else if (user) {
-        await updateUser.mutateAsync({
+        console.log('Updating existing user with ID:', user.id);
+        const updateData = {
           id: user.id,
           first_name: data.first_name,
           last_name: data.last_name,
@@ -152,7 +158,10 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
           company: data.company,
           notes: data.notes,
           is_active: data.is_active,
-        });
+        };
+        console.log('Update data:', updateData);
+
+        await updateUser.mutateAsync(updateData);
 
         toast({
           title: "Usuário atualizado",
@@ -160,6 +169,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
         });
       }
 
+      console.log('Operation completed successfully, closing modal...');
       onClose();
       form.reset();
     } catch (error) {
@@ -170,6 +180,12 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
         variant: "destructive",
       });
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    console.log('Form submit event triggered');
+    e.preventDefault();
+    form.handleSubmit(onSubmit)(e);
   };
 
   return (
@@ -188,7 +204,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -354,6 +370,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
               <Button 
                 type="submit" 
                 disabled={createUser.isPending || updateUser.isPending}
+                onClick={() => console.log('Save button clicked!')}
               >
                 {mode === 'create' ? 'Criar Usuário' : 'Salvar Alterações'}
               </Button>

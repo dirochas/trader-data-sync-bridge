@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,20 +57,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getDefaultRoute = () => {
-    if (!profile) return '/';
-    
-    // Admin e Manager vão direto para Account Monitor
-    if (profile.role === 'admin' || profile.role === 'manager') {
-      return '/accounts';
-    }
-    
-    // Client trader também pode ir para Account Monitor
-    if (profile.role === 'client_trader') {
-      return '/accounts';
-    }
-    
-    // Fallback para página inicial
-    return '/';
+    // Sempre redireciona para o Dashboard após o login
+    return '/dashboard';
   };
 
   useEffect(() => {

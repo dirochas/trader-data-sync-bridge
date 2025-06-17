@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,6 +8,7 @@ import { useSorting } from '@/hooks/useSorting';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { AppLayout } from '@/components/AppLayout';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import EditAccountModal from '@/components/EditAccountModal';
 import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
@@ -214,7 +216,7 @@ const AccountMonitor = () => {
   };
 
   return (
-    <>
+    <AppLayout>
       <div className="p-4 md:p-6 space-y-6">
         {/* Header Section */}
         <div className="space-y-3">
@@ -461,7 +463,7 @@ const AccountMonitor = () => {
         accountName={selectedAccountForClose?.name || ''}
         openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
       />
-    </>
+    </AppLayout>
   );
 };
 

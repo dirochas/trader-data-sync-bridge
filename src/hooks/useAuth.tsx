@@ -30,6 +30,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData?: { first_name?: string; last_name?: string; role?: UserRole }) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+  getDefaultRoute: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,6 +55,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Error fetching profile:', error);
       return null;
     }
+  };
+
+  const getDefaultRoute = () => {
+    if (!profile) return '/';
+    
+    // Admin e Manager vão direto para Account Monitor
+    if (profile.role === 'admin' || profile.role === 'manager') {
+      return '/accounts';
+    }
+    
+    // Client trader também pode ir para Account Monitor
+    if (profile.role === 'client_trader') {
+      return '/accounts';
+    }
+    
+    // Fallback para página inicial
+    return '/';
   };
 
   useEffect(() => {
@@ -189,7 +207,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signIn,
       signUp,
       signOut,
-      updateProfile
+      updateProfile,
+      getDefaultRoute
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,8 @@ import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading, profile, getDefaultRoute } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,9 +24,12 @@ const Auth = () => {
   const [lastName, setLastName] = useState('');
 
   // Redirect if already authenticated
-  if (user && !loading) {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    if (user && profile && !loading) {
+      const defaultRoute = getDefaultRoute();
+      navigate(defaultRoute, { replace: true });
+    }
+  }, [user, profile, loading, navigate, getDefaultRoute]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +40,9 @@ const Auth = () => {
     
     if (error) {
       setError(error.message);
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
+    // Don't set isLoading to false here if successful, let the redirect handle it
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -62,6 +66,15 @@ const Auth = () => {
   };
 
   if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, the useEffect will handle redirect
+  if (user && profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

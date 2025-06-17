@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import AccountInfo from '@/components/AccountInfo';
 import MarginInfo from '@/components/MarginInfo';
@@ -9,8 +10,29 @@ import { useRealtimeUpdates } from '@/hooks/useTradingData';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
-  const { profile } = useAuth();
+  const { profile, loading, getDefaultRoute } = useAuth();
+  const navigate = useNavigate();
   useRealtimeUpdates();
+
+  useEffect(() => {
+    if (!loading && profile) {
+      // Se o usuário é admin, manager ou client_trader, redireciona para Account Monitor
+      const defaultRoute = getDefaultRoute();
+      if (defaultRoute !== '/') {
+        navigate(defaultRoute, { replace: true });
+        return;
+      }
+    }
+  }, [profile, loading, navigate, getDefaultRoute]);
+
+  // Se está carregando ou vai ser redirecionado, mostra loading
+  if (loading || (profile && getDefaultRoute() !== '/')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <AppLayout>

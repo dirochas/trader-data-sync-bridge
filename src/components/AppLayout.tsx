@@ -14,8 +14,8 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header - Melhorado para tema claro */}
+        <div className="flex-1 flex flex-col min-w-0 transition-all duration-200 ease-linear">
+          {/* Header - Melhorado para tema claro e ajustado padding */}
           <header className="h-16 border-b bg-card/80 backdrop-blur-sm flex items-center px-4 md:px-6 gap-4 shadow-sm">
             <SidebarTrigger className="lg:hidden bg-card border border-border hover:bg-accent p-2 rounded-lg transition-colors" />
             <div className="flex-1 min-w-0">
@@ -38,7 +38,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
 
-          {/* Main Content */}
+          {/* Main Content - Ajustado para evitar corte quando sidebar está retraído */}
           <main className="flex-1 overflow-auto bg-background">
             {children}
           </main>

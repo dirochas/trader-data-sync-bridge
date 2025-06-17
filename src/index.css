@@ -34,7 +34,7 @@
     --radius: 0.75rem;
     
     /* Sidebar sempre escura */
-    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-background: 14 16% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 224 71.4% 4.1%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -47,9 +47,9 @@
   .dark {
     --background: 215 28% 8%;
     --foreground: 210 40% 98%;
-    --card: 215 28% 10%;
+    --card: 222 20% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 215 28% 10%;
+    --popover: 222 20% 9%;
     --popover-foreground: 210 40% 98%;
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 84% 4.9%;
@@ -71,7 +71,7 @@
     --chart-5: 340 75% 55%;
     
     /* Sidebar sempre escura */
-    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-background: 14 16% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 224 71.4% 4.1%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -200,6 +200,63 @@
   border-color: rgba(251, 191, 36, 0.4) !important;
 }
 
+/* Cards do Investment Flow - Tema Escuro */
+.dark .investment-flow-card {
+  @apply relative rounded-lg border backdrop-blur-sm transition-all duration-300;
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(71, 85, 105, 0.3);
+}
+
+.dark .investment-flow-card.blue {
+  background: rgba(14, 165, 233, 0.05);
+  border-color: rgba(14, 165, 233, 0.2);
+}
+
+.dark .investment-flow-card.orange {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.dark .investment-flow-card.purple {
+  background: rgba(168, 85, 247, 0.05);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.dark .investment-flow-card.green {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark .investment-flow-card.gray {
+  background: rgba(71, 85, 105, 0.05);
+  border-color: rgba(71, 85, 105, 0.2);
+}
+
+/* Cards do Investment Flow - Tema Claro */
+.investment-flow-card {
+  @apply relative rounded-lg border backdrop-blur-sm transition-all duration-300;
+}
+
+.investment-flow-card.blue {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.investment-flow-card.orange {
+  @apply bg-orange-50 border-orange-200;
+}
+
+.investment-flow-card.purple {
+  @apply bg-purple-50 border-purple-200;
+}
+
+.investment-flow-card.green {
+  @apply bg-green-50 border-green-200;
+}
+
+.investment-flow-card.gray {
+  @apply bg-gray-50 border-gray-200;
+}
+
 /* Status Indicators */
 .status-indicator {
   @apply inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium;
@@ -302,8 +359,8 @@
 
 /* Sidebar sempre escura - Override para forçar cores */
 [data-sidebar="sidebar"] {
-  background-color: rgb(17, 24, 39) !important;
-  border-color: rgb(31, 41, 55) !important;
+  background-color: #0E1016 !important;
+  border-color: #1F2937 !important;
 }
 
 /* Animações e efeitos */

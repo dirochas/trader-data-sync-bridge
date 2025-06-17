@@ -93,7 +93,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
+      <Card className="tech-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
         <TabsContent value="parameters">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Basic PropFirm Parameters */}
-            <Card>
+            <Card className="tech-card">
               <CardHeader>
                 <CardTitle className="text-lg">PropFirm Parameters</CardTitle>
               </CardHeader>
@@ -204,7 +204,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
             </Card>
             
             {/* Extra Hedge Amounts */}
-            <Card>
+            <Card className="tech-card">
               <CardHeader>
                 <CardTitle className="text-lg">Extra Hedge Amounts</CardTitle>
               </CardHeader>
@@ -252,7 +252,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
             </Card>
             
             {/* Safety Multipliers */}
-            <Card>
+            <Card className="tech-card">
               <CardHeader>
                 <CardTitle className="text-lg">Safety Multipliers</CardTitle>
               </CardHeader>
@@ -294,7 +294,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
           {results && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Phase 1 Results */}
-              <Card>
+              <Card className="tech-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Badge variant="secondary">Phase 1</Badge>
@@ -336,7 +336,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
               </Card>
               
               {/* Phase 2 Results */}
-              <Card>
+              <Card className="tech-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Badge variant="secondary">Phase 2</Badge>
@@ -384,7 +384,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
         <TabsContent value="funded">
           {results && (
             <div className="space-y-6">
-              <Card>
+              <Card className="tech-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Badge variant="default">Funded Phase</Badge>
@@ -441,7 +441,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
           {results && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
+                <Card className="tech-card card-blue">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -453,19 +453,19 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="tech-card card-purple">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-muted-foreground">Total Used</p>
                         <p className="text-2xl font-bold text-red-600">{formatCurrency(results.total_used)}</p>
                       </div>
-                      <TrendingUp className="w-8 h-8 text-red-500" />
+                      <TrendingUp className="w-8 h-8 text-purple-500" />
                     </div>
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="tech-card card-green">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -477,7 +477,7 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="tech-card card-yellow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -485,36 +485,36 @@ export function HedgeSimulator({ existingSimulation, onSave }: HedgeSimulatorPro
                         <p className="text-2xl font-bold text-green-600">{formatCurrency(results.total_profit)}</p>
                         <p className="text-sm text-muted-foreground">ROI: {formatPercentage(results.roi_percentage)}</p>
                       </div>
-                      <TrendingUp className="w-8 h-8 text-green-500" />
+                      <TrendingUp className="w-8 h-8 text-yellow-500" />
                     </div>
                   </CardContent>
                 </Card>
               </div>
               
               {/* Investment Flow */}
-              <Card>
+              <Card className="tech-card">
                 <CardHeader>
                   <CardTitle>Investment Flow</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 investment-flow-card blue rounded-lg">
                       <span>Phase 1 Minimum Deposit</span>
                       <span className="font-semibold">{formatCurrency(results.min_real_deposit_f1)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 investment-flow-card orange rounded-lg">
                       <span>Phase 2 Additional Deposit</span>
                       <span className="font-semibold">{formatCurrency(results.additional_deposit_f2)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 investment-flow-card purple rounded-lg">
                       <span>Funded Phase Deposit</span>
                       <span className="font-semibold">{formatCurrency(results.min_real_deposit_funded)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                    <div className="flex items-center justify-between p-4 investment-flow-card green rounded-lg border-2 border-green-200 dark:border-green-800/50">
                       <span className="font-semibold">Expected Withdrawal</span>
                       <span className="font-bold text-green-600 text-lg">{formatCurrency(results.total_withdraw)}</span>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                    <div className="flex items-center justify-between p-4 investment-flow-card gray rounded-lg border-2 border-gray-200 dark:border-gray-800/50">
                       <span className="font-semibold">Net Profit</span>
                       <span className="font-bold text-green-600 text-lg">{formatCurrency(results.total_profit)} ({formatPercentage(results.roi_percentage)})</span>
                     </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -26,7 +25,7 @@ import {
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Account Monitor', url: '/', icon: Monitor },
+  { title: 'Account Monitor', url: '/accounts', icon: Monitor },
   { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
   { title: 'User Management', url: '/users', icon: Users },
   { title: 'Expert Management', url: '/experts', icon: Brain },
@@ -41,8 +40,8 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed';
 
   const isActive = (path: string) => {
-    if (path === '/') {
-      return currentPath === '/';
+    if (path === '/accounts') {
+      return currentPath === '/' || currentPath === '/accounts';
     }
     return currentPath === path;
   };

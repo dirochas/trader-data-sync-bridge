@@ -9,12 +9,13 @@ interface ConnectionStatusProps {
 
 const ConnectionStatus = ({ lastUpdate, className = "" }: ConnectionStatusProps) => {
   const connectionInfo = getConnectionStatus(lastUpdate);
+  const displayStatus = connectionInfo.status === 'Disconnected' ? 'Offline' : connectionInfo.status;
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <span>{connectionInfo.icon}</span>
       <span className={`text-sm font-medium ${connectionInfo.color}`}>
-        {connectionInfo.status}
+        {displayStatus}
       </span>
     </div>
   );

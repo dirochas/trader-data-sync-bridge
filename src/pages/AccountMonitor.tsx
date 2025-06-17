@@ -3,7 +3,10 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
+import { usePagination } from '@/hooks/usePagination';
 import { useSorting } from '@/hooks/useSorting';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +19,8 @@ import {
   TrendingUp, 
   Users, 
   DollarSign, 
-  Activity
+  Activity,
+  Filter
 } from 'lucide-react';
 
 const AccountMonitor = () => {
@@ -28,6 +32,8 @@ const AccountMonitor = () => {
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [closeAllModalOpen, setCloseAllModalOpen] = useState(false);
   const [selectedAccountForClose, setSelectedAccountForClose] = useState<any>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Query otimizada para posições abertas com cache inteligente
   const { data: allOpenPositions = [] } = useQuery({
@@ -120,7 +126,7 @@ const AccountMonitor = () => {
       
       return {
         ...account,
-        status: connectionStatus.status,
+        status: connectionStatus.status === 'Disconnected' ? 'Offline' : connectionStatus.status,
         name: account.name || `Account ${account.account}`,
         vps: account.vps || 'N/A',
         openTrades: Math.max(0, openTradeCount),
@@ -133,9 +139,31 @@ const AccountMonitor = () => {
     });
   }, [accounts, allOpenPositions, todayTrades]);
 
+  // Filtrar contas por status
+  const filteredAccounts = selectedStatus === 'all' 
+    ? enrichedAccounts 
+    : enrichedAccounts.filter(account => {
+        if (selectedStatus === 'connected') {
+          return account.status === 'Live' || account.status === 'Slow Connection';
+        }
+        return account.status.toLowerCase() === selectedStatus.toLowerCase();
+      });
+
+  // Configuração de paginação
+  const {
+    currentPage,
+    totalPages,
+    paginatedData,
+    goToPage,
+    nextPage,
+    previousPage,
+    hasNextPage,
+    hasPreviousPage,
+  } = usePagination(filteredAccounts, itemsPerPage);
+
   // Configuração de ordenação com cache inteligente ativado
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(
-    enrichedAccounts,
+    paginatedData,
     { key: 'openTrades', direction: 'desc' }, // Ordenação padrão por trades abertas
     {
       // Funções de ordenação customizadas para maior controle
@@ -189,11 +217,97 @@ const AccountMonitor = () => {
 
   const accountsByStatus = accounts.reduce((acc, account) => {
     const status = getConnectionStatus(account.updated_at);
-    acc[status.status] = (acc[status.status] || 0) + 1;
+    const statusKey = status.status === 'Disconnected' ? 'Offline' : status.status;
+    acc[statusKey] = (acc[statusKey] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredAccounts.length);
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => goToPage(i)}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={() => goToPage(1)}
+            className="cursor-pointer"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 3) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => goToPage(i)}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      if (currentPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              isActive={currentPage === totalPages}
+              onClick={() => goToPage(totalPages)}
+              className="cursor-pointer"
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
 
   const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
     const handleClick = (e: React.MouseEvent) => {
@@ -204,7 +318,7 @@ const AccountMonitor = () => {
 
     return (
       <TableHead 
-        className={`cursor-pointer select-none text-caption ${className}`}
+        className={`cursor-pointer select-none font-medium ${className}`}
         onClick={handleClick}
       >
         <div className="flex items-center gap-2">
@@ -217,232 +331,241 @@ const AccountMonitor = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-6 space-y-6">
         {/* Header Section */}
-        <div className="space-y-3">
-          <h1 className="text-display text-2xl md:text-3xl text-white">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
             Account Monitor
           </h1>
-          <p className="text-caption text-muted-foreground/80">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
           </p>
         </div>
 
-        {/* Summary Cards - Following Dashboard Pattern */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <Card className="tech-card tech-card-hover border-sky-400/30">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
-                <Users className="h-7 w-7 text-sky-400" />
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Users className="h-5 w-5 text-sky-500" />
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalAccounts}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    {connectedAccounts} conectadas
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccounts}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {connectedAccounts} conectadas
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-purple-400/30">
+          <Card className="tech-card tech-card-hover card-green">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Open Trades</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-                <Activity className="h-7 w-7 text-purple-400" />
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Open Trades</CardTitle>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <Activity className="h-5 w-5 text-emerald-500" />
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalTrades}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    Posições ativas
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-medium text-emerald-500">{totalTrades}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Posições ativas
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-emerald-400/30">
+          <Card className="tech-card tech-card-hover card-green">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Earnings</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                <DollarSign className="h-7 w-7 text-emerald-400" />
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Earnings</CardTitle>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <DollarSign className="h-5 w-5 text-emerald-500" />
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-lg md:text-2xl metric-positive">
-                  US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    Lucro total
-                  </span>
-                </div>
+            <CardContent>
+              <div className="text-2xl font-medium text-emerald-500">
+                US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Lucro total
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-amber-400/30">
+          <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Active Clients</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                <TrendingUp className="h-7 w-7 text-amber-400" />
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Clients</CardTitle>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <TrendingUp className="h-5 w-5 text-sky-500" />
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalClients}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    Contas gerenciadas
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalClients}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Contas gerenciadas
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Connection Status Summary - Compact Version */}
+        {/* Accounts Table */}
         <Card className="tech-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-heading text-lg text-white">Connection Status Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="py-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center space-y-2">
-                <div className="text-display text-xl metric-positive">{accountsByStatus['Live'] || 0}</div>
-                <div className="status-indicator status-live mx-auto text-xs">
-                  🟢 Live
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Trading Accounts</CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="connected">Connected</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="slow connection">Slow Connection</SelectItem>
+                      <SelectItem value="delayed">Delayed</SelectItem>
+                      <SelectItem value="offline">Offline</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-display text-xl metric-neutral">{accountsByStatus['Slow Connection'] || 0}</div>
-                <div className="status-indicator status-slow mx-auto text-xs">
-                  🟡 Slow
-                </div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-display text-xl metric-negative">{accountsByStatus['Delayed'] || 0}</div>
-                <div className="status-indicator status-delayed mx-auto text-xs">
-                  🟠 Delayed
-                </div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-display text-xl metric-negative">{accountsByStatus['Disconnected'] || 0}</div>
-                <div className="status-indicator status-disconnected mx-auto text-xs">
-                  🔴 Disconnected
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Results per page:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Accounts Table */}
-        <Card className="tech-card">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-heading text-lg md:text-xl text-white">Trading Accounts</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <div className="min-w-[1000px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50">
-                      {createSortableHeader("Status", "status")}
-                      {createSortableHeader("Account Name", "name")}
-                      {createSortableHeader("Number", "account")}
-                      {createSortableHeader("VPS", "vps")}
-                      {createSortableHeader("Balance", "balance", "text-right")}
-                      {createSortableHeader("Equity", "equity", "text-right")}
-                      {createSortableHeader("Trades", "openTrades", "text-right")}
-                      {createSortableHeader("Open P&L", "openPnL", "text-right")}
-                      {createSortableHeader("Day P&L", "dayProfit", "text-right")}
-                      {createSortableHeader("Server", "server")}
-                      <TableHead className="min-w-[220px] text-caption">Actions</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {createSortableHeader("Status", "status")}
+                    {createSortableHeader("Account Name", "name")}
+                    {createSortableHeader("Number", "account")}
+                    {createSortableHeader("VPS", "vps")}
+                    {createSortableHeader("Balance", "balance", "text-right")}
+                    {createSortableHeader("Equity", "equity", "text-right")}
+                    {createSortableHeader("Trades", "openTrades", "text-right")}
+                    {createSortableHeader("Open P&L", "openPnL", "text-right")}
+                    {createSortableHeader("Day P&L", "dayProfit", "text-right")}
+                    {createSortableHeader("Server", "server")}
+                    <TableHead className="font-medium">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedAccounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell>
+                        <ConnectionStatus lastUpdate={account.updated_at} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {account.name}
+                      </TableCell>
+                      <TableCell className="font-mono">{account.account}</TableCell>
+                      <TableCell>{account.vps}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {account.openTrades}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
+                            onClick={() => handleCloseAllPositions(account)}
+                            disabled={account.openTrades === 0}
+                          >
+                            Close All
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                            onClick={() => handleEditAccount(account)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
+                            onClick={() => handleViewAccount(account.account)}
+                          >
+                            Details
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedAccounts.map((account) => (
-                      <TableRow key={account.id} className="table-row-hover border-border/30">
-                        <TableCell className="py-4">
-                          <ConnectionStatus lastUpdate={account.updated_at} />
-                        </TableCell>
-                        <TableCell className="text-body font-medium">
-                          {account.name}
-                        </TableCell>
-                        <TableCell className="text-body font-mono">{account.account}</TableCell>
-                        <TableCell className="text-body">{account.vps}</TableCell>
-                        <TableCell className="text-right text-body font-mono metric-neutral">
-                          US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right text-body font-mono metric-neutral">
-                          US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right text-body font-bold">
-                          {account.openTrades}
-                        </TableCell>
-                        <TableCell className={`text-right text-body font-mono ${account.openPnL >= 0 ? 'metric-positive' : 'metric-negative'}`}>
-                          US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className={`text-right text-body font-mono ${account.dayProfit >= 0 ? 'metric-positive' : 'metric-negative'}`}>
-                          US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-body font-medium">{account.server || 'N/A'}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button action-button-danger text-xs h-8"
-                              onClick={() => handleCloseAllPositions(account)}
-                              disabled={account.openTrades === 0}
-                            >
-                              CLOSE ALL
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button action-button-warning text-xs h-8"
-                              onClick={() => handleEditAccount(account)}
-                            >
-                              EDIT
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button action-button-primary text-xs h-8"
-                              onClick={() => handleViewAccount(account.account)}
-                            >
-                              VIEW
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
 
-            {accounts.length === 0 && !isLoading && (
-              <div className="text-center py-12 text-muted-foreground/70">
-                <div className="text-4xl mb-4">📊</div>
-                <p className="text-body">Nenhuma conta conectada</p>
-                <p className="text-caption text-muted-foreground/60 mt-2">Configure seus EAs para começar a monitorar contas</p>
+            {/* Pagination */}
+            {filteredAccounts.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex} to {endIndex} of {filteredAccounts.length} results
+                </div>
+                
+                {totalPages > 1 && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={previousPage}
+                          className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                        />
+                      </PaginationItem>
+                      
+                      {renderPaginationItems()}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={nextPage}
+                          className={hasNextPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
               </div>
             )}
 
-            {isLoading && (
-              <div className="text-center py-12 text-muted-foreground/70">
-                <div className="text-4xl mb-4">⏳</div>
-                <p className="text-body">Carregando contas...</p>
+            {filteredAccounts.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {selectedStatus === 'all' ? 'Nenhuma conta encontrada' : `Nenhuma conta ${selectedStatus} encontrada`}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Configure seus EAs para começar a monitorar contas
+                </p>
               </div>
             )}
           </CardContent>

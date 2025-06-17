@@ -16,6 +16,7 @@ import AccountDetails from './pages/AccountDetails';
 import SimulationManagement from './pages/SimulationManagement';
 import ExpertManagement from './pages/ExpertManagement';
 import VPSManagement from './pages/VPSManagement';
+import CommandsManagement from './pages/CommandsManagement';
 import UserManagement from './pages/UserManagement';
 import Settings from './pages/Settings';
 import Auth from './pages/Auth';
@@ -54,7 +55,6 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Fixed route - now using /account/{accountId} to match the navigation */}
               <Route path="/account/:accountId" element={
                 <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
                   <AccountDetails />
@@ -76,6 +76,12 @@ const App = () => (
               <Route path="/vps" element={
                 <ProtectedRoute requiredRoles={['admin', 'manager']}>
                   <VPSManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/commands" element={
+                <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <CommandsManagement />
                 </ProtectedRoute>
               } />
               

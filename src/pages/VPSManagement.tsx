@@ -60,11 +60,11 @@ const VPSManagement = () => {
     const diffInMinutes = (now.getTime() - vps.lastUpdate.getTime()) / (1000 * 60);
     
     if (diffInMinutes <= 2) {
-      return { status: 'Online', color: 'text-green-500', icon: Wifi };
+      return { status: 'Online', color: 'text-green-600', icon: Wifi };
     } else if (diffInMinutes <= 10) {
-      return { status: 'Delayed', color: 'text-yellow-500', icon: Wifi };
+      return { status: 'Delayed', color: 'text-yellow-600', icon: Wifi };
     } else {
-      return { status: 'Offline', color: 'text-red-400', icon: WifiOff };
+      return { status: 'Offline', color: 'text-red-500', icon: WifiOff };
     }
   };
 
@@ -75,116 +75,92 @@ const VPSManagement = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-6 space-y-6">
         {/* Header Section */}
-        <div className="space-y-3">
-          <h1 className="text-display text-2xl md:text-3xl text-white">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             VPS Management
           </h1>
-          <p className="text-caption text-muted-foreground/80">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Gerenciamento de servidores VPS e infraestrutura de trading
           </p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <Card className="tech-card tech-card-hover border-blue-400/30">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total VPS</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
-                <Server className="h-7 w-7 text-blue-400" />
-              </div>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total VPS</CardTitle>
+              <Server className="h-4 w-4 text-blue-600" />
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalVPS}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    {onlineVPS} online
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-white">{totalVPS}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {onlineVPS} online
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-green-400/30">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Online VPS</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center flex-shrink-0 border border-green-500/20">
-                <Wifi className="h-7 w-7 text-green-400" />
-              </div>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Online VPS</CardTitle>
+              <Wifi className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-positive">{onlineVPS}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    {((onlineVPS / totalVPS) * 100).toFixed(0)}% uptime
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-semibold text-green-600">{onlineVPS}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {((onlineVPS / totalVPS) * 100).toFixed(0)}% uptime
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-purple-400/30">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Accounts</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-                <Users className="h-7 w-7 text-purple-400" />
-              </div>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
+              <Users className="h-4 w-4 text-purple-600" />
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-2xl md:text-3xl metric-neutral">{totalAccountsAcrossVPS}</div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    Distribuídas nos VPS
-                  </span>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-white">{totalAccountsAcrossVPS}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Distribuídas nos VPS
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="tech-card tech-card-hover border-amber-400/30">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Equity</CardTitle>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                <Activity className="h-7 w-7 text-amber-400" />
-              </div>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Equity</CardTitle>
+              <Activity className="h-4 w-4 text-amber-600" />
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="text-display text-lg md:text-2xl metric-positive">
-                  US$ {totalEquityAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="status-indicator status-live">
-                    Equity total
-                  </span>
-                </div>
+            <CardContent>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+                US$ {totalEquityAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Equity total
+              </p>
             </CardContent>
           </Card>
         </div>
 
         {/* VPS Table */}
-        <Card className="tech-card">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-heading text-lg md:text-xl text-white">VPS Servers</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">VPS Servers</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border/50">
-                    <TableHead className="text-caption">Status</TableHead>
-                    <TableHead className="text-caption">VPS Name</TableHead>
-                    <TableHead className="text-caption text-right">Accounts</TableHead>
-                    <TableHead className="text-caption text-right">Connected</TableHead>
-                    <TableHead className="text-caption text-right">Total Balance</TableHead>
-                    <TableHead className="text-caption text-right">Total Equity</TableHead>
-                    <TableHead className="text-caption">Last Update</TableHead>
-                    <TableHead className="text-caption">Actions</TableHead>
+                  <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>VPS Name</TableHead>
+                    <TableHead className="text-right">Accounts</TableHead>
+                    <TableHead className="text-right">Connected</TableHead>
+                    <TableHead className="text-right">Total Balance</TableHead>
+                    <TableHead className="text-right">Total Equity</TableHead>
+                    <TableHead>Last Update</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,8 +169,8 @@ const VPSManagement = () => {
                     const StatusIcon = status.icon;
                     
                     return (
-                      <TableRow key={vps.vpsName} className="table-row-hover border-border/30">
-                        <TableCell className="py-4">
+                      <TableRow key={vps.vpsName}>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <StatusIcon className={`h-4 w-4 ${status.color}`} />
                             <span className={`text-sm font-medium ${status.color}`}>
@@ -202,39 +178,31 @@ const VPSManagement = () => {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-body font-medium">{vps.vpsName}</TableCell>
-                        <TableCell className="text-right text-body font-bold">
+                        <TableCell className="font-medium">{vps.vpsName}</TableCell>
+                        <TableCell className="text-right font-semibold">
                           {vps.totalAccounts}
                         </TableCell>
-                        <TableCell className="text-right text-body">
-                          <span className={vps.connectedAccounts > 0 ? 'metric-positive' : 'metric-negative'}>
+                        <TableCell className="text-right">
+                          <span className={vps.connectedAccounts > 0 ? 'text-green-600' : 'text-red-500'}>
                             {vps.connectedAccounts}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right text-body font-mono metric-neutral">
+                        <TableCell className="text-right font-mono">
                           US$ {vps.totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right text-body font-mono metric-neutral">
+                        <TableCell className="text-right font-mono">
                           US$ {vps.totalEquity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-body text-muted-foreground">
+                        <TableCell className="text-gray-500">
                           {vps.lastUpdate.toLocaleString('pt-BR')}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button action-button-primary text-xs h-8"
-                            >
-                              VIEW
+                            <Button variant="outline" size="sm">
+                              View
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button action-button-warning text-xs h-8"
-                            >
-                              EDIT
+                            <Button variant="outline" size="sm">
+                              Edit
                             </Button>
                           </div>
                         </TableCell>
@@ -246,10 +214,10 @@ const VPSManagement = () => {
             </div>
 
             {vpsData.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground/70">
-                <div className="text-4xl mb-4">🖥️</div>
-                <p className="text-body">Nenhum VPS detectado</p>
-                <p className="text-caption text-muted-foreground/60 mt-2">
+              <div className="text-center py-12">
+                <Server className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Nenhum VPS detectado</h3>
+                <p className="mt-1 text-sm text-gray-500">
                   Conecte seus EAs para começar a detectar VPS automaticamente
                 </p>
               </div>

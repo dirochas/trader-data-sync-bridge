@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -8,7 +9,8 @@ import {
   Server, 
   Brain,
   Calculator,
-  User
+  User,
+  Terminal
 } from 'lucide-react';
 import {
   Sidebar,
@@ -27,6 +29,8 @@ const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Account Monitor', url: '/accounts', icon: Monitor },
   { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
+  { title: 'VPS Management', url: '/vps', icon: Server },
+  { title: 'Commands', url: '/commands', icon: Terminal },
   { title: 'User Management', url: '/users', icon: Users },
   { title: 'Expert Management', url: '/experts', icon: Brain },
   { title: 'Settings', url: '/settings', icon: Settings },

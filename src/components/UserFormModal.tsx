@@ -115,6 +115,8 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
 
   const onSubmit = async (data: UserFormData) => {
     try {
+      console.log('Form data being submitted:', data);
+      
       if (mode === 'create') {
         if (!data.password) {
           toast({
@@ -161,6 +163,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
       onClose();
       form.reset();
     } catch (error) {
+      console.error('Error submitting form:', error);
       toast({
         title: "Erro",
         description: `Erro ao ${mode === 'create' ? 'criar' : 'atualizar'} usuário.`,
@@ -257,7 +260,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Função *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione uma função" />

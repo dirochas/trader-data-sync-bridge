@@ -1,10 +1,12 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { AppLayout } from '@/components/AppLayout';
+import { usePagination } from '@/hooks/usePagination';
 import { 
   Terminal, 
   Send, 
@@ -62,6 +64,114 @@ const mockCommands = [
 
 const CommandsManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const filteredCommands = selectedStatus === 'all' 
+    ? mockCommands 
+    : mockCommands.filter(cmd => cmd.status === selectedStatus);
+
+  const {
+    currentPage,
+    totalPages,
+    paginatedData,
+    goToPage,
+    nextPage,
+    previousPage,
+    hasNextPage,
+    hasPreviousPage,
+  } = usePagination(filteredCommands, itemsPerPage);
+
+  const statusCounts = {
+    total: mockCommands.length,
+    executed: mockCommands.filter(cmd => cmd.status === 'executed').length,
+    pending: mockCommands.filter(cmd => cmd.status === 'pending').length,
+    failed: mockCommands.filter(cmd => cmd.status === 'failed').length
+  };
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredCommands.length);
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => goToPage(i)}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={() => goToPage(1)}
+            className="cursor-pointer"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 3) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => goToPage(i)}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      if (currentPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              isActive={currentPage === totalPages}
+              onClick={() => goToPage(totalPages)}
+              className="cursor-pointer"
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -94,17 +204,6 @@ const CommandsManagement = () => {
           </Badge>
         );
     }
-  };
-
-  const filteredCommands = selectedStatus === 'all' 
-    ? mockCommands 
-    : mockCommands.filter(cmd => cmd.status === selectedStatus);
-
-  const statusCounts = {
-    total: mockCommands.length,
-    executed: mockCommands.filter(cmd => cmd.status === 'executed').length,
-    pending: mockCommands.filter(cmd => cmd.status === 'pending').length,
-    failed: mockCommands.filter(cmd => cmd.status === 'failed').length
   };
 
   return (
@@ -188,18 +287,35 @@ const CommandsManagement = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Recent Commands</CardTitle>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <select 
-                  className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:border-gray-700"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="executed">Executed</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
-                </select>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="executed">Executed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Results per page:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -219,7 +335,7 @@ const CommandsManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCommands.map((command) => (
+                  {paginatedData.map((command) => (
                     <TableRow key={command.id}>
                       <TableCell className="font-mono text-sm font-medium">
                         {command.command}
@@ -268,6 +384,37 @@ const CommandsManagement = () => {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination */}
+            {filteredCommands.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex} to {endIndex} of {filteredCommands.length} results
+                </div>
+                
+                {totalPages > 1 && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={previousPage}
+                          className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                        />
+                      </PaginationItem>
+                      
+                      {renderPaginationItems()}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={nextPage}
+                          className={hasNextPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </div>
+            )}
 
             {filteredCommands.length === 0 && (
               <div className="text-center py-12">

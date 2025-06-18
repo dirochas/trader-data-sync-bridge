@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -6,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FUNÇÃO PARA GERAR IDENTIFICADOR ÚNICO DE VPS
+// FUNÇÃO PARA GERAR IDENTIFICADOR ÚNICO DE VPS (LÓGICA ANTERIOR RESTAURADA)
 function generateVPSIdentifier(account: any): string {
   // Estratégia: usar dados que são consistentes para a mesma máquina física
   // mas diferentes entre máquinas diferentes

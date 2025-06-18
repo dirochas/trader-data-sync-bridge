@@ -49,14 +49,16 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Account Monitor - Todos podem acessar (inclusive investidores) */}
               <Route path="/accounts" element={
-                <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
+                <ProtectedRoute>
                   <AccountMonitor />
                 </ProtectedRoute>
               } />
               
+              {/* Account Details - Todos podem acessar (inclusive investidores) */}
               <Route path="/account/:accountId" element={
-                <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
+                <ProtectedRoute>
                   <AccountDetails />
                 </ProtectedRoute>
               } />
@@ -73,8 +75,9 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* VPS Management - Todos podem acessar (investidores com funcionalidades limitadas) */}
               <Route path="/vps" element={
-                <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                <ProtectedRoute>
                   <VPSManagement />
                 </ProtectedRoute>
               } />

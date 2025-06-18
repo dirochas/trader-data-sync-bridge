@@ -20,6 +20,7 @@ interface Permissions {
   canEditAccounts: boolean;
   canCloseAllPositions: boolean;
   canViewAccountDetails: boolean;
+  canManageVPS: boolean; // Nova permissão para gerenciar VPS
   
   // UI state
   isAdmin: boolean;
@@ -46,7 +47,7 @@ export const usePermissions = (): Permissions => {
     canAccessAccountMonitor: true, // Everyone can access account monitor
     canAccessAccountDetails: true, // Everyone can access account details
     canAccessHedgeSimulator: isAdminOrManager || isTrader, // Investors cannot access
-    canAccessVPS: isAdminOrManager, // Only admin/manager
+    canAccessVPS: true, // Everyone can access VPS (with different permissions)
     canAccessCommands: isAdminOrManager, // Only admin/manager
     canAccessUserManagement: isAdminOrManager, // Only admin/manager
     canAccessExpertManagement: isAdminOrManager || isTrader, // Investors cannot access
@@ -56,6 +57,7 @@ export const usePermissions = (): Permissions => {
     canEditAccounts: isAdminOrManager || isTrader, // Investors cannot edit
     canCloseAllPositions: isAdminOrManager || isTrader, // Investors cannot close positions
     canViewAccountDetails: true, // Everyone can view details
+    canManageVPS: isAdminOrManager || isTrader, // Investors cannot manage VPS
     
     // UI state helpers
     isAdmin,

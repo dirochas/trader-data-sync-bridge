@@ -26,7 +26,7 @@ export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['accounts', profile?.email, profile?.role],
+    queryKey: ['accounts', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
     queryFn: async () => {
       if (!profile) return [];
       
@@ -67,7 +67,7 @@ export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['account', accountNumber, profile?.email, profile?.role],
+    queryKey: ['account', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -108,7 +108,7 @@ export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['margin-info', accountNumber, profile?.email, profile?.role],
+    queryKey: ['margin-info', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -155,7 +155,7 @@ export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['positions', accountNumber, profile?.email, profile?.role],
+    queryKey: ['positions', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -200,7 +200,7 @@ export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['history', accountNumber, profile?.email, profile?.role],
+    queryKey: ['history', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       

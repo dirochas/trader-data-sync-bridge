@@ -25,11 +25,8 @@ export const getConnectionStatus = (lastUpdate: string) => {
 export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
-  // Create stable query key to avoid type inference issues
-  const queryKey = ['accounts', profile?.email || 'no-email', profile?.role || 'no-role'] as const;
-  
   return useQuery({
-    queryKey,
+    queryKey: ['accounts', profile?.email, profile?.role],
     queryFn: async () => {
       if (!profile) return [];
       
@@ -69,11 +66,8 @@ export const useTradingAccounts = () => {
 export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  // Create stable query key to avoid type inference issues
-  const queryKey = ['account', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const;
-  
   return useQuery({
-    queryKey,
+    queryKey: ['account', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -113,11 +107,8 @@ export const useTradingAccount = (accountNumber?: string) => {
 export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  // Create stable query key to avoid type inference issues
-  const queryKey = ['margin-info', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const;
-  
   return useQuery({
-    queryKey,
+    queryKey: ['margin-info', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -163,11 +154,8 @@ export const useMarginInfo = (accountNumber?: string) => {
 export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  // Create stable query key to avoid type inference issues
-  const queryKey = ['positions', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const;
-  
   return useQuery({
-    queryKey,
+    queryKey: ['positions', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -211,11 +199,8 @@ export const useOpenPositions = (accountNumber?: string) => {
 export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  // Create stable query key to avoid type inference issues
-  const queryKey = ['history', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const;
-  
   return useQuery({
-    queryKey,
+    queryKey: ['history', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       

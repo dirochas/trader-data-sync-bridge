@@ -1,3 +1,4 @@
+
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
 //|                                                    Versão 2.14  |
@@ -447,10 +448,11 @@ string BuildJsonData()
    
    LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountMargin(), 2) + " | Livre: $" + DoubleToString(AccountFreeMargin(), 2));
    
-   // Open Positions
+   // Open Positions - FIX: Use correct MQL4 functions and syntax
    json += "\"positions\":[";
    int posCount = 0;
-   for(int i = 0; i < OrdersTotal(); i++)
+   int totalOrders = OrdersTotal();
+   for(int i = 0; i < totalOrders; i++)
    {
       if(OrderSelect(i, SELECT_BY_POS) && OrderType() <= 1) // Only BUY/SELL
       {

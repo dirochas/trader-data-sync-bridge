@@ -365,8 +365,9 @@ void OnTimer()
    {
       bool hasOrders = HasOpenOrdersOrPendingOrders();
       
-      // LOG INTELIGENTE DO TIMER
-      LogTimerSmart("Timer executado - " + TimeToString(TimeCurrent()), hasOrders);
+      // LOG INTELIGENTE DO TIMER - FIX: Remove parameter to match Logger.mqh signature
+      string timerMessage = "Timer executado - " + TimeToString(TimeCurrent());
+      LogTimerSmart(timerMessage);
       
       SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
@@ -378,8 +379,9 @@ void OnTimer()
          
          if(TimeCurrent() - lastCommandCheck >= intervalToUse)
          {
-            // LOG INTELIGENTE DE COMANDOS
-            LogCommandSmart("Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s", hasOrders);
+            // LOG INTELIGENTE DE COMANDOS - usando sobrecarga com bool para especificar importância
+            string commandMessage = "Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s";
+            LogCommandSmart(commandMessage, false); // false = não é importante
             CheckPendingCommands();
             lastCommandCheck = TimeCurrent();
          }

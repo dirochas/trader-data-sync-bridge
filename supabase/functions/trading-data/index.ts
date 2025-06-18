@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,7 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    // Trading Data Endpoint - Version: Fixed 2024-06-18
+    // Trading Data Endpoint - Version: STABLE v1.0 - 2024-06-18 ✅
+    // ✅ Funcionalidades testadas e confirmadas:
+    // - Recebe dados de trading via POST
+    // - Salva contas, margem, posições e histórico
+    // - Suporte a VPS ID
+    // - Logs detalhados para debug
     console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
     console.log('Method:', req.method)
 

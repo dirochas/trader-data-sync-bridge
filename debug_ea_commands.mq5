@@ -1,3 +1,4 @@
+
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq5 |
 //|                            EA para envio de dados de trading    |
@@ -164,7 +165,7 @@ void SendTradingDataIntelligent()
          LogPrint(LOG_ALL, "DATA", "Iniciando coleta completa de dados");
       }
       
-      string jsonData = BuildJsonData();
+      string jsonData = BuildJsonDataWithVps();
       
       // Debug - salvar em arquivo apenas quando necessário
       if(g_LoggingLevel >= LOG_ALL && (stateChanged || TimeCurrent() - lastSendTime >= 30))
@@ -179,7 +180,7 @@ void SendTradingDataIntelligent()
       }
       
       // Enviar via HTTP para Supabase
-      SendToSupabase(jsonData, ServerURL);
+      SendToSupabaseWithHeaders(jsonData, ServerURL);
    }
    
    // Atualizar estado anterior
@@ -198,14 +199,14 @@ void SendIdleStatusToSupabase()
       LogPrint(LOG_ALL, "IDLE", "Enviando status idle para servidor (mantendo conexão)...");
    }
    
-   string jsonData = BuildIdleJsonData();
-   SendToSupabase(jsonData, ServerURL);
+   string jsonData = BuildIdleJsonDataWithVps();
+   SendToSupabaseWithHeaders(jsonData, ServerURL);
 }
 
 //+------------------------------------------------------------------+
 // Nova função para construir JSON Idle com VPS ID
 //+------------------------------------------------------------------+
-string BuildIdleJsonData()
+string BuildIdleJsonDataWithVps()
 {
    string json = "{";
    json += "\"account\":{";
@@ -236,7 +237,7 @@ string BuildIdleJsonData()
 //+------------------------------------------------------------------+
 // Função modificada para incluir VPS ID
 //+------------------------------------------------------------------+
-string BuildJsonData()
+string BuildJsonDataWithVps()
 {
    LogPrint(LOG_ALL, "JSON", "Construindo dados JSON...");
    
@@ -340,14 +341,10 @@ string BuildJsonData()
 }
 
 //+------------------------------------------------------------------+
-// Enviar dados para Supabase
+// Enviar dados para Supabase com headers
 //+------------------------------------------------------------------+
-void SendToSupabase(string jsonData, string url)
+void SendToSupabaseWithHeaders(string jsonData, string url)
 {
-   HttpClient http;
-   http.setUrl(url);
-   http.setRequestHeader("Content-Type", "application/json");
-   
    // Log apenas se não foi mostrado ainda ou se está em nível ALL
    bool isIdle = (StringFind(jsonData, "\"status\":\"IDLE\"") >= 0);
    if(!isIdle || g_LoggingLevel >= LOG_ALL)
@@ -356,125 +353,8 @@ void SendToSupabase(string jsonData, string url)
       LogPrint(LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " bytes");
    }
    
-   int responseCode = http.post(jsonData);
-   string responseBody = http.getResponseBody();
-   
-   // LOG INTELIGENTE DE CONEXÃO
-   LogConnectionSmart(responseCode == 200, responseCode, "Envio para Supabase");
-   
-   if(responseCode == 200)
-   {
-      if(!isIdle || g_LoggingLevel >= LOG_ALL)
-      {
-         LogPrint(LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
-         if(g_LoggingLevel >= LOG_ALL)
-         {
-            LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + responseBody);
-         }
-      }
-   }
-   else
-   {
-      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha no envio para Supabase - Código: " + IntegerToString(responseCode));
-      LogPrint(LOG_ALL, "DEBUG", "Resposta do servidor: " + responseBody);
-   }
-}
-
-//+------------------------------------------------------------------+
-// Verifica se existem ordens abertas ou pendentes
-//+------------------------------------------------------------------+
-bool HasOpenOrdersOrPendingOrders()
-{
-   return (PositionsTotal() > 0 || OrdersTotal() > 0);
-}
-
-//+------------------------------------------------------------------+
-// Log do timer com controle inteligente
-//+------------------------------------------------------------------+
-void LogTimerSmart(string message)
-{
-   static datetime lastLogTime = 0;
-   
-   // Log sempre na primeira execução
-   if(lastLogTime == 0)
-   {
-      LogSeparator("EXECUÇÃO TIMER");
-      LogPrint(LOG_ESSENTIAL, "TIMER", message);
-      lastLogTime = TimeCurrent();
-      return;
-   }
-   
-   // Log apenas se o modo ativo estiver habilitado
-   if(g_LoggingLevel >= LOG_ALL)
-   {
-      LogSeparator("EXECUÇÃO TIMER");
-      LogPrint(LOG_ALL, "TIMER", message);
-      lastLogTime = TimeCurrent();
-      return;
-   }
-   
-   // Log apenas se passaram 5 minutos desde o último log
-   if(TimeCurrent() - lastLogTime >= 300)
-   {
-      LogSeparator("EXECUÇÃO TIMER");
-      LogPrint(LOG_ESSENTIAL, "TIMER", message);
-      lastLogTime = TimeCurrent();
-   }
-}
-
-//+------------------------------------------------------------------+
-// Log de comandos com controle inteligente
-//+------------------------------------------------------------------+
-void LogCommandSmart(string message)
-{
-   static datetime lastCommandLogTime = 0;
-   
-   // Log sempre na primeira execução
-   if(lastCommandLogTime == 0)
-   {
-      LogSeparator("VERIFICAÇÃO COMANDOS");
-      LogPrint(LOG_ESSENTIAL, "POLLING", message);
-      lastCommandLogTime = TimeCurrent();
-      return;
-   }
-   
-   // Log apenas se o modo ativo estiver habilitado
-   if(g_LoggingLevel >= LOG_ALL)
-   {
-      LogSeparator("VERIFICAÇÃO COMANDOS");
-      LogPrint(LOG_ALL, "POLLING", message);
-      lastCommandLogTime = TimeCurrent();
-      return;
-   }
-   
-   // Log apenas se passaram 5 minutos desde o último log
-   if(TimeCurrent() - lastCommandLogTime >= 300)
-   {
-      LogSeparator("VERIFICAÇÃO COMANDOS");
-      LogPrint(LOG_ESSENTIAL, "POLLING", message);
-      lastCommandLogTime = TimeCurrent();
-   }
-}
-
-//+------------------------------------------------------------------+
-// Marcar primeira execução como completa
-//+------------------------------------------------------------------+
-void MarkFirstRunCompleted()
-{
-   static bool firstRunCompleted = false;
-   static int  runCounter = 0;
-   
-   if(!firstRunCompleted)
-   {
-      runCounter++;
-      
-      // Após 3 ciclos, marcar como completa
-      if(runCounter >= 3)
-      {
-         firstRunCompleted = true;
-         LogPrint(LOG_ESSENTIAL, "SYSTEM", "Rotina de inicialização completa");
-      }
-   }
+   // Usar a função do HttpClient
+   SendToSupabase(jsonData, url);
 }
 
 //+------------------------------------------------------------------+
@@ -486,7 +366,7 @@ void OnTimer()
       bool hasOrders = HasOpenOrdersOrPendingOrders();
       
       // LOG INTELIGENTE DO TIMER
-      LogTimerSmart("Timer executado - " + TimeToString(TimeCurrent()));
+      LogTimerSmart("Timer executado - " + TimeToString(TimeCurrent()), hasOrders);
       
       SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
@@ -499,7 +379,7 @@ void OnTimer()
          if(TimeCurrent() - lastCommandCheck >= intervalToUse)
          {
             // LOG INTELIGENTE DE COMANDOS
-            LogCommandSmart("Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+            LogCommandSmart("Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s", hasOrders);
             CheckPendingCommands();
             lastCommandCheck = TimeCurrent();
          }

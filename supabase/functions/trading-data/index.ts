@@ -1,30 +1,10 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-// FUNÇÃO PARA GERAR IDENTIFICADOR ÚNICO DE VPS (LÓGICA ORIGINAL RESTAURADA)
-function generateVPSIdentifier(account: any): string {
-  // Usar apenas o server como base para o identificador
-  // Contas no mesmo broker/servidor físico terão o mesmo VPS ID
-  
-  let identifier = 'Unknown';
-  
-  if (account.server) {
-    // Limpar e padronizar o nome do servidor
-    identifier = account.server
-      .replace(/[-._]/g, '') // Remove separadores
-      .replace(/\d+/g, '')   // Remove números
-      .toLowerCase();
-  }
-  
-  // Gerar hash simples baseado no servidor
-  const hash = btoa(identifier).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase();
-  
-  return `VPS-${hash}`;
 }
 
 serve(async (req) => {
@@ -64,11 +44,7 @@ serve(async (req) => {
       history: history?.length 
     })
 
-    // GERAR IDENTIFICADOR DE VPS AUTOMATICAMENTE
-    const vpsIdentifier = generateVPSIdentifier(account);
-    console.log('VPS Identifier gerado:', vpsIdentifier);
-
-    // Upsert trading account (incluindo VPS identifier)
+    // Upsert trading account (usando novos nomes)
     console.log('=== SALVANDO CONTA ===')
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
@@ -79,7 +55,6 @@ serve(async (req) => {
         equity: account.equity,
         profit: account.profit,
         leverage: account.leverage,
-        vps: vpsIdentifier, // CAMPO VPS IDENTIFICADOR
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'account'
@@ -92,10 +67,10 @@ serve(async (req) => {
       throw new Error(`Erro conta: ${accountError.message}`)
     }
 
-    console.log('Conta salva:', accountData?.id, 'VPS:', vpsIdentifier)
+    console.log('Conta salva:', accountData?.id)
     const accountId = accountData.id
 
-    // Delete old margin info and insert new one
+    // Delete old margin info and insert new one (usando novos nomes)
     console.log('=== ATUALIZANDO MARGEM ===')
     
     // First delete existing margin info for this account
@@ -108,7 +83,7 @@ serve(async (req) => {
       console.log('Info: Nenhuma margem anterior para deletar ou erro:', deleteMarginError.message)
     }
 
-    // Insert new margin info
+    // Insert new margin info (usando novos nomes)
     const { error: marginError } = await supabase
       .from('margin')
       .insert({
@@ -126,7 +101,7 @@ serve(async (req) => {
 
     console.log('Margem salva com sucesso')
 
-    // Clear old positions and insert new ones
+    // Clear old positions and insert new ones (usando novos nomes)
     console.log('=== LIMPANDO POSIÇÕES ANTIGAS ===')
     const { error: deleteError } = await supabase
       .from('positions')
@@ -139,7 +114,7 @@ serve(async (req) => {
       console.log('Posições antigas removidas')
     }
 
-    // Insert current positions
+    // Insert current positions (usando novos nomes)
     if (positions && positions.length > 0) {
       console.log('=== SALVANDO', positions.length, 'POSIÇÕES ===')
       const positionsData = positions.map((pos: any) => ({
@@ -169,7 +144,7 @@ serve(async (req) => {
       console.log('Nenhuma posição aberta para salvar')
     }
 
-    // Insert trade history (avoid duplicates)
+    // Insert trade history (avoid duplicates) (usando novos nomes)
     if (history && history.length > 0) {
       console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
       for (const trade of history) {
@@ -211,7 +186,6 @@ serve(async (req) => {
         success: true, 
         message: 'Dados atualizados com sucesso',
         account_id: accountId,
-        vps_identifier: vpsIdentifier,
         positions_count: positions?.length || 0,
         history_count: history?.length || 0,
         timestamp: new Date().toISOString()

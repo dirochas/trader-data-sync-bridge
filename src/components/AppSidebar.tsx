@@ -109,7 +109,7 @@ export function AppSidebar() {
     return currentPath === path;
   };
 
-  const userRole = profile?.role || 'user';
+  const userRole = profile?.role || 'client_trader';
   const displayName = getRoleDisplayName(userRole);
   const roleColor = getRoleColor(userRole);
 

@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -25,7 +26,7 @@ export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['accounts', profile?.email ?? '', profile?.role ?? ''] as const,
+    queryKey: ['accounts', profile?.email || '', profile?.role || ''],
     queryFn: async () => {
       if (!profile) return [];
       
@@ -66,7 +67,7 @@ export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['account', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
+    queryKey: ['account', accountNumber || '', profile?.email || '', profile?.role || ''],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -107,7 +108,7 @@ export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['margin-info', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
+    queryKey: ['margin-info', accountNumber || '', profile?.email || '', profile?.role || ''],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -154,7 +155,7 @@ export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['positions', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
+    queryKey: ['positions', accountNumber || '', profile?.email || '', profile?.role || ''],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -199,7 +200,7 @@ export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['history', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
+    queryKey: ['history', accountNumber || '', profile?.email || '', profile?.role || ''],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       

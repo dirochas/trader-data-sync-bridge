@@ -1,223 +1,232 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  console.log("=== TRADING DATA ENDPOINT CHAMADO ===");
+  console.log("Method:", req.method);
+  
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
-    console.log('Method:', req.method)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    console.log("Supabase URL:", supabaseUrl);
+    console.log("Service Key disponível:", !!supabaseServiceKey);
 
-    // Initialize Supabase client with SERVICE ROLE KEY (bypass RLS)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    
-    console.log('Supabase URL:', supabaseUrl)
-    console.log('Service Key disponível:', !!supabaseServiceKey)
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    })
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request body
-    const requestBody = await req.text()
-    console.log('Request body recebido:', requestBody)
+    const requestBody = await req.text();
+    console.log("Request body recebido:", requestBody);
     
-    const { account, margin, positions, history, vpsId } = JSON.parse(requestBody)
+    const data = JSON.parse(requestBody);
     
-    console.log('Dados parseados:', { 
-      account: account?.accountNumber, 
-      margin: margin?.used, 
-      positions: positions?.length,
-      history: history?.length,
-      vpsId: vpsId 
-    })
+    // Extrair informações principais
+    const accountNumber = data.account?.accountNumber;
+    const userEmail = data.userEmail || 'usuario@exemplo.com'; // Email do EA
+    const vpsId = data.vpsId || null;
+    
+    console.log("Dados parseados:", {
+      account: accountNumber,
+      margin: data.margin ? Object.keys(data.margin).length : 0,
+      positions: data.positions ? data.positions.length : 0,
+      history: data.history ? data.history.length : 0,
+      vpsId: vpsId,
+      userEmail: userEmail
+    });
 
-    // Upsert trading account (incluindo VPS ID)
-    console.log('=== SALVANDO CONTA ===')
-    const accountUpsertData: any = {
-      account: account.accountNumber,
-      server: account.server,
-      balance: account.balance,
-      equity: account.equity,
-      profit: account.profit,
-      leverage: account.leverage,
+    if (!accountNumber) {
+      return new Response(
+        JSON.stringify({ error: 'Account number é obrigatório' }), 
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // === SALVANDO CONTA ===
+    console.log("=== SALVANDO CONTA ===");
+    
+    const accountData = {
+      account: accountNumber,
+      name: `Account ${accountNumber}`,
+      server: data.account.server || 'Unknown',
+      broker: data.account.server ? data.account.server.split('-')[0] : 'Unknown',
+      balance: parseFloat(data.account.balance) || 0,
+      equity: parseFloat(data.account.equity) || 0,
+      profit: parseFloat(data.account.profit) || 0,
+      leverage: parseInt(data.account.leverage) || 1,
+      vps: vpsId,
+      user_email: userEmail, // Salvando o email do usuário do EA
       updated_at: new Date().toISOString()
-    }
-
-    // Adicionar VPS ID se fornecido
-    if (vpsId) {
-      accountUpsertData.vps = vpsId
-      console.log('VPS ID recebido e será salvo:', vpsId)
-    }
-
-    const { data: accountData, error: accountError } = await supabase
+    };
+    
+    const { data: savedAccount, error: accountError } = await supabase
       .from('accounts')
-      .upsert(accountUpsertData, {
-        onConflict: 'account'
+      .upsert(accountData, { 
+        onConflict: 'account',
+        ignoreDuplicates: false 
       })
       .select()
-      .single()
-
-    if (accountError) {
-      console.error('Erro ao salvar conta:', accountError)
-      throw new Error(`Erro conta: ${accountError.message}`)
-    }
-
-    console.log('Conta salva:', accountData?.id, vpsId ? `VPS: ${vpsId}` : 'Sem VPS ID')
-    const accountId = accountData.id
-
-    // Delete old margin info and insert new one (usando novos nomes)
-    console.log('=== ATUALIZANDO MARGEM ===')
+      .single();
     
-    // First delete existing margin info for this account
-    const { error: deleteMarginError } = await supabase
-      .from('margin')
-      .delete()
-      .eq('account_id', accountId)
-
-    if (deleteMarginError) {
-      console.log('Info: Nenhuma margem anterior para deletar ou erro:', deleteMarginError.message)
+    if (accountError) {
+      console.error("Erro ao salvar conta:", accountError);
+      throw accountError;
+    }
+    
+    if (vpsId) {
+      console.log("Conta salva:", savedAccount.id, "VPS:", vpsId, "Email:", userEmail);
+    } else {
+      console.log("Conta salva:", savedAccount.id, "Email:", userEmail, "Sem VPS ID");
     }
 
-    // Insert new margin info (usando novos nomes)
-    const { error: marginError } = await supabase
-      .from('margin')
-      .insert({
-        account_id: accountId,
-        used: margin.used,
-        free: margin.free,
-        level: margin.level,
+    // === ATUALIZANDO MARGEM ===
+    console.log("=== ATUALIZANDO MARGEM ===");
+    if (data.margin) {
+      const marginData = {
+        account_id: savedAccount.id,
+        used: parseFloat(data.margin.used) || 0,
+        free: parseFloat(data.margin.free) || 0,
+        level: parseFloat(data.margin.level) || 0,
         updated_at: new Date().toISOString()
-      })
-
-    if (marginError) {
-      console.error('Erro ao salvar margem:', marginError)
-      throw new Error(`Erro margem: ${marginError.message}`)
+      };
+      
+      const { error: marginError } = await supabase
+        .from('margin')
+        .upsert(marginData, { 
+          onConflict: 'account_id',
+          ignoreDuplicates: false 
+        });
+      
+      if (marginError) {
+        console.error("Erro ao salvar margem:", marginError);
+        throw marginError;
+      }
+      
+      console.log("Margem salva com sucesso");
     }
 
-    console.log('Margem salva com sucesso')
-
-    // Clear old positions and insert new ones (usando novos nomes)
-    console.log('=== LIMPANDO POSIÇÕES ANTIGAS ===')
-    const { error: deleteError } = await supabase
+    // === LIMPANDO POSIÇÕES ANTIGAS ===
+    console.log("=== LIMPANDO POSIÇÕES ANTIGAS ===");
+    const { error: deletePositionsError } = await supabase
       .from('positions')
       .delete()
-      .eq('account_id', accountId)
-
-    if (deleteError) {
-      console.error('Erro ao limpar posições:', deleteError)
-    } else {
-      console.log('Posições antigas removidas')
+      .eq('account_id', savedAccount.id);
+    
+    if (deletePositionsError) {
+      console.error("Erro ao limpar posições:", deletePositionsError);
+      throw deletePositionsError;
     }
+    
+    console.log("Posições antigas removidas");
 
-    // Insert current positions (usando novos nomes)
-    if (positions && positions.length > 0) {
-      console.log('=== SALVANDO', positions.length, 'POSIÇÕES ===')
-      const positionsData = positions.map((pos: any) => ({
-        account_id: accountId,
-        ticket: pos.ticket,
+    // === SALVANDO POSIÇÕES ===
+    if (data.positions && data.positions.length > 0) {
+      console.log("=== SALVANDO", data.positions.length, "POSIÇÕES ===");
+      
+      const positionsToInsert = data.positions.map((pos: any) => ({
+        account_id: savedAccount.id,
+        ticket: parseInt(pos.ticket),
         symbol: pos.symbol,
         type: pos.type,
-        volume: pos.volume,
-        price: pos.openPrice,
-        current: pos.currentPrice,
-        profit: pos.profit,
+        volume: parseFloat(pos.volume),
+        price: parseFloat(pos.openPrice),
+        current: parseFloat(pos.currentPrice),
+        profit: parseFloat(pos.profit),
         time: new Date(pos.openTime).toISOString(),
-        updated_at: new Date().toISOString()
-      }))
-
+      }));
+      
       const { error: positionsError } = await supabase
         .from('positions')
-        .insert(positionsData)
-
+        .insert(positionsToInsert);
+      
       if (positionsError) {
-        console.error('Erro ao salvar posições:', positionsError)
-        throw new Error(`Erro posições: ${positionsError.message}`)
+        console.error("Erro ao salvar posições:", positionsError);
+        throw positionsError;
       }
-
-      console.log('Posições salvas:', positions.length)
+      
+      console.log("Posições salvas com sucesso");
     } else {
-      console.log('Nenhuma posição aberta para salvar')
+      console.log("Nenhuma posição aberta para salvar");
     }
 
-    // Insert trade history (avoid duplicates) (usando novos nomes)
-    if (history && history.length > 0) {
-      console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
-      for (const trade of history) {
+    // === SALVANDO HISTÓRICO ===
+    if (data.history && data.history.length > 0) {
+      console.log("=== SALVANDO HISTÓRICO ===");
+      
+      for (const trade of data.history) {
         try {
-          const { error: historyError } = await supabase
+          const tradeData = {
+            account_id: savedAccount.id,
+            ticket: parseInt(trade.ticket),
+            symbol: trade.symbol,
+            type: trade.type,
+            volume: parseFloat(trade.volume),
+            price: parseFloat(trade.openPrice),
+            close: parseFloat(trade.closePrice),
+            profit: parseFloat(trade.profit),
+            time: new Date(trade.openTime).toISOString(),
+            close_time: new Date(trade.closeTime).toISOString(),
+          };
+          
+          const { error: tradeError } = await supabase
             .from('history')
-            .upsert({
-              account_id: accountId,
-              ticket: trade.ticket,
-              symbol: trade.symbol,
-              type: trade.type,
-              volume: trade.volume,
-              price: trade.openPrice,
-              close: trade.closePrice,
-              profit: trade.profit,
-              time: new Date(trade.openTime).toISOString(),
-              close_time: new Date(trade.closeTime).toISOString()
-            }, {
-              onConflict: 'account_id,ticket'
-            })
-
-          if (historyError) {
-            console.error('Erro ao salvar trade:', trade.ticket, historyError)
+            .upsert(tradeData, { 
+              onConflict: 'ticket,account_id',
+              ignoreDuplicates: false 
+            });
+          
+          if (tradeError) {
+            console.error("Erro ao salvar trade:", trade.ticket, tradeError);
           } else {
-            console.log('Trade salvo:', trade.ticket)
+            console.log("Trade salvo:", trade.ticket);
           }
         } catch (error) {
-          console.error('Erro ao processar trade:', trade.ticket, error)
+          console.error("Erro ao processar trade:", trade.ticket, error);
         }
       }
-      console.log('Histórico processado')
+      
+      console.log("Histórico processado");
     } else {
-      console.log('Nenhum histórico para salvar')
+      console.log("Nenhum histórico para salvar");
     }
 
-    console.log('=== SUCESSO TOTAL ===')
+    console.log("=== SUCESSO TOTAL ===");
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Dados atualizados com sucesso',
-        account_id: accountId,
-        vps_id: vpsId || null,
-        positions_count: positions?.length || 0,
-        history_count: history?.length || 0,
-        timestamp: new Date().toISOString()
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+        message: 'Dados processados com sucesso',
+        accountId: savedAccount.id,
+        userEmail: userEmail
+      }), 
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
 
   } catch (error) {
-    console.error('=== ERRO NA EDGE FUNCTION ===')
-    console.error('Erro completo:', error)
-    console.error('Stack trace:', error.stack)
-    
+    console.error("=== ERRO TOTAL ===", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: 'Verifique os logs da Edge Function',
-        timestamp: new Date().toISOString()
-      }),
+        error: 'Erro interno do servidor', 
+        details: error.message 
+      }), 
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    )
+    );
   }
-})
+});

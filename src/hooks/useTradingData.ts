@@ -1,8 +1,6 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 
 // Função para calcular o status da conexão baseado na última atualização
 export const getConnectionStatus = (lastUpdate: string) => {
@@ -21,116 +19,65 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook para buscar TODAS as contas de trading com filtragem por email
+// Hook otimizado para buscar TODAS as contas de trading
 export const useTradingAccounts = () => {
-  const { profile } = useAuth();
-  
   return useQuery({
-    queryKey: ['accounts', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
+    queryKey: ['accounts'],
     queryFn: async () => {
-      if (!profile) return [];
-      
-      console.log('Fetching accounts for user:', profile.email, 'with role:', profile.role);
-      
-      let query = supabase
+      const { data, error } = await supabase
         .from('accounts')
         .select('*')
         .order('updated_at', { ascending: false });
       
-      // Se o usuário não é admin nem manager, filtrar apenas suas contas
-      if (profile.role !== 'admin' && profile.role !== 'manager') {
-        console.log('Filtering accounts by email:', profile.email);
-        query = query.eq('user_email', profile.email);
-      } else {
-        console.log('User has admin/manager role - showing all accounts');
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching accounts:', error);
-        throw error;
-      }
-      
-      console.log('Fetched accounts:', data?.length || 0);
+      if (error) throw error;
       return data || [];
     },
-    enabled: !!profile,
-    refetchInterval: 1500,
-    staleTime: 500,
-    gcTime: 30000,
+    refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
+    staleTime: 500, // Considera dados "frescos" por 500ms
+    gcTime: 30000, // Cache por 30 segundos
   });
 };
 
-// Hook para buscar UMA conta específica com filtragem por email
+// Hook para buscar UMA conta específica
 export const useTradingAccount = (accountNumber?: string) => {
-  const { profile } = useAuth();
-  
   return useQuery({
-    queryKey: ['account', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
+    queryKey: ['account', accountNumber],
     queryFn: async () => {
-      if (!accountNumber || !profile) return null;
+      if (!accountNumber) return null;
       
-      console.log('Fetching single account:', accountNumber, 'for user:', profile.email);
-      
-      let query = supabase
+      const { data, error } = await supabase
         .from('accounts')
         .select('*')
         .eq('account', accountNumber)
         .order('updated_at', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .single();
       
-      // Se o usuário não é admin nem manager, filtrar apenas suas contas
-      if (profile.role !== 'admin' && profile.role !== 'manager') {
-        console.log('Adding email filter for account query');
-        query = query.eq('user_email', profile.email);
-      }
-      
-      const { data, error } = await query.maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching account:', error);
-        throw error;
-      }
-      
-      console.log('Fetched account:', data ? 'found' : 'not found');
+      if (error) throw error;
       return data;
     },
-    enabled: !!accountNumber && !!profile,
-    refetchInterval: 1500,
+    enabled: !!accountNumber,
+    refetchInterval: 1500, // Mesmo intervalo para consistência
     staleTime: 500,
     gcTime: 30000,
   });
 };
 
-// Hook para buscar informações de margem por conta com filtragem por email
+// Hook para buscar informações de margem por conta
 export const useMarginInfo = (accountNumber?: string) => {
-  const { profile } = useAuth();
-  
   return useQuery({
-    queryKey: ['margin-info', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
+    queryKey: ['margin-info', accountNumber],
     queryFn: async () => {
-      if (!accountNumber || !profile) return null;
+      if (!accountNumber) return null;
       
-      console.log('Fetching margin info for account:', accountNumber);
-      
-      // Primeiro busca o ID da conta com filtragem por email se necessário
-      let accountQuery = supabase
+      // Primeiro busca o ID da conta
+      const { data: accountData, error: accountError } = await supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber);
+        .eq('account', accountNumber)
+        .single();
       
-      // Se o usuário não é admin nem manager, filtrar apenas suas contas
-      if (profile.role !== 'admin' && profile.role !== 'manager') {
-        accountQuery = accountQuery.eq('user_email', profile.email);
-      }
-      
-      const { data: accountData, error: accountError } = await accountQuery.single();
-      
-      if (accountError || !accountData) {
-        console.log('Account not found or no permission');
-        return null;
-      }
+      if (accountError || !accountData) return null;
       
       const { data, error } = await supabase
         .from('margin')
@@ -143,41 +90,28 @@ export const useMarginInfo = (accountNumber?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!accountNumber && !!profile,
-    refetchInterval: 3000,
+    enabled: !!accountNumber,
+    refetchInterval: 3000, // Dados menos críticos - 3 segundos
     staleTime: 1000,
     gcTime: 60000,
   });
 };
 
-// Hook para buscar posições abertas por conta - DADOS CRÍTICOS com filtragem por email
+// Hook para buscar posições abertas por conta - DADOS CRÍTICOS
 export const useOpenPositions = (accountNumber?: string) => {
-  const { profile } = useAuth();
-  
   return useQuery({
-    queryKey: ['positions', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
+    queryKey: ['positions', accountNumber],
     queryFn: async () => {
-      if (!accountNumber || !profile) return [];
+      if (!accountNumber) return [];
       
-      console.log('Fetching positions for account:', accountNumber);
-      
-      // Primeiro busca o ID da conta com filtragem por email se necessário
-      let accountQuery = supabase
+      // Primeiro busca o ID da conta
+      const { data: accountData, error: accountError } = await supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber);
+        .eq('account', accountNumber)
+        .single();
       
-      // Se o usuário não é admin nem manager, filtrar apenas suas contas
-      if (profile.role !== 'admin' && profile.role !== 'manager') {
-        accountQuery = accountQuery.eq('user_email', profile.email);
-      }
-      
-      const { data: accountData, error: accountError } = await accountQuery.single();
-      
-      if (accountError || !accountData) {
-        console.log('Account not found or no permission');
-        return [];
-      }
+      if (accountError || !accountData) return [];
       
       const { data, error } = await supabase
         .from('positions')
@@ -188,41 +122,28 @@ export const useOpenPositions = (accountNumber?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!accountNumber && !!profile,
-    refetchInterval: 1000,
-    staleTime: 300,
+    enabled: !!accountNumber,
+    refetchInterval: 1000, // MAIS CRÍTICO - 1 segundo para posições
+    staleTime: 300, // Dados muito frescos
     gcTime: 30000,
   });
 };
 
-// Hook para buscar histórico de trades por conta com filtragem por email
+// Hook para buscar histórico de trades por conta
 export const useTradeHistory = (accountNumber?: string) => {
-  const { profile } = useAuth();
-  
   return useQuery({
-    queryKey: ['history', accountNumber || 'no-account', profile?.email || 'no-email', profile?.role || 'no-role'] as const,
+    queryKey: ['history', accountNumber],
     queryFn: async () => {
-      if (!accountNumber || !profile) return [];
+      if (!accountNumber) return [];
       
-      console.log('Fetching trade history for account:', accountNumber);
-      
-      // Primeiro busca o ID da conta com filtragem por email se necessário
-      let accountQuery = supabase
+      // Primeiro busca o ID da conta
+      const { data: accountData, error: accountError } = await supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber);
+        .eq('account', accountNumber)
+        .single();
       
-      // Se o usuário não é admin nem manager, filtrar apenas suas contas
-      if (profile.role !== 'admin' && profile.role !== 'manager') {
-        accountQuery = accountQuery.eq('user_email', profile.email);
-      }
-      
-      const { data: accountData, error: accountError } = await accountQuery.single();
-      
-      if (accountError || !accountData) {
-        console.log('Account not found or no permission');
-        return [];
-      }
+      if (accountError || !accountData) return [];
       
       const { data, error } = await supabase
         .from('history')
@@ -234,10 +155,10 @@ export const useTradeHistory = (accountNumber?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!accountNumber && !!profile,
-    refetchInterval: 8000,
+    enabled: !!accountNumber,
+    refetchInterval: 8000, // Dados históricos - menos críticos, 8 segundos
     staleTime: 2000,
-    gcTime: 120000,
+    gcTime: 120000, // Cache por 2 minutos
   });
 };
 

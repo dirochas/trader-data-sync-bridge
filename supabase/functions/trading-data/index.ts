@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -7,38 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FUNÇÃO PARA GERAR IDENTIFICADOR ÚNICO DE VPS (LÓGICA ANTERIOR RESTAURADA)
+// FUNÇÃO PARA GERAR IDENTIFICADOR ÚNICO DE VPS (LÓGICA ORIGINAL RESTAURADA)
 function generateVPSIdentifier(account: any): string {
-  // Estratégia: usar dados que são consistentes para a mesma máquina física
-  // mas diferentes entre máquinas diferentes
+  // Usar apenas o server como base para o identificador
+  // Contas no mesmo broker/servidor físico terão o mesmo VPS ID
   
-  const components = [];
+  let identifier = 'Unknown';
   
-  // 1. Account Server (geralmente indica o broker/servidor)
   if (account.server) {
-    components.push(account.server);
+    // Limpar e padronizar o nome do servidor
+    identifier = account.server
+      .replace(/[-._]/g, '') // Remove separadores
+      .replace(/\d+/g, '')   // Remove números
+      .toLowerCase();
   }
   
-  // 2. Se tiver informações de terminal (caso venham do EA)
-  if (account.terminal_info) {
-    // Terminal Company + Name (ex: MetaQuotes + MetaTrader)
-    if (account.terminal_info.company) components.push(account.terminal_info.company);
-    if (account.terminal_info.name) components.push(account.terminal_info.name);
-    
-    // CPU Cores + Physical Memory (hardware da máquina)
-    if (account.terminal_info.cpu_cores) components.push(`cpu${account.terminal_info.cpu_cores}`);
-    if (account.terminal_info.memory_physical) components.push(`mem${account.terminal_info.memory_physical}`);
-  }
-  
-  // 3. Fallback: usar parte do account number
-  if (components.length === 0) {
-    components.push(account.accountNumber || account.account || 'unknown');
-  }
-  
-  // Gerar hash baseado nos componentes coletados
-  const identifier = components.join('-');
-  
-  // Simplificar o hash para algo mais legível
+  // Gerar hash simples baseado no servidor
   const hash = btoa(identifier).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase();
   
   return `VPS-${hash}`;

@@ -1,9 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
-//|                                                    Versão 2.12  |
+//|                                                    Versão 2.14  |
 //+------------------------------------------------------------------+
-#property version   "2.12"
+#property version   "2.14"
 #property strict
+
+#include "VpsIdentifier_MQL4.mqh"  // BIBLIOTECA VPS
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
 input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
@@ -17,7 +19,7 @@ input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
 input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
-// SISTEMA DE LOGS MELHORADO - VERSÃO 2.12
+// SISTEMA DE LOGS MELHORADO - VERSÃO 2.14
 enum LogLevel {
    LOG_NONE = 0,           // Sem logs
    LOG_ERRORS_ONLY = 1,    // Apenas erros críticos e comandos remotos
@@ -27,6 +29,9 @@ enum LogLevel {
 };
 
 input LogLevel LoggingLevel = LOG_ERRORS_ONLY; // Nível de logging
+
+// VARIÁVEL NOVA PARA VPS
+input bool EnableVpsIdentification = true; // Habilitar identificação de VPS
 
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
@@ -43,49 +48,11 @@ bool connectionEstablished = false;
 int consecutiveSuccessfulSends = 0;
 int consecutiveFailures = 0;
 
-//+------------------------------------------------------------------+
-// FUNÇÃO PARA TESTAR COLETA DE DADOS DA MÁQUINA (MQL4)
-//+------------------------------------------------------------------+
-void TestMachineDataCollection()
-{
-   Print("========== TESTE DE COLETA DE DADOS DA MÁQUINA (MQL4) ==========");
-   
-   // Informações do Terminal
-   Print("TERMINAL INFO:");
-   Print("Terminal Name: ", TerminalName());
-   Print("Terminal Company: ", TerminalCompany());
-   Print("Terminal Path: ", TerminalPath());
-   
-   // Conta e Servidor
-   Print("\nACCOUNT & SERVER INFO:");
-   Print("Account Number: ", IntegerToString(AccountNumber()));
-   Print("Account Server: ", AccountServer());
-   Print("Account Company: ", AccountCompany());
-   Print("Account Name: ", AccountName());
-   Print("Account Currency: ", AccountCurrency());
-   
-   // Símbolo atual
-   Print("\nSYMBOL INFO:");
-   Print("Current Symbol: ", Symbol());
-   
-   // Data e Hora
-   Print("\nTIME INFO:");
-   Print("Local Time: ", TimeToString(TimeLocal()));
-   Print("Server Time: ", TimeToString(TimeCurrent()));
-   
-   // Informações específicas do MQL4
-   Print("\nMQL4 SPECIFIC INFO:");
-   Print("Account Balance: $", DoubleToString(AccountBalance(), 2));
-   Print("Account Equity: $", DoubleToString(AccountEquity(), 2));
-   Print("Account Leverage: 1:", IntegerToString(AccountLeverage()));
-   Print("Account Margin: $", DoubleToString(AccountMargin(), 2));
-   Print("Account Free Margin: $", DoubleToString(AccountFreeMargin(), 2));
-   
-   Print("========== FIM DO TESTE DE COLETA DE DADOS ==========");
-}
+// VARIÁVEL GLOBAL PARA VPS ID
+string g_VpsId = "";
 
 //+------------------------------------------------------------------+
-// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.12
+// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.14
 //+------------------------------------------------------------------+
 void LogPrint(LogLevel level, string category, string message)
 {
@@ -186,7 +153,7 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ERRORS_ONLY, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.12 - Sistema Inteligente MQL4");
+   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.14 - Sistema Inteligente MQL4 + VPS ID");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
@@ -195,8 +162,13 @@ int OnInit()
    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
-   // TESTE DE COLETA DE DADOS DA MÁQUINA (para identificação única)
-   TestMachineDataCollection();
+   // INICIALIZAR VPS ID
+   if(EnableVpsIdentification)
+   {
+      LogSubSeparator("IDENTIFICAÇÃO VPS");
+      g_VpsId = GetVpsUniqueId(); // Obter e salvar VPS ID globalmente
+      LogPrint(LOG_ERRORS_ONLY, "VPS", "VPS ID ativo: " + g_VpsId);
+   }
    
    if(UseTimer)
    {
@@ -213,7 +185,7 @@ int OnInit()
    LogPrint(LOG_ALL, "INIT", "Enviando dados iniciais...");
    SendTradingDataIntelligent();
    
-   return INIT_SUCCEEDED;
+   return(INIT_SUCCEEDED);
 }
 
 //+------------------------------------------------------------------+
@@ -366,6 +338,13 @@ void SendIdleStatusToSupabase()
    jsonData += "\"history\":[],";
    jsonData += "\"userEmail\":\"" + UserEmail + "\",";
    jsonData += "\"status\":\"IDLE\"";
+   
+   // ADICIONAR VPS ID SE DISPONÍVEL
+   if(EnableVpsIdentification && g_VpsId != "")
+   {
+      jsonData += ",\"vpsId\":\"" + g_VpsId + "\"";
+   }
+   
    jsonData += "}";
    
    SendToSupabase(jsonData);
@@ -423,12 +402,11 @@ void SendToSupabase(string jsonData)
    }
    else if(res == 0)
    {
-      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Timeout ou sem conexão com internet");
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Timeout ou sem conexão");
    }
    else
    {
       LogPrint(LOG_ERRORS_ONLY, "ERROR", "Erro HTTP: " + IntegerToString(res));
-      LogPrint(LOG_ALL, "DEBUG", "Headers de resposta: " + resultHeaders);
       if(ArraySize(result) > 0)
       {
          string errorResponse = CharArrayToString(result);
@@ -464,7 +442,7 @@ string BuildJsonData()
    json += "\"margin\":{";
    json += "\"used\":" + DoubleToString(AccountMargin(), 2) + ",";
    json += "\"free\":" + DoubleToString(AccountFreeMargin(), 2) + ",";
-   json += "\"level\":" + DoubleToString(AccountMargin() == 0 ? 0 : AccountEquity()/AccountMargin()*100, 2);
+   json += "\"level\":" + DoubleToString(AccountMargin() == 0 ? 0 : (AccountEquity()/AccountMargin()*100), 2);
    json += "},";
    
    LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountMargin(), 2) + " | Livre: $" + DoubleToString(AccountFreeMargin(), 2));
@@ -485,7 +463,7 @@ string BuildJsonData()
          json += "\"openPrice\":" + DoubleToString(OrderOpenPrice(), 5) + ",";
          json += "\"currentPrice\":" + DoubleToString(OrderType() == OP_BUY ? MarketInfo(OrderSymbol(), MODE_BID) : MarketInfo(OrderSymbol(), MODE_ASK), 5) + ",";
          json += "\"profit\":" + DoubleToString(OrderProfit(), 2) + ",";
-         json += "\"openTime\":\"" + TimeToString(OrderOpenTime()) + "\"";
+         json += "\"openTime\":\"" + TimeToStr(OrderOpenTime()) + "\"";
          json += "}";
          posCount++;
       }
@@ -514,8 +492,8 @@ string BuildJsonData()
          json += "\"openPrice\":" + DoubleToString(OrderOpenPrice(), 5) + ",";
          json += "\"closePrice\":" + DoubleToString(OrderClosePrice(), 5) + ",";
          json += "\"profit\":" + DoubleToString(OrderProfit(), 2) + ",";
-         json += "\"openTime\":\"" + TimeToString(OrderOpenTime()) + "\",";
-         json += "\"closeTime\":\"" + TimeToString(OrderCloseTime()) + "\"";
+         json += "\"openTime\":\"" + TimeToStr(OrderOpenTime()) + "\",";
+         json += "\"closeTime\":\"" + TimeToStr(OrderCloseTime()) + "\"";
          json += "}";
          histCount++;
       }
@@ -524,6 +502,12 @@ string BuildJsonData()
    
    // ADICIONAR EMAIL DO USUÁRIO
    json += "\"userEmail\":\"" + UserEmail + "\"";
+   
+   // ADICIONAR VPS ID SE DISPONÍVEL
+   if(EnableVpsIdentification && g_VpsId != "")
+   {
+      json += ",\"vpsId\":\"" + g_VpsId + "\"";
+   }
    
    json += "}";
    
@@ -546,7 +530,7 @@ void OnTimer()
       if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
       {
          LogSeparator("EXECUÇÃO TIMER");
-         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToString(TimeCurrent()));
+         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToStr(TimeCurrent()));
       }
       
       SendTradingDataIntelligent();
@@ -715,7 +699,7 @@ void ExecuteCloseAllCommand(string jsonResponse)
                failedCount++;
                int error = GetLastError();
                LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha ao fechar posição: " + IntegerToString(OrderTicket()));
-               LogPrint(LOG_ERRORS_ONLY, "ERROR", "Código: " + IntegerToString(error) + " | " + ErrorDescription(error));
+               LogPrint(LOG_ERRORS_ONLY, "ERROR", "Código: " + IntegerToString(error));
             }
          }
          else
@@ -760,18 +744,13 @@ void ExecuteCloseAllCommand(string jsonResponse)
 //+------------------------------------------------------------------+
 string ExtractCommandId(string jsonResponse)
 {
-   string searchStr = "\"id\":\"";
-   int startPos = StringFind(jsonResponse, searchStr);
-   if(startPos >= 0)
-   {
-      startPos += StringLen(searchStr);
-      int endPos = StringFind(jsonResponse, "\"", startPos);
-      if(endPos > startPos)
-      {
-         return StringSubstr(jsonResponse, startPos, endPos - startPos);
-      }
-   }
-   return "";
+   int start = StringFind(jsonResponse, "\"id\":\"") + 6;
+   if(start < 6) return("");
+   
+   int end = StringFind(jsonResponse, "\"", start);
+   if(end <= start) return("");
+   
+   return(StringSubstr(jsonResponse, start, end - start));
 }
 
 //+------------------------------------------------------------------+
@@ -779,16 +758,18 @@ string ExtractCommandId(string jsonResponse)
 //+------------------------------------------------------------------+
 void UpdateCommandStatus(string commandId, string status, string message)
 {
-   LogPrint(LOG_ALL, "UPDATE", "Atualizando status do comando: " + commandId + " para " + status);
-   
-   string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/update-command-status";
-   string headers = "Content-Type: application/json\r\n";
+   LogPrint(LOG_ALL, "UPDATE", "Atualizando status do comando: " + commandId);
+   LogPrint(LOG_ALL, "UPDATE", "Status: " + status + " | Mensagem: " + message);
    
    string jsonData = "{";
    jsonData += "\"commandId\":\"" + commandId + "\",";
    jsonData += "\"status\":\"" + status + "\",";
-   jsonData += "\"message\":\"" + message + "\"";
+   jsonData += "\"message\":\"" + message + "\",";
+   jsonData += "\"executedAt\":\"" + TimeToStr(TimeCurrent()) + "\"";
    jsonData += "}";
+   
+   string url = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/update-command-status";
+   string headers = "Content-Type: application/json\r\n";
    
    char post[];
    char result[];
@@ -799,55 +780,12 @@ void UpdateCommandStatus(string commandId, string status, string message)
    
    int res = WebRequest("POST", url, headers, 5000, post, result, resultHeaders);
    
-   LogPrint(LOG_ALL, "POST", "Código de resposta: " + IntegerToString(res));
-   
    if(res == 200)
    {
-      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Status atualizado com sucesso!");
+      LogPrint(LOG_ESSENTIAL, "SUCCESS", "Status do comando atualizado com sucesso");
    }
    else
    {
-      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha ao atualizar status: " + IntegerToString(res));
-   }
-}
-
-//+------------------------------------------------------------------+
-// Descrição de erros
-//+------------------------------------------------------------------+
-string ErrorDescription(int error_code)
-{
-   switch(error_code)
-   {
-      case 0:    return "Sem erro";
-      case 1:    return "Sem erro, mas resultado desconhecido";
-      case 2:    return "Erro comum";
-      case 3:    return "Parâmetros inválidos";
-      case 4:    return "Servidor de trade ocupado";
-      case 5:    return "Versão antiga do terminal cliente";
-      case 6:    return "Sem conexão com servidor de trade";
-      case 7:    return "Não há direitos suficientes";
-      case 8:    return "Muita frequência de requisições";
-      case 9:    return "Operação malformada";
-      case 64:   return "Conta desabilitada";
-      case 65:   return "Número de conta inválido";
-      case 128:  return "Timeout de trade";
-      case 129:  return "Preço inválido";
-      case 130:  return "Stops inválidos";
-      case 131:  return "Volume inválido";
-      case 132:  return "Mercado fechado";
-      case 133:  return "Trade desabilitado";
-      case 134:  return "Dinheiro insuficiente";
-      case 135:  return "Preço mudou";
-      case 136:  return "Sem preços";
-      case 137:  return "Broker ocupado";
-      case 138:  return "Nova cotação";
-      case 139:  return "Ordem travada";
-      case 140:  return "Apenas compra permitida";
-      case 141:  return "Muitas requisições";
-      case 145:  return "Modificação negada porque ordem muito próxima ao mercado";
-      case 146:  return "Subsistema de trade ocupado";
-      case 147:  return "Uso de data de expiração negado pelo broker";
-      case 148:  return "Quantidade de ordens abertas e pendentes atingiu o limite";
-      default:   return "Erro desconhecido: " + IntegerToString(error_code);
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha ao atualizar status do comando: " + IntegerToString(res));
    }
 }

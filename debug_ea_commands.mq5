@@ -1,4 +1,3 @@
-
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq5 |
 //|                            EA para envio de dados de trading    |
@@ -9,6 +8,7 @@
 #include "Includes/AccountUtils.mqh"
 #include "Includes/HttpClient.mqh" 
 #include "Includes/CommandProcessor.mqh"
+#include "Includes/VpsIdentifier_v2.14.mqh"  // BIBLIOTECA VPS
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
 input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
@@ -25,6 +25,9 @@ input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ord
 // DEFINIÇÃO DO NÍVEL DE LOGGING
 input LogLevel LoggingLevel = LOG_ESSENTIAL; // Nível de logging
 
+// VARIÁVEL PARA VPS
+input bool EnableVpsIdentification = true; // Habilitar identificação de VPS
+
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
 datetime lastIdleLog = 0;
@@ -35,6 +38,9 @@ int lastOrderCount = -1;    // Para detectar mudanças na quantidade de ordens
 bool idleLogAlreadyShown = false;
 bool activeLogAlreadyShown = false;
 
+// VARIÁVEL GLOBAL PARA VPS ID
+string g_VpsId = "";
+
 //+------------------------------------------------------------------+
 int OnInit()
 {
@@ -43,7 +49,7 @@ int OnInit()
    
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.14 - Sistema Inteligente MQL5");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.14 - Sistema Inteligente MQL5 + VPS ID");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
    LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
@@ -52,8 +58,13 @@ int OnInit()
    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
-   // TESTE DE COLETA DE DADOS DA MÁQUINA (para identificação única)
-   TestMachineDataCollection();
+   // INICIALIZAR VPS ID
+   if(EnableVpsIdentification)
+   {
+      LogSubSeparator("IDENTIFICAÇÃO VPS");
+      g_VpsId = GetVpsUniqueId(); // Obter e salvar VPS ID globalmente
+      LogPrint(LOG_ESSENTIAL, "VPS", "VPS ID ativo: " + g_VpsId);
+   }
    
    if(UseTimer)
    {
@@ -71,53 +82,6 @@ int OnInit()
    SendTradingDataIntelligent();
    
    return INIT_SUCCEEDED;
-}
-
-//+------------------------------------------------------------------+
-// FUNÇÃO PARA TESTAR COLETA DE DADOS DA MÁQUINA
-//+------------------------------------------------------------------+
-void TestMachineDataCollection()
-{
-   Print("========== TESTE DE COLETA DE DADOS DA MÁQUINA ==========");
-   
-   // Informações do Terminal
-   Print("TERMINAL INFO:");
-   Print("Terminal Name: ", TerminalInfoString(TERMINAL_NAME));
-   Print("Terminal Company: ", TerminalInfoString(TERMINAL_COMPANY));
-   Print("Terminal Path: ", TerminalInfoString(TERMINAL_PATH));
-   Print("Terminal Data Path: ", TerminalInfoString(TERMINAL_DATA_PATH));
-   Print("Terminal Common Data Path: ", TerminalInfoString(TERMINAL_COMMONDATA_PATH));
-   Print("Terminal Language: ", TerminalInfoString(TERMINAL_LANGUAGE));
-   Print("Terminal Build: ", IntegerToString(TerminalInfoInteger(TERMINAL_BUILD)));
-   Print("Terminal CPU Cores: ", IntegerToString(TerminalInfoInteger(TERMINAL_CPU_CORES)));
-   Print("Terminal Memory Physical: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_PHYSICAL)), " MB");
-   Print("Terminal Memory Total: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_TOTAL)), " MB");
-   Print("Terminal Memory Available: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_AVAILABLE)), " MB");
-   Print("Terminal Memory Used: ", IntegerToString(TerminalInfoInteger(TERMINAL_MEMORY_USED)), " MB");
-   Print("Terminal Disk Space: ", IntegerToString(TerminalInfoInteger(TERMINAL_DISK_SPACE)), " MB");
-   Print("Terminal Screen DPI: ", IntegerToString(TerminalInfoInteger(TERMINAL_SCREEN_DPI)));
-   Print("Terminal Ping Last: ", IntegerToString(TerminalInfoInteger(TERMINAL_PING_LAST)), " microseconds");
-   
-   // Conta e Servidor
-   Print("\nACCOUNT & SERVER INFO:");
-   Print("Account Number: ", IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)));
-   Print("Account Server: ", AccountInfoString(ACCOUNT_SERVER));
-   Print("Account Company: ", AccountInfoString(ACCOUNT_COMPANY));
-   Print("Account Name: ", AccountInfoString(ACCOUNT_NAME));
-   Print("Account Currency: ", AccountInfoString(ACCOUNT_CURRENCY));
-   
-   // Símbolo atual
-   Print("\nSYMBOL INFO:");
-   Print("Current Symbol: ", Symbol());
-   Print("Symbol Server: ", SymbolInfoString(Symbol(), SYMBOL_PATH));
-   
-   // Data e Hora
-   Print("\nTIME INFO:");
-   Print("Local Time: ", TimeToString(TimeLocal()));
-   Print("Server Time: ", TimeToString(TimeCurrent()));
-   Print("GMT Time: ", TimeToString(TimeGMT()));
-   
-   Print("========== FIM DO TESTE DE COLETA DE DADOS ==========");
 }
 
 //+------------------------------------------------------------------+
@@ -236,6 +200,281 @@ void SendIdleStatusToSupabase()
    
    string jsonData = BuildIdleJsonData();
    SendToSupabase(jsonData, ServerURL);
+}
+
+//+------------------------------------------------------------------+
+// Nova função para construir JSON Idle com VPS ID
+//+------------------------------------------------------------------+
+string BuildIdleJsonData()
+{
+   string json = "{";
+   json += "\"account\":{";
+   json += "\"balance\":" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
+   json += "\"equity\":" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2) + ",";
+   json += "\"profit\":0.00,";
+   json += "\"accountNumber\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "\",";
+   json += "\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",";
+   json += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
+   json += "},";
+   json += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",\"level\":0.00},";
+   json += "\"positions\":[],";
+   json += "\"history\":[],";
+   json += "\"userEmail\":\"" + UserEmail + "\",";
+   json += "\"status\":\"IDLE\"";
+   
+   // ADICIONAR VPS ID SE DISPONÍVEL
+   if(EnableVpsIdentification && g_VpsId != "")
+   {
+      json += ",\"vpsId\":\"" + g_VpsId + "\"";
+   }
+   
+   json += "}";
+   
+   return json;
+}
+
+//+------------------------------------------------------------------+
+// Função modificada para incluir VPS ID
+//+------------------------------------------------------------------+
+string BuildJsonData()
+{
+   LogPrint(LOG_ALL, "JSON", "Construindo dados JSON...");
+   
+   string json = "{";
+   
+   // Account Info
+   json += "\"account\":{";
+   json += "\"balance\":" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
+   json += "\"equity\":" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2) + ",";
+   json += "\"profit\":" + DoubleToString(AccountInfoDouble(ACCOUNT_PROFIT), 2) + ",";
+   json += "\"accountNumber\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "\",";
+   json += "\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",";
+   json += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
+   json += "},";
+   
+   // LOG INTELIGENTE DA CONTA
+   if(g_LoggingLevel >= LOG_ESSENTIAL)
+   {
+      LogPrint(LOG_ESSENTIAL, "ACCOUNT", "Conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " | Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2));
+   }
+   
+   // Margin Info
+   json += "\"margin\":{";
+   json += "\"used\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + ",";
+   json += "\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
+   json += "\"level\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN) == 0 ? 0 : AccountInfoDouble(ACCOUNT_EQUITY)/AccountInfoDouble(ACCOUNT_MARGIN)*100, 2);
+   json += "},";
+   
+   LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2));
+   
+   // Open Positions
+   json += "\"positions\":[";
+   int posCount = 0;
+   for(int i = 0; i < PositionsTotal(); i++)
+   {
+      if(PositionSelectByIndex(i))
+      {
+         if(posCount > 0) json += ",";
+         json += "{";
+         json += "\"ticket\":" + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ",";
+         json += "\"symbol\":\"" + PositionGetString(POSITION_SYMBOL) + "\",";
+         json += "\"type\":\"" + (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "BUY" : "SELL") + "\",";
+         json += "\"volume\":" + DoubleToString(PositionGetDouble(POSITION_VOLUME), 2) + ",";
+         json += "\"openPrice\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), 5) + ",";
+         json += "\"currentPrice\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_CURRENT), 5) + ",";
+         json += "\"profit\":" + DoubleToString(PositionGetDouble(POSITION_PROFIT), 2) + ",";
+         json += "\"openTime\":\"" + TimeToString((datetime)PositionGetInteger(POSITION_TIME)) + "\"";
+         json += "}";
+         posCount++;
+      }
+   }
+   json += "],";
+   
+   // LOG INTELIGENTE DAS POSIÇÕES
+   if(g_LoggingLevel >= LOG_ESSENTIAL)
+   {
+      LogPrint(LOG_ESSENTIAL, "POSITIONS", "Posições abertas: " + IntegerToString(posCount));
+   }
+   
+   // Trade History (últimos 10)
+   json += "\"history\":[";
+   int histCount = 0;
+   HistorySelect(0, TimeCurrent());
+   for(int i = HistoryDealsTotal()-1; i >= 0 && histCount < 10; i--)
+   {
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket > 0 && HistoryDealGetInteger(ticket, DEAL_TYPE) <= 1)
+      {
+         if(histCount > 0) json += ",";
+         json += "{";
+         json += "\"ticket\":" + IntegerToString((long)ticket) + ",";
+         json += "\"symbol\":\"" + HistoryDealGetString(ticket, DEAL_SYMBOL) + "\",";
+         json += "\"type\":\"" + (HistoryDealGetInteger(ticket, DEAL_TYPE) == DEAL_TYPE_BUY ? "BUY" : "SELL") + "\",";
+         json += "\"volume\":" + DoubleToString(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2) + ",";
+         json += "\"openPrice\":" + DoubleToString(HistoryDealGetDouble(ticket, DEAL_PRICE), 5) + ",";
+         json += "\"closePrice\":" + DoubleToString(HistoryDealGetDouble(ticket, DEAL_PRICE), 5) + ",";
+         json += "\"profit\":" + DoubleToString(HistoryDealGetDouble(ticket, DEAL_PROFIT), 2) + ",";
+         json += "\"openTime\":\"" + TimeToString((datetime)HistoryDealGetInteger(ticket, DEAL_TIME)) + "\",";
+         json += "\"closeTime\":\"" + TimeToString((datetime)HistoryDealGetInteger(ticket, DEAL_TIME)) + "\"";
+         json += "}";
+         histCount++;
+      }
+   }
+   json += "],";
+   
+   // ADICIONAR EMAIL DO USUÁRIO
+   json += "\"userEmail\":\"" + UserEmail + "\"";
+   
+   // ADICIONAR VPS ID SE DISPONÍVEL
+   if(EnableVpsIdentification && g_VpsId != "")
+   {
+      json += ",\"vpsId\":\"" + g_VpsId + "\"";
+   }
+   
+   json += "}";
+   
+   LogPrint(LOG_ALL, "HISTORY", "Histórico de trades: " + IntegerToString(histCount));
+   LogPrint(LOG_ALL, "JSON", "JSON construído com sucesso");
+   
+   return json;
+}
+
+//+------------------------------------------------------------------+
+// Enviar dados para Supabase
+//+------------------------------------------------------------------+
+void SendToSupabase(string jsonData, string url)
+{
+   HttpClient http;
+   http.setUrl(url);
+   http.setRequestHeader("Content-Type", "application/json");
+   
+   // Log apenas se não foi mostrado ainda ou se está em nível ALL
+   bool isIdle = (StringFind(jsonData, "\"status\":\"IDLE\"") >= 0);
+   if(!isIdle || g_LoggingLevel >= LOG_ALL)
+   {
+      LogPrint(LOG_ALL, "HTTP", "Enviando dados para: " + url);
+      LogPrint(LOG_ALL, "HTTP", "Tamanho dos dados: " + IntegerToString(StringLen(jsonData)) + " bytes");
+   }
+   
+   int responseCode = http.post(jsonData);
+   string responseBody = http.getResponseBody();
+   
+   // LOG INTELIGENTE DE CONEXÃO
+   LogConnectionSmart(responseCode == 200, responseCode, "Envio para Supabase");
+   
+   if(responseCode == 200)
+   {
+      if(!isIdle || g_LoggingLevel >= LOG_ALL)
+      {
+         LogPrint(LOG_ESSENTIAL, "SUCCESS", "Dados enviados para Supabase com sucesso!");
+         if(g_LoggingLevel >= LOG_ALL)
+         {
+            LogPrint(LOG_ALL, "RESPONSE", "Resposta do servidor: " + responseBody);
+         }
+      }
+   }
+   else
+   {
+      LogPrint(LOG_ERRORS_ONLY, "ERROR", "Falha no envio para Supabase - Código: " + IntegerToString(responseCode));
+      LogPrint(LOG_ALL, "DEBUG", "Resposta do servidor: " + responseBody);
+   }
+}
+
+//+------------------------------------------------------------------+
+// Verifica se existem ordens abertas ou pendentes
+//+------------------------------------------------------------------+
+bool HasOpenOrdersOrPendingOrders()
+{
+   return (PositionsTotal() > 0 || OrdersTotal() > 0);
+}
+
+//+------------------------------------------------------------------+
+// Log do timer com controle inteligente
+//+------------------------------------------------------------------+
+void LogTimerSmart(string message)
+{
+   static datetime lastLogTime = 0;
+   
+   // Log sempre na primeira execução
+   if(lastLogTime == 0)
+   {
+      LogSeparator("EXECUÇÃO TIMER");
+      LogPrint(LOG_ESSENTIAL, "TIMER", message);
+      lastLogTime = TimeCurrent();
+      return;
+   }
+   
+   // Log apenas se o modo ativo estiver habilitado
+   if(g_LoggingLevel >= LOG_ALL)
+   {
+      LogSeparator("EXECUÇÃO TIMER");
+      LogPrint(LOG_ALL, "TIMER", message);
+      lastLogTime = TimeCurrent();
+      return;
+   }
+   
+   // Log apenas se passaram 5 minutos desde o último log
+   if(TimeCurrent() - lastLogTime >= 300)
+   {
+      LogSeparator("EXECUÇÃO TIMER");
+      LogPrint(LOG_ESSENTIAL, "TIMER", message);
+      lastLogTime = TimeCurrent();
+   }
+}
+
+//+------------------------------------------------------------------+
+// Log de comandos com controle inteligente
+//+------------------------------------------------------------------+
+void LogCommandSmart(string message)
+{
+   static datetime lastCommandLogTime = 0;
+   
+   // Log sempre na primeira execução
+   if(lastCommandLogTime == 0)
+   {
+      LogSeparator("VERIFICAÇÃO COMANDOS");
+      LogPrint(LOG_ESSENTIAL, "POLLING", message);
+      lastCommandLogTime = TimeCurrent();
+      return;
+   }
+   
+   // Log apenas se o modo ativo estiver habilitado
+   if(g_LoggingLevel >= LOG_ALL)
+   {
+      LogSeparator("VERIFICAÇÃO COMANDOS");
+      LogPrint(LOG_ALL, "POLLING", message);
+      lastCommandLogTime = TimeCurrent();
+      return;
+   }
+   
+   // Log apenas se passaram 5 minutos desde o último log
+   if(TimeCurrent() - lastCommandLogTime >= 300)
+   {
+      LogSeparator("VERIFICAÇÃO COMANDOS");
+      LogPrint(LOG_ESSENTIAL, "POLLING", message);
+      lastCommandLogTime = TimeCurrent();
+   }
+}
+
+//+------------------------------------------------------------------+
+// Marcar primeira execução como completa
+//+------------------------------------------------------------------+
+void MarkFirstRunCompleted()
+{
+   static bool firstRunCompleted = false;
+   static int  runCounter = 0;
+   
+   if(!firstRunCompleted)
+   {
+      runCounter++;
+      
+      // Após 3 ciclos, marcar como completa
+      if(runCounter >= 3)
+      {
+         firstRunCompleted = true;
+         LogPrint(LOG_ESSENTIAL, "SYSTEM", "Rotina de inicialização completa");
+      }
+   }
 }
 
 //+------------------------------------------------------------------+

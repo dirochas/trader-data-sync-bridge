@@ -35,28 +35,37 @@ serve(async (req) => {
     const requestBody = await req.text()
     console.log('Request body recebido:', requestBody)
     
-    const { account, margin, positions, history } = JSON.parse(requestBody)
+    const { account, margin, positions, history, vpsId } = JSON.parse(requestBody)
     
     console.log('Dados parseados:', { 
       account: account?.accountNumber, 
       margin: margin?.used, 
       positions: positions?.length,
-      history: history?.length 
+      history: history?.length,
+      vpsId: vpsId 
     })
 
-    // Upsert trading account (usando novos nomes)
+    // Upsert trading account (incluindo VPS ID)
     console.log('=== SALVANDO CONTA ===')
+    const accountUpsertData: any = {
+      account: account.accountNumber,
+      server: account.server,
+      balance: account.balance,
+      equity: account.equity,
+      profit: account.profit,
+      leverage: account.leverage,
+      updated_at: new Date().toISOString()
+    }
+
+    // Adicionar VPS ID se fornecido
+    if (vpsId) {
+      accountUpsertData.vps = vpsId
+      console.log('VPS ID recebido e será salvo:', vpsId)
+    }
+
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
-      .upsert({
-        account: account.accountNumber,
-        server: account.server,
-        balance: account.balance,
-        equity: account.equity,
-        profit: account.profit,
-        leverage: account.leverage,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(accountUpsertData, {
         onConflict: 'account'
       })
       .select()
@@ -67,7 +76,7 @@ serve(async (req) => {
       throw new Error(`Erro conta: ${accountError.message}`)
     }
 
-    console.log('Conta salva:', accountData?.id)
+    console.log('Conta salva:', accountData?.id, vpsId ? `VPS: ${vpsId}` : 'Sem VPS ID')
     const accountId = accountData.id
 
     // Delete old margin info and insert new one (usando novos nomes)
@@ -186,6 +195,7 @@ serve(async (req) => {
         success: true, 
         message: 'Dados atualizados com sucesso',
         account_id: accountId,
+        vps_id: vpsId || null,
         positions_count: positions?.length || 0,
         history_count: history?.length || 0,
         timestamp: new Date().toISOString()

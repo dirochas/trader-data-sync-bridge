@@ -25,32 +25,58 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions, getRoleDisplayName } from '@/hooks/usePermissions';
 
 const menuItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Account Monitor', url: '/accounts', icon: Monitor },
-  { title: 'Hedge Simulator', url: '/simulations', icon: Calculator },
-  { title: 'VPS Management', url: '/vps', icon: Server },
-  { title: 'Commands', url: '/commands', icon: Terminal },
-  { title: 'User Management', url: '/users', icon: Users },
-  { title: 'Expert Management', url: '/experts', icon: Brain },
-  { title: 'Settings', url: '/settings', icon: Settings },
+  { 
+    title: 'Dashboard', 
+    url: '/dashboard', 
+    icon: LayoutDashboard,
+    permissionKey: 'canAccessDashboard' as const
+  },
+  { 
+    title: 'Account Monitor', 
+    url: '/accounts', 
+    icon: Monitor,
+    permissionKey: 'canAccessAccountMonitor' as const
+  },
+  { 
+    title: 'Hedge Simulator', 
+    url: '/simulations', 
+    icon: Calculator,
+    permissionKey: 'canAccessHedgeSimulator' as const
+  },
+  { 
+    title: 'Expert Management', 
+    url: '/experts', 
+    icon: Brain,
+    permissionKey: 'canAccessExpertManagement' as const
+  },
+  { 
+    title: 'VPS Management', 
+    url: '/vps', 
+    icon: Server,
+    permissionKey: 'canAccessVPS' as const
+  },
+  { 
+    title: 'Commands', 
+    url: '/commands', 
+    icon: Terminal,
+    permissionKey: 'canAccessCommands' as const
+  },
+  { 
+    title: 'User Management', 
+    url: '/users', 
+    icon: Users,
+    permissionKey: 'canAccessUserManagement' as const
+  },
+  { 
+    title: 'Settings', 
+    url: '/settings', 
+    icon: Settings,
+    permissionKey: 'canAccessSettings' as const
+  },
 ];
-
-const getRoleDisplayName = (role: string) => {
-  switch (role) {
-    case 'admin':
-      return 'Admin';
-    case 'manager':
-      return 'Manager';
-    case 'client_trader':
-      return 'Trader';
-    case 'client_investor':
-      return 'Investor';
-    default:
-      return 'User';
-  }
-};
 
 const getRoleColor = (role: string) => {
   switch (role) {
@@ -71,6 +97,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { profile } = useAuth();
+  const permissions = usePermissions();
   const currentPath = location.pathname;
   
   const isCollapsed = state === 'collapsed';
@@ -85,6 +112,11 @@ export function AppSidebar() {
   const userRole = profile?.role || 'user';
   const displayName = getRoleDisplayName(userRole);
   const roleColor = getRoleColor(userRole);
+
+  // Filter menu items based on permissions
+  const availableMenuItems = menuItems.filter(item => 
+    permissions[item.permissionKey]
+  );
 
   return (
     <Sidebar 
@@ -121,7 +153,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              {menuItems.map((item) => (
+              {availableMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-11">
                     <NavLink 
@@ -158,8 +190,11 @@ export function AppSidebar() {
               </div>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{displayName} User</p>
-                  <p className="text-xs text-gray-400">{profile?.email || 'admin@traderlab.com'}</p>
+                  <p className="text-sm font-medium text-white">{displayName}</p>
+                  <p className="text-xs text-gray-400">{profile?.email || 'user@traderlab.com'}</p>
+                  {permissions.isInvestor && (
+                    <p className="text-xs text-purple-400 mt-1">View Only Access</p>
+                  )}
                 </div>
               )}
             </div>

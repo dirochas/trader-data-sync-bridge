@@ -21,14 +21,12 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook otimizado para buscar TODAS as contas de trading com filtragem por email
+// Hook para buscar TODAS as contas de trading com filtragem por email
 export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
-  const queryKey = ['accounts', profile?.email || '', profile?.role || ''];
-  
   return useQuery({
-    queryKey,
+    queryKey: ['accounts', profile?.email, profile?.role],
     queryFn: async () => {
       if (!profile) return [];
       
@@ -68,10 +66,8 @@ export const useTradingAccounts = () => {
 export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  const queryKey = ['account', accountNumber || '', profile?.email || '', profile?.role || ''];
-  
   return useQuery({
-    queryKey,
+    queryKey: ['account', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -111,10 +107,8 @@ export const useTradingAccount = (accountNumber?: string) => {
 export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  const queryKey = ['margin-info', accountNumber || '', profile?.email || '', profile?.role || ''];
-  
   return useQuery({
-    queryKey,
+    queryKey: ['margin-info', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -160,10 +154,8 @@ export const useMarginInfo = (accountNumber?: string) => {
 export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  const queryKey = ['positions', accountNumber || '', profile?.email || '', profile?.role || ''];
-  
   return useQuery({
-    queryKey,
+    queryKey: ['positions', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -207,10 +199,8 @@ export const useOpenPositions = (accountNumber?: string) => {
 export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   
-  const queryKey = ['history', accountNumber || '', profile?.email || '', profile?.role || ''];
-  
   return useQuery({
-    queryKey,
+    queryKey: ['history', accountNumber, profile?.email, profile?.role],
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       

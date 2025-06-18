@@ -14,6 +14,8 @@ import { AppLayout } from '@/components/AppLayout';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import EditAccountModal from '@/components/EditAccountModal';
 import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   TrendingUp, 
   Users, 
@@ -26,6 +28,8 @@ const AccountMonitor = () => {
   const { data: accounts = [], isLoading } = useTradingAccounts();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const permissions = usePermissions();
+  const { profile } = useAuth();
   
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
@@ -34,38 +38,70 @@ const AccountMonitor = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Query otimizada para posições abertas com cache inteligente
+  // Query otimizada para posições abertas COM FILTRO POR USUÁRIO
   const { data: allOpenPositions = [] } = useQuery({
-    queryKey: ['all-open-positions'],
+    queryKey: ['all-open-positions', profile?.email],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('positions')
-        .select('*');
+      let query = supabase.from('positions').select(`
+        *,
+        accounts!inner(account, user_email)
+      `);
       
-      if (error) throw error;
+      // APLICAR FILTRO POR USUÁRIO se for cliente
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          query = query.eq('accounts.user_email', profile.email);
+          console.log('🔍 Filtrando posições para usuário:', profile.email);
+        } else {
+          console.log('⚠️ Cliente sem email - não mostrará posições');
+          return [];
+        }
+      } else {
+        console.log('👑 Admin/Manager - mostrando todas as posições');
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Erro ao buscar posições:', error);
+        throw error;
+      }
       return data || [];
     },
-    refetchInterval: 1000, // Dados críticos - 1 segundo
+    enabled: !!profile,
+    refetchInterval: 1000,
     staleTime: 300,
     gcTime: 30000,
   });
 
-  // Query otimizada para trades do dia
+  // Query otimizada para trades do dia COM FILTRO POR USUÁRIO
   const { data: todayTrades = [] } = useQuery({
-    queryKey: ['todays-trades'],
+    queryKey: ['todays-trades', profile?.email],
     queryFn: async () => {
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       
-      const { data, error } = await supabase
-        .from('history')
-        .select('*')
-        .gte('close_time', startOfDay.toISOString());
+      let query = supabase.from('history').select(`
+        *,
+        accounts!inner(account, user_email)
+      `).gte('close_time', startOfDay.toISOString());
+      
+      // APLICAR FILTRO POR USUÁRIO se for cliente
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          query = query.eq('accounts.user_email', profile.email);
+        } else {
+          return [];
+        }
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 5000, // Dados históricos - 5 segundos
+    enabled: !!profile,
+    refetchInterval: 5000,
     staleTime: 2000,
     gcTime: 60000,
   });
@@ -189,6 +225,12 @@ const AccountMonitor = () => {
   };
 
   const handleEditAccount = (account: any) => {
+    // Verificar permissão antes de abrir modal
+    if (!permissions.canEditAccounts) {
+      console.log('⚠️ Usuário sem permissão para editar contas');
+      return;
+    }
+    
     setSelectedAccount({
       id: account.id,
       name: account.name,
@@ -201,6 +243,12 @@ const AccountMonitor = () => {
   };
 
   const handleCloseAllPositions = (account: any) => {
+    // Verificar permissão antes de abrir modal
+    if (!permissions.canCloseAllPositions) {
+      console.log('⚠️ Usuário sem permissão para fechar posições');
+      return;
+    }
+    
     setSelectedAccountForClose(account);
     setCloseAllModalOpen(true);
   };
@@ -338,6 +386,7 @@ const AccountMonitor = () => {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
+            {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
           </p>
         </div>
 
@@ -492,23 +541,32 @@ const AccountMonitor = () => {
                       <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="action-button-danger"
-                            onClick={() => handleCloseAllPositions(account)}
-                            disabled={account.openTrades === 0}
-                          >
-                            Close All
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
-                            onClick={() => handleEditAccount(account)}
-                          >
-                            Edit
-                          </Button>
+                          {/* BOTÃO CLOSE ALL - Apenas para quem tem permissão */}
+                          {permissions.canCloseAllPositions && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="action-button-danger"
+                              onClick={() => handleCloseAllPositions(account)}
+                              disabled={account.openTrades === 0}
+                            >
+                              Close All
+                            </Button>
+                          )}
+                          
+                          {/* BOTÃO EDIT - Apenas para quem tem permissão */}
+                          {permissions.canEditAccounts && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                              onClick={() => handleEditAccount(account)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          
+                          {/* BOTÃO DETAILS - Todos podem ver */}
                           <Button
                             variant="outline"
                             size="sm"
@@ -571,20 +629,25 @@ const AccountMonitor = () => {
         </Card>
       </div>
 
-      <EditAccountModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        account={selectedAccount}
-        onAccountUpdated={handleAccountUpdated}
-      />
+      {/* MODAIS - Apenas renderizar se o usuário tem permissões */}
+      {permissions.canEditAccounts && (
+        <EditAccountModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          account={selectedAccount}
+          onAccountUpdated={handleAccountUpdated}
+        />
+      )}
 
-      <CloseAllPositionsModal
-        isOpen={closeAllModalOpen}
-        onClose={() => setCloseAllModalOpen(false)}
-        accountNumber={selectedAccountForClose?.account || ''}
-        accountName={selectedAccountForClose?.name || ''}
-        openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
-      />
+      {permissions.canCloseAllPositions && (
+        <CloseAllPositionsModal
+          isOpen={closeAllModalOpen}
+          onClose={() => setCloseAllModalOpen(false)}
+          accountNumber={selectedAccountForClose?.account || ''}
+          accountName={selectedAccountForClose?.name || ''}
+          openTradesCount={selectedAccountForClose ? selectedAccountForClose.openTrades : 0}
+        />
+      )}
     </AppLayout>
   );
 };

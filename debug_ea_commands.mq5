@@ -268,12 +268,13 @@ string BuildJsonDataWithVps()
    
    LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2));
    
-   // Open Positions
+   // Open Positions - FIX: Correct function name and syntax
    json += "\"positions\":[";
    int posCount = 0;
-   for(int i = 0; i < PositionsTotal(); i++)
+   int totalPositions = PositionsTotal();
+   for(int i = 0; i < totalPositions; i++)
    {
-      if(PositionSelectByIndex(i))
+      if(PositionGetTicket(i) > 0)
       {
          if(posCount > 0) json += ",";
          json += "{";

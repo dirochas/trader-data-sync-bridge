@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -26,7 +25,7 @@ export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['accounts', profile?.email, profile?.role],
+    queryKey: ['accounts', profile?.email ?? '', profile?.role ?? ''] as const,
     queryFn: async () => {
       if (!profile) return [];
       
@@ -56,9 +55,9 @@ export const useTradingAccounts = () => {
       return data || [];
     },
     enabled: !!profile,
-    refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
-    staleTime: 500, // Considera dados "frescos" por 500ms
-    gcTime: 30000, // Cache por 30 segundos
+    refetchInterval: 1500,
+    staleTime: 500,
+    gcTime: 30000,
   });
 };
 
@@ -67,7 +66,7 @@ export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['account', accountNumber, profile?.email, profile?.role],
+    queryKey: ['account', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -97,7 +96,7 @@ export const useTradingAccount = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 1500, // Mesmo intervalo para consistência
+    refetchInterval: 1500,
     staleTime: 500,
     gcTime: 30000,
   });
@@ -108,7 +107,7 @@ export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['margin-info', accountNumber, profile?.email, profile?.role],
+    queryKey: ['margin-info', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return null;
       
@@ -144,7 +143,7 @@ export const useMarginInfo = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 3000, // Dados menos críticos - 3 segundos
+    refetchInterval: 3000,
     staleTime: 1000,
     gcTime: 60000,
   });
@@ -155,7 +154,7 @@ export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['positions', accountNumber, profile?.email, profile?.role],
+    queryKey: ['positions', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -189,8 +188,8 @@ export const useOpenPositions = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 1000, // MAIS CRÍTICO - 1 segundo para posições
-    staleTime: 300, // Dados muito frescos
+    refetchInterval: 1000,
+    staleTime: 300,
     gcTime: 30000,
   });
 };
@@ -200,7 +199,7 @@ export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['history', accountNumber, profile?.email, profile?.role],
+    queryKey: ['history', accountNumber ?? '', profile?.email ?? '', profile?.role ?? ''] as const,
     queryFn: async () => {
       if (!accountNumber || !profile) return [];
       
@@ -235,9 +234,9 @@ export const useTradeHistory = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 8000, // Dados históricos - menos críticos, 8 segundos
+    refetchInterval: 8000,
     staleTime: 2000,
-    gcTime: 120000, // Cache por 2 minutos
+    gcTime: 120000,
   });
 };
 

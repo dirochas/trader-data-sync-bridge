@@ -24,6 +24,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/hooks/useAuth';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -36,9 +37,40 @@ const menuItems = [
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
+const getRoleDisplayName = (role: string) => {
+  switch (role) {
+    case 'admin':
+      return 'Admin';
+    case 'manager':
+      return 'Manager';
+    case 'client_trader':
+      return 'Trader';
+    case 'client_investor':
+      return 'Investor';
+    default:
+      return 'User';
+  }
+};
+
+const getRoleColor = (role: string) => {
+  switch (role) {
+    case 'admin':
+      return 'from-red-400 to-red-500';
+    case 'manager':
+      return 'from-blue-400 to-blue-500';
+    case 'client_trader':
+      return 'from-emerald-400 to-teal-400';
+    case 'client_investor':
+      return 'from-purple-400 to-purple-500';
+    default:
+      return 'from-gray-400 to-gray-500';
+  }
+};
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const { profile } = useAuth();
   const currentPath = location.pathname;
   
   const isCollapsed = state === 'collapsed';
@@ -49,6 +81,10 @@ export function AppSidebar() {
     }
     return currentPath === path;
   };
+
+  const userRole = profile?.role || 'user';
+  const displayName = getRoleDisplayName(userRole);
+  const roleColor = getRoleColor(userRole);
 
   return (
     <Sidebar 
@@ -117,13 +153,13 @@ export function AppSidebar() {
         <div className="mt-auto p-3">
           <div className={`bg-gray-800/50 border border-gray-700 rounded-xl p-3 backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
                 <User className="w-4 h-4 text-white" />
               </div>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">Admin User</p>
-                  <p className="text-xs text-gray-400">admin@traderlab.com</p>
+                  <p className="text-sm font-medium text-white">{displayName} User</p>
+                  <p className="text-xs text-gray-400">{profile?.email || 'admin@traderlab.com'}</p>
                 </div>
               )}
             </div>

@@ -13,11 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    // Trading Data Endpoint - Version: STABLE v1.0 - 2024-06-18 ✅
+    // Trading Data Endpoint - Version: STABLE v1.1 - 2024-06-18 ✅
+    // ✅ ETAPA 2: Adicionado suporte para user_email
     // ✅ Funcionalidades testadas e confirmadas:
     // - Recebe dados de trading via POST
     // - Salva contas, margem, posições e histórico
-    // - Suporte a VPS ID
+    // - Suporte a VPS ID e USER EMAIL
     // - Logs detalhados para debug
     console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
     console.log('Method:', req.method)
@@ -40,17 +41,18 @@ serve(async (req) => {
     const requestBody = await req.text()
     console.log('Request body recebido:', requestBody)
     
-    const { account, margin, positions, history, vpsId } = JSON.parse(requestBody)
+    const { account, margin, positions, history, vpsId, userEmail } = JSON.parse(requestBody)
     
     console.log('Dados parseados:', { 
       account: account?.accountNumber, 
       margin: margin?.used, 
       positions: positions?.length,
       history: history?.length,
-      vpsId: vpsId 
+      vpsId: vpsId,
+      userEmail: userEmail
     })
 
-    // Upsert trading account (incluindo VPS ID)
+    // Upsert trading account (incluindo VPS ID e USER EMAIL)
     console.log('=== SALVANDO CONTA ===')
     const accountUpsertData: any = {
       account: account.accountNumber,
@@ -68,6 +70,12 @@ serve(async (req) => {
       console.log('VPS ID recebido e será salvo:', vpsId)
     }
 
+    // Adicionar USER EMAIL se fornecido
+    if (userEmail) {
+      accountUpsertData.user_email = userEmail
+      console.log('USER EMAIL recebido e será salvo:', userEmail)
+    }
+
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
       .upsert(accountUpsertData, {
@@ -81,7 +89,7 @@ serve(async (req) => {
       throw new Error(`Erro conta: ${accountError.message}`)
     }
 
-    console.log('Conta salva:', accountData?.id, vpsId ? `VPS: ${vpsId}` : 'Sem VPS ID')
+    console.log('Conta salva:', accountData?.id, vpsId ? `VPS: ${vpsId}` : 'Sem VPS ID', userEmail ? `USER: ${userEmail}` : 'Sem User Email')
     const accountId = accountData.id
 
     // Delete old margin info and insert new one (usando novos nomes)
@@ -201,6 +209,7 @@ serve(async (req) => {
         message: 'Dados atualizados com sucesso',
         account_id: accountId,
         vps_id: vpsId || null,
+        user_email: userEmail || null,
         positions_count: positions?.length || 0,
         history_count: history?.length || 0,
         timestamp: new Date().toISOString()

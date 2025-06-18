@@ -1,6 +1,8 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 // Função para calcular o status da conexão baseado na última atualização
 export const getConnectionStatus = (lastUpdate: string) => {
@@ -19,63 +21,103 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook otimizado para buscar TODAS as contas de trading
+// Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário)
 export const useTradingAccounts = () => {
+  const { profile } = useAuth();
+  
   return useQuery({
-    queryKey: ['accounts'],
+    queryKey: ['accounts', profile?.email],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .order('updated_at', { ascending: false });
+      let query = supabase.from('accounts').select('*');
+      
+      // ADMIN e MANAGER veem todas as contas
+      // CLIENTE vê apenas suas próprias contas
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          query = query.eq('user_email', profile.email);
+          console.log('🔍 Filtrando contas para usuário cliente:', profile.email);
+        } else {
+          console.log('⚠️ Cliente sem email - não mostrará contas');
+          return [];
+        }
+      } else {
+        console.log('👑 Admin/Manager - mostrando todas as contas');
+      }
+      
+      const { data, error } = await query.order('updated_at', { ascending: false });
       
       if (error) throw error;
       return data || [];
     },
+    enabled: !!profile, // Só executa quando tem perfil carregado
     refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
     staleTime: 500, // Considera dados "frescos" por 500ms
     gcTime: 30000, // Cache por 30 segundos
   });
 };
 
-// Hook para buscar UMA conta específica
+// Hook para buscar UMA conta específica (com verificação de permissão)
 export const useTradingAccount = (accountNumber?: string) => {
+  const { profile } = useAuth();
+  
   return useQuery({
-    queryKey: ['account', accountNumber],
+    queryKey: ['account', accountNumber, profile?.email],
     queryFn: async () => {
       if (!accountNumber) return null;
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('accounts')
         .select('*')
-        .eq('account', accountNumber)
+        .eq('account', accountNumber);
+      
+      // Se for cliente, verifica se a conta pertence a ele
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          query = query.eq('user_email', profile.email);
+        } else {
+          return null; // Cliente sem email não vê nada
+        }
+      }
+      
+      const { data, error } = await query
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!accountNumber,
+    enabled: !!accountNumber && !!profile,
     refetchInterval: 1500, // Mesmo intervalo para consistência
     staleTime: 500,
     gcTime: 30000,
   });
 };
 
-// Hook para buscar informações de margem por conta
+// Hook para buscar informações de margem por conta (com verificação de permissão)
 export const useMarginInfo = (accountNumber?: string) => {
+  const { profile } = useAuth();
+  
   return useQuery({
-    queryKey: ['margin-info', accountNumber],
+    queryKey: ['margin-info', accountNumber, profile?.email],
     queryFn: async () => {
       if (!accountNumber) return null;
       
-      // Primeiro busca o ID da conta
-      const { data: accountData, error: accountError } = await supabase
+      // Primeiro verifica se o usuário tem acesso à conta
+      let accountQuery = supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber)
-        .single();
+        .eq('account', accountNumber);
+      
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          accountQuery = accountQuery.eq('user_email', profile.email);
+        } else {
+          return null;
+        }
+      }
+      
+      const { data: accountData, error: accountError } = await accountQuery.single();
       
       if (accountError || !accountData) return null;
       
@@ -90,26 +132,37 @@ export const useMarginInfo = (accountNumber?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!accountNumber,
+    enabled: !!accountNumber && !!profile,
     refetchInterval: 3000, // Dados menos críticos - 3 segundos
     staleTime: 1000,
     gcTime: 60000,
   });
 };
 
-// Hook para buscar posições abertas por conta - DADOS CRÍTICOS
+// Hook para buscar posições abertas por conta (com verificação de permissão)
 export const useOpenPositions = (accountNumber?: string) => {
+  const { profile } = useAuth();
+  
   return useQuery({
-    queryKey: ['positions', accountNumber],
+    queryKey: ['positions', accountNumber, profile?.email],
     queryFn: async () => {
       if (!accountNumber) return [];
       
-      // Primeiro busca o ID da conta
-      const { data: accountData, error: accountError } = await supabase
+      // Primeiro verifica se o usuário tem acesso à conta
+      let accountQuery = supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber)
-        .single();
+        .eq('account', accountNumber);
+      
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          accountQuery = accountQuery.eq('user_email', profile.email);
+        } else {
+          return [];
+        }
+      }
+      
+      const { data: accountData, error: accountError } = await accountQuery.single();
       
       if (accountError || !accountData) return [];
       
@@ -122,26 +175,37 @@ export const useOpenPositions = (accountNumber?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!accountNumber,
+    enabled: !!accountNumber && !!profile,
     refetchInterval: 1000, // MAIS CRÍTICO - 1 segundo para posições
     staleTime: 300, // Dados muito frescos
     gcTime: 30000,
   });
 };
 
-// Hook para buscar histórico de trades por conta
+// Hook para buscar histórico de trades por conta (com verificação de permissão)
 export const useTradeHistory = (accountNumber?: string) => {
+  const { profile } = useAuth();
+  
   return useQuery({
-    queryKey: ['history', accountNumber],
+    queryKey: ['history', accountNumber, profile?.email],
     queryFn: async () => {
       if (!accountNumber) return [];
       
-      // Primeiro busca o ID da conta
-      const { data: accountData, error: accountError } = await supabase
+      // Primeiro verifica se o usuário tem acesso à conta
+      let accountQuery = supabase
         .from('accounts')
         .select('id')
-        .eq('account', accountNumber)
-        .single();
+        .eq('account', accountNumber);
+      
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          accountQuery = accountQuery.eq('user_email', profile.email);
+        } else {
+          return [];
+        }
+      }
+      
+      const { data: accountData, error: accountError } = await accountQuery.single();
       
       if (accountError || !accountData) return [];
       
@@ -155,7 +219,7 @@ export const useTradeHistory = (accountNumber?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!accountNumber,
+    enabled: !!accountNumber && !!profile,
     refetchInterval: 8000, // Dados históricos - menos críticos, 8 segundos
     staleTime: 2000,
     gcTime: 120000, // Cache por 2 minutos

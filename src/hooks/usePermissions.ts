@@ -29,6 +29,7 @@ interface Permissions {
   isManager: boolean;
   isTrader: boolean;
   isInvestor: boolean;
+  isAdminOrManager: boolean; // Nova propriedade combinada
 }
 
 export const usePermissions = (): Permissions => {
@@ -68,6 +69,7 @@ export const usePermissions = (): Permissions => {
     isManager,
     isTrader,
     isInvestor,
+    isAdminOrManager, // Nova propriedade combinada
   };
 };
 

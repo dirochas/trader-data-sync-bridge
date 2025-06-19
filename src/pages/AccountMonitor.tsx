@@ -47,24 +47,31 @@ const AccountMonitor = () => {
     queryFn: async () => {
       if (!permissions.isAdminOrManager) return [];
       
-      const { data, error } = await supabase
+      // Buscar emails únicos das contas e depois buscar os perfis correspondentes
+      const { data: accountsData, error: accountsError } = await supabase
+        .from('accounts')
+        .select('user_email')
+        .not('user_email', 'is', null)
+        .neq('user_email', '');
+      
+      if (accountsError) throw accountsError;
+      
+      // Extrair emails únicos
+      const uniqueEmails = [...new Set(accountsData?.map(acc => acc.user_email).filter(Boolean))] || [];
+      
+      if (uniqueEmails.length === 0) return [];
+      
+      // Buscar perfis correspondentes aos emails
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('first_name, email')
+        .in('email', uniqueEmails)
         .not('first_name', 'is', null)
-        .neq('first_name', '')
-        .order('first_name');
+        .neq('first_name', '');
       
-      if (error) throw error;
+      if (profilesError) throw profilesError;
       
-      // Filtrar apenas clientes únicos por primeiro nome
-      const uniqueClients = data?.reduce((acc: any[], profile) => {
-        if (!acc.find(client => client.first_name === profile.first_name)) {
-          acc.push(profile);
-        }
-        return acc;
-      }, []) || [];
-      
-      return uniqueClients;
+      return profilesData || [];
     },
     enabled: permissions.isAdminOrManager,
     refetchInterval: 30000, // Atualizar a cada 30 segundos
@@ -150,8 +157,7 @@ const AccountMonitor = () => {
         .from('accounts')
         .select(`
           *,
-          vps_servers(display_name),
-          profiles!accounts_user_email_fkey(first_name, last_name, email)
+          vps_servers(display_name)
         `);
       
       // Aplicar filtros baseados no papel do usuário
@@ -165,10 +171,29 @@ const AccountMonitor = () => {
         }
       }
       
-      const { data, error } = await query.order('updated_at', { ascending: false });
+      const { data: accountsWithVps, error } = await query.order('updated_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Buscar perfis separadamente para evitar problemas de relacionamento
+      if (!accountsWithVps?.length) return [];
+      
+      const userEmails = [...new Set(accountsWithVps.map(acc => acc.user_email).filter(Boolean))];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .in('email', userEmails);
+      
+      if (profilesError) throw profilesError;
+      
+      // Combinar dados das contas com perfis
+      const enrichedData = accountsWithVps.map(account => ({
+        ...account,
+        profiles: profilesData?.find(profile => profile.email === account.user_email) || null
+      }));
+      
+      return enrichedData;
     },
     enabled: !!profile && accounts.length > 0,
     refetchInterval: 1500,

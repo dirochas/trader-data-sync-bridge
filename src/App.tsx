@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
+import InactiveAccounts from './pages/InactiveAccounts';
 
 // Pages
 import Index from './pages/Index';
@@ -68,6 +68,13 @@ const App = () => (
               <Route path="/accounts-management" element={
                 <ProtectedRoute requiredRoles={['admin', 'manager']}>
                   <AccountsManagement />
+                </ProtectedRoute>
+              } />
+              
+              {/* Inactive Accounts - Todos podem acessar */}
+              <Route path="/inactive-accounts" element={
+                <ProtectedRoute>
+                  <InactiveAccounts />
                 </ProtectedRoute>
               } />
               

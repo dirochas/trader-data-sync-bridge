@@ -10,7 +10,8 @@ import {
   Brain,
   Calculator,
   User,
-  Terminal
+  Terminal,
+  Archive
 } from 'lucide-react';
 import {
   Sidebar,

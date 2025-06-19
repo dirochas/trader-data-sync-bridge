@@ -41,7 +41,7 @@ const AccountMonitor = () => {
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Query para buscar lista de clientes únicos (apenas para admin/manager)
+  // Query para buscar lista de clientes únicos usando nickname (apenas para admin/manager)
   const { data: clientsList = [] } = useQuery({
     queryKey: ['clients-list'],
     queryFn: async () => {
@@ -62,13 +62,13 @@ const AccountMonitor = () => {
       
       if (uniqueEmails.length === 0) return [];
       
-      // Buscar perfis correspondentes aos emails
+      // Buscar perfis correspondentes aos emails usando nickname
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('first_name, email')
+        .select('nickname, email')
         .in('email', uniqueEmails)
-        .not('first_name', 'is', null)
-        .neq('first_name', '');
+        .not('nickname', 'is', null)
+        .neq('nickname', '');
       
       if (profilesError) throw profilesError;
       
@@ -148,7 +148,7 @@ const AccountMonitor = () => {
     gcTime: 60000,
   });
 
-  // Query para enriquecer contas com dados dos perfis de usuário
+  // Query para enriquecer contas com dados dos perfis de usuário (usando nickname)
   const { data: enrichedAccountsData = [] } = useQuery({
     queryKey: ['enriched-accounts', profile?.email],
     queryFn: async () => {
@@ -183,7 +183,7 @@ const AccountMonitor = () => {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email')
+        .select('nickname, last_name, email')
         .in('email', userEmails);
       
       if (profilesError) throw profilesError;
@@ -202,12 +202,12 @@ const AccountMonitor = () => {
     gcTime: 30000,
   });
 
-  // Função para obter primeiro nome do cliente baseado no email
-  const getClientFirstName = (userEmail: string) => {
+  // Função para obter nickname do cliente baseado no email
+  const getClientNickname = (userEmail: string) => {
     if (!enrichedAccountsData.length) return 'N/A';
     
     const account = enrichedAccountsData.find(acc => acc.user_email === userEmail);
-    return account?.profiles?.first_name || 'N/A';
+    return account?.profiles?.nickname || 'N/A';
   };
 
   const getOpenTradesCount = (accountId: string) => {
@@ -251,14 +251,14 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Dados enriquecidos com validação mais robusta
+  // Dados enriquecidos com validação mais robusta (usando nickname)
   const enrichedAccounts = useMemo(() => {
     return accounts.map(account => {
       const connectionStatus = getConnectionStatus(account.updated_at);
       const openTradeCount = getOpenTradesCount(account.id);
       const openPnLValue = getOpenPnL(account);
       const dayProfitValue = getDayProfit(account.id);
-      const clientFirstName = getClientFirstName(account.user_email);
+      const clientNickname = getClientNickname(account.user_email);
       
       // Validação extra para dados numéricos
       const safeBalance = account.balance && !isNaN(Number(account.balance)) ? Number(account.balance) : 0;
@@ -275,12 +275,12 @@ const AccountMonitor = () => {
         balance: safeBalance,
         equity: safeEquity,
         connectionStatus: connectionStatus,
-        clientFirstName: clientFirstName,
+        clientNickname: clientNickname,
       };
     });
   }, [accounts, allOpenPositions, todayTrades, enrichedAccountsData]);
 
-  // Filtrar contas por status e cliente
+  // Filtrar contas por status e cliente (usando nickname)
   const filteredAccounts = useMemo(() => {
     let filtered = enrichedAccounts;
     
@@ -297,10 +297,10 @@ const AccountMonitor = () => {
       }
     }
     
-    // Filtro por cliente (apenas para admin/manager)
+    // Filtro por cliente (apenas para admin/manager) - usando nickname
     if (selectedClient !== 'all' && permissions.isAdminOrManager) {
       filtered = filtered.filter(account => 
-        account.clientFirstName === selectedClient
+        account.clientNickname === selectedClient
       );
     }
     
@@ -620,7 +620,7 @@ const AccountMonitor = () => {
                   </Select>
                 </div>
                 
-                {/* Filtro por Cliente - apenas para Admin/Manager */}
+                {/* Filtro por Cliente usando nickname - apenas para Admin/Manager */}
                 {permissions.isAdminOrManager && (
                   <div className="flex items-center gap-2">
                     <UserCheck className="h-4 w-4 text-gray-500" />
@@ -631,8 +631,8 @@ const AccountMonitor = () => {
                       <SelectContent>
                         <SelectItem value="all">All Clients</SelectItem>
                         {clientsList.map((client) => (
-                          <SelectItem key={client.email} value={client.first_name}>
-                            {client.first_name}
+                          <SelectItem key={client.email} value={client.nickname}>
+                            {client.nickname}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -665,7 +665,7 @@ const AccountMonitor = () => {
                     {createSortableHeader("Status", "status")}
                     {createSortableHeader("Account Name", "name")}
                     {createSortableHeader("Number", "account")}
-                    {permissions.isAdminOrManager && createSortableHeader("Client", "clientFirstName")}
+                    {permissions.isAdminOrManager && createSortableHeader("Client", "clientNickname")}
                     {createSortableHeader("VPS", "vps")}
                     {createSortableHeader("Balance", "balance", "text-right")}
                     {createSortableHeader("Equity", "equity", "text-right")}
@@ -688,7 +688,7 @@ const AccountMonitor = () => {
                       <TableCell className="font-mono">{account.account}</TableCell>
                       {permissions.isAdminOrManager && (
                         <TableCell className="font-medium">
-                          {account.clientFirstName}
+                          {account.clientNickname}
                         </TableCell>
                       )}
                       <TableCell>{account.vps}</TableCell>

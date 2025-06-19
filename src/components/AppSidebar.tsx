@@ -120,7 +120,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-20' : 'w-64'} border-r`}
+      className={`${isCollapsed ? 'w-[80px]' : 'w-64'} border-r`}
       collapsible="icon"
       style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}
     >

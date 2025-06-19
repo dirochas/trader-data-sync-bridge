@@ -9,6 +9,7 @@ interface Permissions {
   canAccessDashboard: boolean;
   canAccessAccountMonitor: boolean;
   canAccessAccountDetails: boolean;
+  canAccessAccountsManagement: boolean; // Nova permissão para contas inativas
   canAccessHedgeSimulator: boolean;
   canAccessVPS: boolean;
   canAccessCommands: boolean;
@@ -47,6 +48,7 @@ export const usePermissions = (): Permissions => {
     canAccessDashboard: true, // Everyone can access dashboard
     canAccessAccountMonitor: true, // Everyone can access account monitor
     canAccessAccountDetails: true, // Everyone can access account details
+    canAccessAccountsManagement: true, // TODOS podem acessar contas inativas
     canAccessHedgeSimulator: isAdminOrManager || isTrader, // Investors cannot access
     canAccessVPS: true, // Everyone can access VPS (with different permissions)
     canAccessCommands: isAdminOrManager, // Only admin/manager

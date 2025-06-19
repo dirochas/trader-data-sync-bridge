@@ -57,8 +57,8 @@ const Index = () => {
             </p>
           </div>
           
-          {/* Botão para Accounts Management - só aparece para admin e manager */}
-          {(permissions.canAccessUserManagement) && (
+          {/* Botão para Accounts Management - aparece para TODOS os usuários */}
+          {permissions.canAccessAccountsManagement && (
             <Button
               onClick={handleAccountsManagement}
               variant="outline"

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
@@ -195,6 +194,10 @@
   border-color: rgba(245, 158, 11, 0.3) !important;
 }
 
+.dark .card-red {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
 /* Cores específicas para cada card no tema claro */
 .card-blue {
   border-color: rgba(59, 130, 246, 0.4) !important;
@@ -210,6 +213,10 @@
 
 .card-yellow {
   border-color: rgba(251, 191, 36, 0.4) !important;
+}
+
+.card-red {
+  border-color: rgba(239, 68, 68, 0.4) !important;
 }
 
 /* Cards do Investment Flow - Tema Escuro */

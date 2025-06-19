@@ -21,14 +21,19 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário)
+// Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário e JOIN com VPS)
 export const useTradingAccounts = () => {
   const { profile } = useAuth();
   
   return useQuery({
     queryKey: ['accounts', profile?.email],
     queryFn: async () => {
-      let query = supabase.from('accounts').select('*');
+      let query = supabase
+        .from('accounts')
+        .select(`
+          *,
+          vps_servers!left(display_name)
+        `);
       
       // ADMIN e MANAGER veem todas as contas
       // CLIENTE vê apenas suas próprias contas
@@ -47,7 +52,12 @@ export const useTradingAccounts = () => {
       const { data, error } = await query.order('updated_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Mapear os dados para incluir vps como propriedade direta
+      return (data || []).map(account => ({
+        ...account,
+        vps: account.vps_servers?.display_name || account.vps_unique_id || 'N/A'
+      }));
     },
     enabled: !!profile, // Só executa quando tem perfil carregado
     refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
@@ -56,7 +66,7 @@ export const useTradingAccounts = () => {
   });
 };
 
-// Hook para buscar UMA conta específica (com verificação de permissão)
+// Hook para buscar UMA conta específica (com verificação de permissão e JOIN com VPS)
 export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
   
@@ -67,7 +77,10 @@ export const useTradingAccount = (accountNumber?: string) => {
       
       let query = supabase
         .from('accounts')
-        .select('*')
+        .select(`
+          *,
+          vps_servers!left(display_name)
+        `)
         .eq('account', accountNumber);
       
       // Se for cliente, verifica se a conta pertence a ele
@@ -85,6 +98,15 @@ export const useTradingAccount = (accountNumber?: string) => {
         .maybeSingle();
       
       if (error) throw error;
+      
+      // Mapear os dados para incluir vps como propriedade direta
+      if (data) {
+        return {
+          ...data,
+          vps: data.vps_servers?.display_name || data.vps_unique_id || 'N/A'
+        };
+      }
+      
       return data;
     },
     enabled: !!accountNumber && !!profile,

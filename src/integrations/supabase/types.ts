@@ -23,7 +23,6 @@ export type Database = {
           server: string
           updated_at: string
           user_email: string | null
-          vps: string | null
           vps_unique_id: string | null
         }
         Insert: {
@@ -39,7 +38,6 @@ export type Database = {
           server: string
           updated_at?: string
           user_email?: string | null
-          vps?: string | null
           vps_unique_id?: string | null
         }
         Update: {
@@ -55,7 +53,6 @@ export type Database = {
           server?: string
           updated_at?: string
           user_email?: string | null
-          vps?: string | null
           vps_unique_id?: string | null
         }
         Relationships: []
@@ -443,6 +440,30 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      vps_servers: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+          vps_unique_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          updated_at?: string
+          vps_unique_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          vps_unique_id?: string
         }
         Relationships: []
       }

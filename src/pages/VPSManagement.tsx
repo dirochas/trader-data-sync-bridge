@@ -6,6 +6,7 @@ import { useTradingAccounts } from '@/hooks/useTradingData';
 import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
+import EditVPSModal from '@/components/EditVPSModal';
 import { 
   Server, 
   Monitor,
@@ -20,10 +21,13 @@ const VPSManagement = () => {
   const navigate = useNavigate();
   const permissions = usePermissions();
   
-  // Agrupar contas por VPS único (usando vps_unique_id quando disponível)
+  const [editVPSModalOpen, setEditVPSModalOpen] = useState(false);
+  const [selectedVPS, setSelectedVPS] = useState<any>(null);
+  
+  // Agrupar contas por VPS único (usando vps_unique_id)
   const vpsGroups = accounts.reduce((acc, account) => {
-    const vpsUniqueId = account.vps_unique_id || account.vps || 'Unknown VPS';
-    const vpsDisplayName = account.vps || account.vps_unique_id || 'Unknown VPS';
+    const vpsUniqueId = account.vps_unique_id || 'Unknown VPS';
+    const vpsDisplayName = account.vps || 'Unknown VPS';
     
     if (!acc[vpsUniqueId]) {
       acc[vpsUniqueId] = {
@@ -76,6 +80,19 @@ const VPSManagement = () => {
   const handleViewVPS = (vpsUniqueId: string) => {
     // Navigate to accounts page with VPS filter
     navigate('/accounts', { state: { vpsFilter: vpsUniqueId } });
+  };
+
+  const handleEditVPS = (vps: any) => {
+    if (!permissions.canEditVPSDisplayName) {
+      console.log('⚠️ Usuário sem permissão para editar nomes de VPS');
+      return;
+    }
+    
+    setSelectedVPS({
+      vpsUniqueId: vps.vpsUniqueId,
+      displayName: vps.vpsDisplayName
+    });
+    setEditVPSModalOpen(true);
   };
 
   const totalVPS = vpsData.length;
@@ -238,6 +255,7 @@ const VPSManagement = () => {
                                 variant="outline" 
                                 size="sm"
                                 className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                                onClick={() => handleEditVPS(vps)}
                               >
                                 Edit
                               </Button>
@@ -263,6 +281,19 @@ const VPSManagement = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal para editar VPS */}
+      {permissions.canEditVPSDisplayName && (
+        <EditVPSModal
+          isOpen={editVPSModalOpen}
+          onClose={() => setEditVPSModalOpen(false)}
+          vps={selectedVPS}
+          onVPSUpdated={() => {
+            // Invalidar queries para atualizar dados
+            // (será implementado no componente modal)
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

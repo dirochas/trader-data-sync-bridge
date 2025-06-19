@@ -25,7 +25,6 @@ interface EditAccountModalProps {
 const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
   const [formData, setFormData] = useState({
     name: account?.name || '',
-    vps: account?.vps || '',
     broker: account?.broker || '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +34,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     if (account) {
       setFormData({
         name: account.name || '',
-        vps: account.vps || '',
         broker: account.broker || '',
       });
     }
@@ -51,7 +49,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         .from('accounts')
         .update({
           name: formData.name.trim() || null,
-          vps: formData.vps.trim() || null,
           broker: formData.broker.trim() || null,
         })
         .eq('id', account.id);
@@ -111,11 +108,13 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
               <Label htmlFor="vps">Nome do VPS (Display)</Label>
               <Input
                 id="vps"
-                value={formData.vps}
-                onChange={(e) => setFormData(prev => ({ ...prev, vps: e.target.value }))}
-                placeholder="Ex: VPS-João, VPS_7110"
+                value={account.vps || ''}
+                disabled
+                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500">Nome amigável para exibição na interface</p>
+              <p className="text-xs text-gray-500">
+                Para editar o nome do VPS, use a página VPS Management - isso atualizará todas as contas deste VPS
+              </p>
             </div>
 
             {account.vps_unique_id && (

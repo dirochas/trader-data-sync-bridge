@@ -16,7 +16,8 @@ import {
   Mail,
   Phone,
   Building,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react';
 import {
   Table,
@@ -73,6 +74,7 @@ const UserManagement = () => {
   const filteredUsers = users?.filter(user => 
     user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.company?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -118,6 +120,13 @@ const UserManagement = () => {
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  const getDisplayName = (user: Profile) => {
+    if (user.nickname && user.nickname.trim() !== '') {
+      return user.nickname;
+    }
+    return `${user.first_name || ''} ${user.last_name || ''}`.trim();
   };
 
   return (
@@ -184,7 +193,7 @@ const UserManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>Nome/Nickname</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
@@ -198,11 +207,19 @@ const UserManagement = () => {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium">
-                            {user.first_name} {user.last_name}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">
+                              {getDisplayName(user)}
+                            </span>
+                          </div>
+                          {user.nickname && user.nickname !== user.first_name && (
+                            <span className="text-sm text-muted-foreground ml-6">
+                              Nome real: {user.first_name} {user.last_name}
+                            </span>
+                          )}
                           {user.phone && (
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <span className="text-sm text-muted-foreground flex items-center gap-1 ml-6">
                               <Phone className="h-3 w-3" />
                               {user.phone}
                             </span>
@@ -274,7 +291,7 @@ const UserManagement = () => {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o usuário "{user.first_name} {user.last_name}"? 
+                                  Tem certeza que deseja excluir o usuário "{getDisplayName(user)}"? 
                                   Esta ação não pode ser desfeita.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>

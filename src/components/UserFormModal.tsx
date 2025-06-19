@@ -6,8 +6,6 @@ import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -19,6 +17,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,42 +26,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { useCreateUser, useUpdateUser } from '@/hooks/useUserManagement';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
 type UserRole = Database['public']['Enums']['user_role'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
-// Schema base para campos comuns
-const baseUserSchema = {
-  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+const userFormSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional(),
   first_name: z.string().min(1, 'Nome é obrigatório'),
-  last_name: z.string().min(1, 'Sobrenome é obrigatório'),
+  last_name: z.string().optional(),
+  nickname: z.string().optional(),
   role: z.enum(['admin', 'manager', 'client_trader', 'client_investor'] as const),
   phone: z.string().optional(),
   company: z.string().optional(),
   notes: z.string().optional(),
-  is_active: z.boolean().default(true),
-};
-
-// Schema para criação (senha obrigatória)
-const createUserSchema = z.object({
-  ...baseUserSchema,
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
-// Schema para edição (senha opcional)
-const editUserSchema = z.object({
-  ...baseUserSchema,
-  password: z.string().optional(),
-});
-
-type UserFormData = z.infer<typeof createUserSchema> | z.infer<typeof editUserSchema>;
+type UserFormData = z.infer<typeof userFormSchema>;
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -70,156 +55,126 @@ interface UserFormModalProps {
   user?: Profile;
 }
 
-const roleOptions = [
-  { value: 'admin', label: 'Administrator' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'client_trader', label: 'Trader' },
-  { value: 'client_investor', label: 'Investor' },
-];
+const roleLabels: Record<UserRole, string> = {
+  admin: 'Administrator',
+  manager: 'Manager', 
+  client_trader: 'Trader',
+  client_investor: 'Investor'
+};
 
-export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProps) {
+export const UserFormModal = ({ isOpen, onClose, mode, user }: UserFormModalProps) => {
+  const { toast } = useToast();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
-  const { toast } = useToast();
 
-  // Usar schema diferente baseado no modo
-  const schema = mode === 'create' ? createUserSchema : editUserSchema;
-  
   const form = useForm<UserFormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
       email: user?.email || '',
       password: '',
       first_name: user?.first_name || '',
       last_name: user?.last_name || '',
+      nickname: user?.nickname || '',
       role: user?.role || 'client_trader',
       phone: user?.phone || '',
       company: user?.company || '',
       notes: user?.notes || '',
-      is_active: user?.is_active ?? true,
     },
   });
 
   React.useEffect(() => {
-    console.log('UserFormModal useEffect triggered:', { user, mode });
     if (user && mode === 'edit') {
-      const resetData = {
+      form.reset({
         email: user.email,
-        password: '',
         first_name: user.first_name || '',
         last_name: user.last_name || '',
+        nickname: user.nickname || '',
         role: user.role,
         phone: user.phone || '',
         company: user.company || '',
         notes: user.notes || '',
-        is_active: user.is_active,
-      };
-      console.log('Resetting form with data:', resetData);
-      form.reset(resetData);
+      });
     } else if (mode === 'create') {
       form.reset({
         email: '',
         password: '',
         first_name: '',
         last_name: '',
+        nickname: '',
         role: 'client_trader',
         phone: '',
         company: '',
         notes: '',
-        is_active: true,
       });
     }
   }, [user, mode, form]);
 
   const onSubmit = async (data: UserFormData) => {
     try {
-      console.log('onSubmit triggered with data:', data);
-      console.log('Current form values:', form.getValues());
-      console.log('Form errors:', form.formState.errors);
-      console.log('Form is valid:', form.formState.isValid);
-      
       if (mode === 'create') {
-        console.log('Creating new user...');
-        const createData = data as z.infer<typeof createUserSchema>;
-        
-        await createUser.mutateAsync({
-          email: createData.email,
-          password: createData.password,
-          first_name: createData.first_name,
-          last_name: createData.last_name,
-          role: createData.role,
-          phone: createData.phone,
-          company: createData.company,
-          notes: createData.notes,
-        });
+        if (!data.password) {
+          toast({
+            title: "Erro",
+            description: "Senha é obrigatória para criar usuário",
+            variant: "destructive",
+          });
+          return;
+        }
 
-        toast({
-          title: "Usuário criado",
-          description: "Usuário criado com sucesso.",
-        });
-      } else if (user) {
-        console.log('Updating existing user with ID:', user.id);
-        const updateData = {
-          id: user.id,
+        await createUser.mutateAsync({
+          email: data.email,
+          password: data.password,
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
           phone: data.phone,
           company: data.company,
           notes: data.notes,
-          is_active: data.is_active,
-        };
-        console.log('Update data:', updateData);
+        });
 
-        await updateUser.mutateAsync(updateData);
+        toast({
+          title: "Usuário criado",
+          description: "Usuário criado com sucesso",
+        });
+      } else if (user) {
+        await updateUser.mutateAsync({
+          id: user.id,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          nickname: data.nickname,
+          role: data.role,
+          phone: data.phone,
+          company: data.company,
+          notes: data.notes,
+        });
 
         toast({
           title: "Usuário atualizado",
-          description: "Usuário atualizado com sucesso.",
+          description: "Usuário atualizado com sucesso",
         });
       }
 
-      console.log('Operation completed successfully, closing modal...');
       onClose();
-      form.reset();
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast({
         title: "Erro",
-        description: `Erro ao ${mode === 'create' ? 'criar' : 'atualizar'} usuário.`,
+        description: mode === 'create' ? "Erro ao criar usuário" : "Erro ao atualizar usuário",
         variant: "destructive",
       });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    console.log('Form submit event triggered');
-    console.log('Form state:', {
-      isValid: form.formState.isValid,
-      errors: form.formState.errors,
-      values: form.getValues()
-    });
-    e.preventDefault();
-    form.handleSubmit(onSubmit)(e);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Adicionar Novo Usuário' : 'Editar Usuário'}
+            {mode === 'create' ? 'Criar Usuário' : 'Editar Usuário'}
           </DialogTitle>
-          <DialogDescription>
-            {mode === 'create' 
-              ? 'Preencha os dados para criar um novo usuário no sistema.'
-              : 'Atualize as informações do usuário.'
-            }
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -240,7 +195,7 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sobrenome *</FormLabel>
+                    <FormLabel>Sobrenome</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -252,16 +207,29 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
 
             <FormField
               control={form.control}
+              name="nickname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apelido/Nickname</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Como você conhece este usuário (ex: ZéRoberto, Lucas_BR)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email *</FormLabel>
                   <FormControl>
-                    <Input 
-                      {...field} 
-                      type="email" 
-                      disabled={mode === 'edit'}
-                    />
+                    <Input {...field} type="email" disabled={mode === 'edit'} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -290,17 +258,17 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Função *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Permissão *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma função" />
+                          <SelectValue placeholder="Selecione uma permissão" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {roleOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                        {Object.entries(roleLabels).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -353,46 +321,20 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
               )}
             />
 
-            {mode === 'edit' && (
-              <FormField
-                control={form.control}
-                name="is_active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Usuário Ativo
-                      </FormLabel>
-                      <div className="text-sm text-muted-foreground">
-                        Determine se o usuário pode acessar o sistema
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <DialogFooter>
+            <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button 
                 type="submit" 
                 disabled={createUser.isPending || updateUser.isPending}
-                onClick={() => console.log('Save button clicked! Form valid:', form.formState.isValid)}
               >
                 {mode === 'create' ? 'Criar Usuário' : 'Salvar Alterações'}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
-}
+};

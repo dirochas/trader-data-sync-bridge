@@ -422,6 +422,7 @@ export type Database = {
           is_active: boolean
           last_login: string | null
           last_name: string | null
+          nickname: string | null
           notes: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -436,6 +437,7 @@ export type Database = {
           is_active?: boolean
           last_login?: string | null
           last_name?: string | null
+          nickname?: string | null
           notes?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -450,6 +452,7 @@ export type Database = {
           is_active?: boolean
           last_login?: string | null
           last_name?: string | null
+          nickname?: string | null
           notes?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]

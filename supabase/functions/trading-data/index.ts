@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,12 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    // Trading Data Endpoint - Version: STABLE v1.1 - 2024-06-18 ✅
-    // ✅ ETAPA 2: Adicionado suporte para user_email
+    // Trading Data Endpoint - Version: STABLE v1.2 - 2024-06-19 ✅
+    // ✅ ETAPA 3: Adicionado processamento inteligente de VPS ID
     // ✅ Funcionalidades testadas e confirmadas:
     // - Recebe dados de trading via POST
     // - Salva contas, margem, posições e histórico
     // - Suporte a VPS ID e USER EMAIL
+    // - Processamento automático de VPS único vs display
     // - Logs detalhados para debug
     console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
     console.log('Method:', req.method)
@@ -52,7 +54,32 @@ serve(async (req) => {
       userEmail: userEmail
     })
 
-    // Upsert trading account (incluindo VPS ID e USER EMAIL)
+    // Função para processar VPS ID - separar único vs display
+    const processVpsId = (rawVpsId: string) => {
+      if (!rawVpsId || rawVpsId === 'N/A') {
+        return { vpsUniqueId: null, vpsDisplayName: null };
+      }
+
+      console.log('🔧 Processando VPS ID:', rawVpsId);
+      
+      // O VPS ID único é sempre preservado como veio
+      const vpsUniqueId = rawVpsId;
+      
+      // Criar versão encurtada para display
+      let vpsDisplayName = rawVpsId;
+      
+      // Se começa com VPS_ e tem mais de 8 caracteres, encurtar
+      if (rawVpsId.startsWith('VPS_') && rawVpsId.length > 8) {
+        // Pegar os últimos 4 caracteres após VPS_
+        const suffix = rawVpsId.slice(-4);
+        vpsDisplayName = `VPS_${suffix}`;
+        console.log(`📝 VPS encurtado: ${rawVpsId} -> ${vpsDisplayName}`);
+      }
+      
+      return { vpsUniqueId, vpsDisplayName };
+    };
+
+    // Upsert trading account (incluindo processamento inteligente de VPS)
     console.log('=== SALVANDO CONTA ===')
     const accountUpsertData: any = {
       account: account.accountNumber,
@@ -64,10 +91,18 @@ serve(async (req) => {
       updated_at: new Date().toISOString()
     }
 
-    // Adicionar VPS ID se fornecido
+    // Processar VPS ID se fornecido
     if (vpsId) {
-      accountUpsertData.vps = vpsId
-      console.log('VPS ID recebido e será salvo:', vpsId)
+      const { vpsUniqueId, vpsDisplayName } = processVpsId(vpsId);
+      
+      if (vpsUniqueId) {
+        accountUpsertData.vps_unique_id = vpsUniqueId;
+        accountUpsertData.vps = vpsDisplayName;
+        console.log('✅ VPS processado:', { 
+          único: vpsUniqueId, 
+          display: vpsDisplayName 
+        });
+      }
     }
 
     // Adicionar USER EMAIL se fornecido
@@ -89,7 +124,9 @@ serve(async (req) => {
       throw new Error(`Erro conta: ${accountError.message}`)
     }
 
-    console.log('Conta salva:', accountData?.id, vpsId ? `VPS: ${vpsId}` : 'Sem VPS ID', userEmail ? `USER: ${userEmail}` : 'Sem User Email')
+    console.log('Conta salva:', accountData?.id, 
+      vpsId ? `VPS: ${accountUpsertData.vps} (${accountUpsertData.vps_unique_id})` : 'Sem VPS ID', 
+      userEmail ? `USER: ${userEmail}` : 'Sem User Email')
     const accountId = accountData.id
 
     // Delete old margin info and insert new one (usando novos nomes)
@@ -208,7 +245,8 @@ serve(async (req) => {
         success: true, 
         message: 'Dados atualizados com sucesso',
         account_id: accountId,
-        vps_id: vpsId || null,
+        vps_id: accountUpsertData.vps || null,
+        vps_unique_id: accountUpsertData.vps_unique_id || null,
         user_email: userEmail || null,
         positions_count: positions?.length || 0,
         history_count: history?.length || 0,

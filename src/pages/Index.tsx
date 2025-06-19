@@ -8,10 +8,14 @@ import OpenPositions from '@/components/OpenPositions';
 import TradeHistory from '@/components/TradeHistory';
 import { useRealtimeUpdates } from '@/hooks/useTradingData';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Button } from '@/components/ui/button';
+import { Archive } from 'lucide-react';
 
 const Index = () => {
   const { profile, loading, getDefaultRoute } = useAuth();
   const navigate = useNavigate();
+  const permissions = usePermissions();
   useRealtimeUpdates();
 
   useEffect(() => {
@@ -34,6 +38,11 @@ const Index = () => {
     );
   }
 
+  // Função para navegar para accounts management
+  const handleAccountsManagement = () => {
+    navigate('/accounts-management');
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -47,6 +56,18 @@ const Index = () => {
               </span>
             </p>
           </div>
+          
+          {/* Botão para Accounts Management - só aparece para admin e manager */}
+          {(permissions.canAccessUserManagement) && (
+            <Button
+              onClick={handleAccountsManagement}
+              variant="outline"
+              className="flex items-center gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+            >
+              <Archive className="h-4 w-4" />
+              VER contas INATIVAS
+            </Button>
+          )}
         </div>
         
         {/* Row 1: Account Info and Margin Info */}

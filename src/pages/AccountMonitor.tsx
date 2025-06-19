@@ -21,7 +21,8 @@ import {
   Users, 
   DollarSign, 
   Activity,
-  Filter
+  Filter,
+  Archive
 } from 'lucide-react';
 
 const AccountMonitor = () => {
@@ -377,18 +378,36 @@ const AccountMonitor = () => {
     );
   };
 
+  const handleInactiveAccounts = () => {
+    navigate('/inactive-accounts');
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         {/* Header Section */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
-            Account Monitor
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
-            {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
+                Account Monitor
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
+                {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
+              </p>
+            </div>
+            
+            {/* Botão para Contas Inativas */}
+            <Button
+              onClick={handleInactiveAccounts}
+              variant="outline"
+              className="flex items-center gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+            >
+              <Archive className="h-4 w-4" />
+              Contas Inativas
+            </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}

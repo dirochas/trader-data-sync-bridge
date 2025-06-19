@@ -120,7 +120,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} border-r`}
       collapsible="icon"
       style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}
     >
@@ -146,7 +146,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <SidebarContent className="px-3 py-4" style={{ backgroundColor: '#0E1016' }}>
+      <SidebarContent className={`${isCollapsed ? 'px-2' : 'px-3'} py-4`} style={{ backgroundColor: '#0E1016' }}>
         <SidebarGroup>
           <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-xs text-gray-400 uppercase tracking-wider mb-2`}>
             Navigation
@@ -159,7 +159,7 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end 
-                      className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
+                      className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} py-3 rounded-xl transition-all duration-300 group ${
                         isActive(item.url)
                           ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30' 
                           : 'hover:bg-gray-800 text-gray-300 hover:text-white hover:translate-x-1'
@@ -182,8 +182,8 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* User Profile Section */}
-        <div className="mt-auto p-3">
-          <div className={`bg-gray-800/50 border border-gray-700 rounded-xl p-3 backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
+        <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          <div className={`bg-gray-800/50 border border-gray-700 rounded-xl ${isCollapsed ? 'p-2' : 'p-3'} backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
                 <User className="w-4 h-4 text-white" />
@@ -202,7 +202,7 @@ export function AppSidebar() {
         </div>
       </SidebarContent>
 
-      <div className="p-3 border-t" style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
+      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t`} style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
         <SidebarTrigger className="w-full h-11 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-300 hover:text-white" />
       </div>
     </Sidebar>

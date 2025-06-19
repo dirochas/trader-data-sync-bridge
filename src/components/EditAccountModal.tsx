@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Archive, Trash2 } from 'lucide-react';
 
 interface EditAccountModalProps {
   isOpen: boolean;
@@ -18,6 +20,7 @@ interface EditAccountModalProps {
     vps_unique_id: string | null;
     broker: string | null;
     server: string;
+    status?: string;
   } | null;
   onAccountUpdated: () => void;
 }
@@ -27,6 +30,8 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     name: account?.name || '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -68,6 +73,74 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleArchiveAccount = async () => {
+    if (!account) return;
+
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({
+          status: 'archived',
+        })
+        .eq('id', account.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta arquivada",
+        description: "A conta foi arquivada com sucesso. Ela não aparecerá mais no monitor ativo, mas o histórico permanece acessível.",
+      });
+
+      onAccountUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao arquivar conta:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível arquivar a conta.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!account) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({
+          status: 'deleted',
+          deleted_at: new Date().toISOString(),
+        })
+        .eq('id', account.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta movida para lixeira",
+        description: "A conta foi movida para lixeira e será permanentemente deletada em 30 dias. Você pode restaurá-la até lá.",
+        variant: "destructive",
+      });
+
+      onAccountUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível mover a conta para lixeira.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -131,25 +204,117 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
               <Label htmlFor="server">Servidor</Label>
               <Input
                 id="server"
-                value={account.server}
+                value={account.server || 'N/A'}
                 disabled
                 className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed font-mono text-sm"
               />
               <p className="text-xs text-gray-500">Este campo é atualizado automaticamente pelo EA</p>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isLoading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Salvando...' : 'Salvar'}
-              </Button>
+            <div className="flex flex-col space-y-3 pt-4">
+              {/* Botão principal de salvar */}
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+
+              {/* Separador */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Ações Avançadas</span>
+                </div>
+              </div>
+
+              {/* Botões de ação */}
+              <div className="flex justify-between space-x-2">
+                {/* Botão Arquivar */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                      disabled={isLoading || isArchiving || isDeleting}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Arquivar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Arquivar conta?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A conta <strong>{account.name || account.account}</strong> será arquivada e não aparecerá mais no monitor ativo.
+                        <br /><br />
+                        O histórico de trades e dados permanecerão acessíveis para consulta, mas a conta não estará mais "em trabalho".
+                        <br /><br />
+                        Você pode reverter esta ação posteriormente se necessário.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleArchiveAccount}
+                        disabled={isArchiving}
+                        className="bg-amber-600 hover:bg-amber-700"
+                      >
+                        {isArchiving ? 'Arquivando...' : 'Arquivar Conta'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Botão Deletar */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                      disabled={isLoading || isArchiving || isDeleting}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Deletar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mover conta para lixeira?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A conta <strong>{account.name || account.account}</strong> será movida para lixeira.
+                        <br /><br />
+                        <span className="text-amber-600 font-medium">⚠️ Esta ação pode ser revertida por 30 dias.</span>
+                        <br /><br />
+                        Após 30 dias, a conta e todos os seus dados (histórico, posições, etc.) serão <strong>permanentemente deletados</strong>.
+                        <br /><br />
+                        Use esta opção apenas para contas que nunca mais serão utilizadas.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {isDeleting ? 'Movendo...' : 'Mover para Lixeira'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </form>
         )}

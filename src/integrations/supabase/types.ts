@@ -15,12 +15,14 @@ export type Database = {
           balance: number
           broker: string | null
           created_at: string
+          deleted_at: string | null
           equity: number
           id: string
           leverage: number
           name: string | null
           profit: number
           server: string
+          status: Database["public"]["Enums"]["account_status"]
           updated_at: string
           user_email: string | null
           vps_unique_id: string | null
@@ -30,12 +32,14 @@ export type Database = {
           balance?: number
           broker?: string | null
           created_at?: string
+          deleted_at?: string | null
           equity?: number
           id?: string
           leverage?: number
           name?: string | null
           profit?: number
           server: string
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           user_email?: string | null
           vps_unique_id?: string | null
@@ -45,12 +49,14 @@ export type Database = {
           balance?: number
           broker?: string | null
           created_at?: string
+          deleted_at?: string | null
           equity?: number
           id?: string
           leverage?: number
           name?: string | null
           profit?: number
           server?: string
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           user_email?: string | null
           vps_unique_id?: string | null
@@ -494,6 +500,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_status: "active" | "archived" | "deleted"
       user_role: "admin" | "manager" | "client_trader" | "client_investor"
     }
     CompositeTypes: {
@@ -610,6 +617,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["active", "archived", "deleted"],
       user_role: ["admin", "manager", "client_trader", "client_investor"],
     },
   },

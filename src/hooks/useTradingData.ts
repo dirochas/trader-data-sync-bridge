@@ -21,11 +21,12 @@ export const getConnectionStatus = (lastUpdate: string) => {
 };
 
 // Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário e JOIN com VPS)
-export const useTradingAccounts = () => {
+// Por padrão, mostra apenas contas ativas
+export const useTradingAccounts = (includeArchived = false, includeDeleted = false) => {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['accounts', profile?.email],
+    queryKey: ['accounts', profile?.email, includeArchived, includeDeleted],
     queryFn: async () => {
       let query = supabase
         .from('accounts')
@@ -33,6 +34,14 @@ export const useTradingAccounts = () => {
           *,
           vps_servers(display_name)
         `);
+      
+      // Filtrar por status (por padrão apenas ativas)
+      const statusFilter = [];
+      statusFilter.push('active');
+      if (includeArchived) statusFilter.push('archived');
+      if (includeDeleted) statusFilter.push('deleted');
+      
+      query = query.in('status', statusFilter);
       
       // ADMIN e MANAGER veem todas as contas
       // CLIENTE vê apenas suas próprias contas

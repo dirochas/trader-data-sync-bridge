@@ -55,7 +55,15 @@ export type Database = {
           user_email?: string | null
           vps_unique_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounts_vps_unique_id_fkey"
+            columns: ["vps_unique_id"]
+            isOneToOne: false
+            referencedRelation: "vps_servers"
+            referencedColumns: ["vps_unique_id"]
+          },
+        ]
       }
       commands: {
         Row: {

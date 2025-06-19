@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -32,7 +31,7 @@ export const useTradingAccounts = () => {
         .from('accounts')
         .select(`
           *,
-          vps_servers!accounts_vps_unique_id_fkey(display_name)
+          vps_servers(display_name)
         `);
       
       // ADMIN e MANAGER veem todas as contas
@@ -79,7 +78,7 @@ export const useTradingAccount = (accountNumber?: string) => {
         .from('accounts')
         .select(`
           *,
-          vps_servers!accounts_vps_unique_id_fkey(display_name)
+          vps_servers(display_name)
         `)
         .eq('account', accountNumber);
       

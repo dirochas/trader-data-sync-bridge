@@ -22,7 +22,8 @@ import {
   DollarSign, 
   Activity,
   Filter,
-  Archive
+  Archive,
+  UserCheck
 } from 'lucide-react';
 
 const AccountMonitor = () => {
@@ -37,7 +38,39 @@ const AccountMonitor = () => {
   const [closeAllModalOpen, setCloseAllModalOpen] = useState(false);
   const [selectedAccountForClose, setSelectedAccountForClose] = useState<any>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedClient, setSelectedClient] = useState<string>('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Query para buscar lista de clientes únicos (apenas para admin/manager)
+  const { data: clientsList = [] } = useQuery({
+    queryKey: ['clients-list'],
+    queryFn: async () => {
+      if (!permissions.isAdminOrManager) return [];
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, email')
+        .not('first_name', 'is', null)
+        .neq('first_name', '')
+        .order('first_name');
+      
+      if (error) throw error;
+      
+      // Filtrar apenas clientes únicos por primeiro nome
+      const uniqueClients = data?.reduce((acc: any[], profile) => {
+        if (!acc.find(client => client.first_name === profile.first_name)) {
+          acc.push(profile);
+        }
+        return acc;
+      }, []) || [];
+      
+      return uniqueClients;
+    },
+    enabled: permissions.isAdminOrManager,
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
+    staleTime: 10000,
+    gcTime: 60000,
+  });
 
   // Query otimizada para posições abertas COM FILTRO POR USUÁRIO
   const { data: allOpenPositions = [] } = useQuery({
@@ -107,6 +140,50 @@ const AccountMonitor = () => {
     gcTime: 60000,
   });
 
+  // Query para enriquecer contas com dados dos perfis de usuário
+  const { data: enrichedAccountsData = [] } = useQuery({
+    queryKey: ['enriched-accounts', profile?.email],
+    queryFn: async () => {
+      if (!accounts.length) return [];
+      
+      let query = supabase
+        .from('accounts')
+        .select(`
+          *,
+          vps_servers(display_name),
+          profiles!accounts_user_email_fkey(first_name, last_name, email)
+        `);
+      
+      // Aplicar filtros baseados no papel do usuário
+      query = query.in('status', ['active']);
+      
+      if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        if (profile.email) {
+          query = query.eq('user_email', profile.email);
+        } else {
+          return [];
+        }
+      }
+      
+      const { data, error } = await query.order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!profile && accounts.length > 0,
+    refetchInterval: 1500,
+    staleTime: 500,
+    gcTime: 30000,
+  });
+
+  // Função para obter primeiro nome do cliente baseado no email
+  const getClientFirstName = (userEmail: string) => {
+    if (!enrichedAccountsData.length) return 'N/A';
+    
+    const account = enrichedAccountsData.find(acc => acc.user_email === userEmail);
+    return account?.profiles?.first_name || 'N/A';
+  };
+
   const getOpenTradesCount = (accountId: string) => {
     return allOpenPositions.filter(pos => pos.account_id === accountId).length;
   };
@@ -155,6 +232,7 @@ const AccountMonitor = () => {
       const openTradeCount = getOpenTradesCount(account.id);
       const openPnLValue = getOpenPnL(account);
       const dayProfitValue = getDayProfit(account.id);
+      const clientFirstName = getClientFirstName(account.user_email);
       
       // Validação extra para dados numéricos
       const safeBalance = account.balance && !isNaN(Number(account.balance)) ? Number(account.balance) : 0;
@@ -171,19 +249,37 @@ const AccountMonitor = () => {
         balance: safeBalance,
         equity: safeEquity,
         connectionStatus: connectionStatus,
+        clientFirstName: clientFirstName,
       };
     });
-  }, [accounts, allOpenPositions, todayTrades]);
+  }, [accounts, allOpenPositions, todayTrades, enrichedAccountsData]);
 
-  // Filtrar contas por status
-  const filteredAccounts = selectedStatus === 'all' 
-    ? enrichedAccounts 
-    : enrichedAccounts.filter(account => {
-        if (selectedStatus === 'connected') {
-          return account.status === 'Live' || account.status === 'Slow Connection';
-        }
-        return account.status.toLowerCase() === selectedStatus.toLowerCase();
-      });
+  // Filtrar contas por status e cliente
+  const filteredAccounts = useMemo(() => {
+    let filtered = enrichedAccounts;
+    
+    // Filtro por status
+    if (selectedStatus !== 'all') {
+      if (selectedStatus === 'connected') {
+        filtered = filtered.filter(account => 
+          account.status === 'Live' || account.status === 'Slow Connection'
+        );
+      } else {
+        filtered = filtered.filter(account => 
+          account.status.toLowerCase() === selectedStatus.toLowerCase()
+        );
+      }
+    }
+    
+    // Filtro por cliente (apenas para admin/manager)
+    if (selectedClient !== 'all' && permissions.isAdminOrManager) {
+      filtered = filtered.filter(account => 
+        account.clientFirstName === selectedClient
+      );
+    }
+    
+    return filtered;
+  }, [enrichedAccounts, selectedStatus, selectedClient, permissions.isAdminOrManager]);
 
   // Configuração de paginação
   const {
@@ -497,6 +593,27 @@ const AccountMonitor = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Filtro por Cliente - apenas para Admin/Manager */}
+                {permissions.isAdminOrManager && (
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-gray-500" />
+                    <Select value={selectedClient} onValueChange={setSelectedClient}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Filter by client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Clients</SelectItem>
+                        {clientsList.map((client) => (
+                          <SelectItem key={client.email} value={client.first_name}>
+                            {client.first_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">Results per page:</span>
                   <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
@@ -522,6 +639,7 @@ const AccountMonitor = () => {
                     {createSortableHeader("Status", "status")}
                     {createSortableHeader("Account Name", "name")}
                     {createSortableHeader("Number", "account")}
+                    {permissions.isAdminOrManager && createSortableHeader("Client", "clientFirstName")}
                     {createSortableHeader("VPS", "vps")}
                     {createSortableHeader("Balance", "balance", "text-right")}
                     {createSortableHeader("Equity", "equity", "text-right")}
@@ -542,6 +660,11 @@ const AccountMonitor = () => {
                         {account.name}
                       </TableCell>
                       <TableCell className="font-mono">{account.account}</TableCell>
+                      {permissions.isAdminOrManager && (
+                        <TableCell className="font-medium">
+                          {account.clientFirstName}
+                        </TableCell>
+                      )}
                       <TableCell>{account.vps}</TableCell>
                       <TableCell className="text-right font-mono">
                         US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -638,7 +761,9 @@ const AccountMonitor = () => {
               <div className="text-center py-12">
                 <Users className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                  {selectedStatus === 'all' ? 'Nenhuma conta encontrada' : `Nenhuma conta ${selectedStatus} encontrada`}
+                  {selectedStatus === 'all' && selectedClient === 'all' 
+                    ? 'Nenhuma conta encontrada' 
+                    : `Nenhuma conta encontrada para os filtros selecionados`}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
                   Configure seus EAs para começar a monitorar contas

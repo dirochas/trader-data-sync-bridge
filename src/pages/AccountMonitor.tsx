@@ -56,8 +56,9 @@ const AccountMonitor = () => {
       
       if (accountsError) throw accountsError;
       
-      // Extrair emails únicos
-      const uniqueEmails = [...new Set(accountsData?.map(acc => acc.user_email).filter(Boolean))] || [];
+      // Extrair emails únicos com validação mais robusta
+      const validEmails = accountsData?.map(acc => acc.user_email).filter(email => email && email.trim() !== '') || [];
+      const uniqueEmails = [...new Set(validEmails)];
       
       if (uniqueEmails.length === 0) return [];
       

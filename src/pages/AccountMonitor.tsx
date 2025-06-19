@@ -402,7 +402,7 @@ const AccountMonitor = () => {
             <Button
               onClick={handleInactiveAccounts}
               variant="outline"
-              className="flex items-center gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+              className="flex items-center gap-2 text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-colors"
             >
               <Archive className="h-4 w-4" />
               Contas Inativas

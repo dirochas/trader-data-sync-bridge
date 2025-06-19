@@ -25,7 +25,6 @@ interface EditAccountModalProps {
 const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
   const [formData, setFormData] = useState({
     name: account?.name || '',
-    broker: account?.broker || '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -34,7 +33,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     if (account) {
       setFormData({
         name: account.name || '',
-        broker: account.broker || '',
       });
     }
   }, [account]);
@@ -49,7 +47,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         .from('accounts')
         .update({
           name: formData.name.trim() || null,
-          broker: formData.broker.trim() || null,
         })
         .eq('id', account.id);
 
@@ -84,6 +81,16 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         {account && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="name">Nome da Conta</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Digite o nome da conta"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="account">Número da Conta</Label>
               <Input
                 id="account"
@@ -92,16 +99,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                 className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed"
               />
               <p className="text-xs text-gray-500">Este campo não pode ser editado</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome da Conta</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Digite o nome da conta"
-              />
             </div>
 
             <div className="space-y-2">
@@ -129,16 +126,6 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                 <p className="text-xs text-gray-500">Identificador único interno (não editável)</p>
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="broker">Broker</Label>
-              <Input
-                id="broker"
-                value={formData.broker}
-                onChange={(e) => setFormData(prev => ({ ...prev, broker: e.target.value }))}
-                placeholder="Digite o nome do broker"
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="server">Servidor</Label>

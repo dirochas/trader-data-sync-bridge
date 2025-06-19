@@ -15,6 +15,7 @@ interface EditAccountModalProps {
     name: string | null;
     account: string;
     vps: string | null;
+    vps_unique_id: string | null;
     broker: string | null;
     server: string;
   } | null;
@@ -91,7 +92,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                 id="account"
                 value={account.account}
                 disabled
-                className="bg-gray-100"
+                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed"
               />
               <p className="text-xs text-gray-500">Este campo não pode ser editado</p>
             </div>
@@ -107,14 +108,28 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vps">Nome do VPS</Label>
+              <Label htmlFor="vps">Nome do VPS (Display)</Label>
               <Input
                 id="vps"
                 value={formData.vps}
                 onChange={(e) => setFormData(prev => ({ ...prev, vps: e.target.value }))}
-                placeholder="Digite o nome do VPS"
+                placeholder="Ex: VPS-João, VPS_7110"
               />
+              <p className="text-xs text-gray-500">Nome amigável para exibição na interface</p>
             </div>
+
+            {account.vps_unique_id && (
+              <div className="space-y-2">
+                <Label htmlFor="vps_unique_id">ID Único do VPS</Label>
+                <Input
+                  id="vps_unique_id"
+                  value={account.vps_unique_id}
+                  disabled
+                  className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500">Identificador único interno (não editável)</p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="broker">Broker</Label>
@@ -132,7 +147,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                 id="server"
                 value={account.server}
                 disabled
-                className="bg-gray-100"
+                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed font-mono text-sm"
               />
               <p className="text-xs text-gray-500">Este campo é atualizado automaticamente pelo EA</p>
             </div>

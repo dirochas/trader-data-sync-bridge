@@ -24,6 +24,7 @@ export type Database = {
           updated_at: string
           user_email: string | null
           vps: string | null
+          vps_unique_id: string | null
         }
         Insert: {
           account: string
@@ -39,6 +40,7 @@ export type Database = {
           updated_at?: string
           user_email?: string | null
           vps?: string | null
+          vps_unique_id?: string | null
         }
         Update: {
           account?: string
@@ -54,6 +56,7 @@ export type Database = {
           updated_at?: string
           user_email?: string | null
           vps?: string | null
+          vps_unique_id?: string | null
         }
         Relationships: []
       }

@@ -234,8 +234,9 @@ const AccountMonitor = () => {
     setSelectedAccount({
       id: account.id,
       name: account.name,
-      account_number: account.account,
-      vps_name: account.vps,
+      account: account.account,
+      vps: account.vps,
+      vps_unique_id: account.vps_unique_id,
       broker: account.broker,
       server: account.server,
     });

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useTradingAccounts } from '@/hooks/useTradingData';
 import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 import { 
   Server, 
   Monitor,
@@ -18,13 +18,17 @@ import {
 const VPSManagement = () => {
   const { data: accounts = [] } = useTradingAccounts();
   const navigate = useNavigate();
+  const permissions = usePermissions();
   
-  // Agrupar contas por VPS
+  // Agrupar contas por VPS único (usando vps_unique_id quando disponível)
   const vpsGroups = accounts.reduce((acc, account) => {
-    const vpsName = account.vps || 'Unknown VPS';
-    if (!acc[vpsName]) {
-      acc[vpsName] = {
-        vpsName,
+    const vpsUniqueId = account.vps_unique_id || account.vps || 'Unknown VPS';
+    const vpsDisplayName = account.vps || account.vps_unique_id || 'Unknown VPS';
+    
+    if (!acc[vpsUniqueId]) {
+      acc[vpsUniqueId] = {
+        vpsUniqueId,
+        vpsDisplayName,
         accounts: [],
         totalAccounts: 0,
         connectedAccounts: 0,
@@ -34,21 +38,21 @@ const VPSManagement = () => {
       };
     }
     
-    acc[vpsName].accounts.push(account);
-    acc[vpsName].totalAccounts++;
-    acc[vpsName].totalBalance += Number(account.balance) || 0;
-    acc[vpsName].totalEquity += Number(account.equity) || 0;
+    acc[vpsUniqueId].accounts.push(account);
+    acc[vpsUniqueId].totalAccounts++;
+    acc[vpsUniqueId].totalBalance += Number(account.balance) || 0;
+    acc[vpsUniqueId].totalEquity += Number(account.equity) || 0;
     
     const accountUpdate = new Date(account.updated_at);
-    if (accountUpdate > acc[vpsName].lastUpdate) {
-      acc[vpsName].lastUpdate = accountUpdate;
+    if (accountUpdate > acc[vpsUniqueId].lastUpdate) {
+      acc[vpsUniqueId].lastUpdate = accountUpdate;
     }
     
     // Conta como conectada se foi atualizada nos últimos 2 minutos
     const now = new Date();
     const diffInMinutes = (now.getTime() - accountUpdate.getTime()) / (1000 * 60);
     if (diffInMinutes <= 2) {
-      acc[vpsName].connectedAccounts++;
+      acc[vpsUniqueId].connectedAccounts++;
     }
     
     return acc;
@@ -69,9 +73,9 @@ const VPSManagement = () => {
     }
   };
 
-  const handleViewVPS = (vpsName: string) => {
+  const handleViewVPS = (vpsUniqueId: string) => {
     // Navigate to accounts page with VPS filter
-    navigate('/accounts', { state: { vpsFilter: vpsName } });
+    navigate('/accounts', { state: { vpsFilter: vpsUniqueId } });
   };
 
   const totalVPS = vpsData.length;
@@ -89,6 +93,7 @@ const VPSManagement = () => {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Gerenciamento de servidores VPS e infraestrutura de trading
+            {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
           </p>
         </div>
 
@@ -169,6 +174,7 @@ const VPSManagement = () => {
                   <TableRow>
                     <TableHead className="font-medium">Status</TableHead>
                     <TableHead className="font-medium">VPS Name</TableHead>
+                    <TableHead className="font-medium">Unique ID</TableHead>
                     <TableHead className="text-right font-medium">Accounts</TableHead>
                     <TableHead className="text-right font-medium">Connected</TableHead>
                     <TableHead className="text-right font-medium">Total Balance</TableHead>
@@ -183,7 +189,7 @@ const VPSManagement = () => {
                     const StatusIcon = status.icon;
                     
                     return (
-                      <TableRow key={vps.vpsName}>
+                      <TableRow key={vps.vpsUniqueId}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <StatusIcon className={`h-4 w-4 ${status.color}`} />
@@ -192,7 +198,13 @@ const VPSManagement = () => {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{vps.vpsName}</TableCell>
+                        <TableCell className="font-medium">{vps.vpsDisplayName}</TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">
+                          {vps.vpsUniqueId.length > 20 ? 
+                            `${vps.vpsUniqueId.substring(0, 20)}...` : 
+                            vps.vpsUniqueId
+                          }
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           {vps.totalAccounts}
                         </TableCell>
@@ -216,18 +228,20 @@ const VPSManagement = () => {
                               variant="outline" 
                               size="sm" 
                               className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
-                              onClick={() => handleViewVPS(vps.vpsName)}
+                              onClick={() => handleViewVPS(vps.vpsUniqueId)}
                             >
                               <Monitor className="h-4 w-4 mr-1" />
                               View
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                            >
-                              Edit
-                            </Button>
+                            {permissions.canEditVPSDisplayName && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                              >
+                                Edit
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

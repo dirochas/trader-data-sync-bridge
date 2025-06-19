@@ -13,6 +13,7 @@ import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
 import AccountMonitor from './pages/AccountMonitor';
 import AccountDetails from './pages/AccountDetails';
+import AccountsManagement from './pages/AccountsManagement';
 import SimulationManagement from './pages/SimulationManagement';
 import ExpertManagement from './pages/ExpertManagement';
 import VPSManagement from './pages/VPSManagement';
@@ -60,6 +61,13 @@ const App = () => (
               <Route path="/account/:accountId" element={
                 <ProtectedRoute>
                   <AccountDetails />
+                </ProtectedRoute>
+              } />
+              
+              {/* Accounts Management - Apenas Admin e Manager */}
+              <Route path="/accounts-management" element={
+                <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <AccountsManagement />
                 </ProtectedRoute>
               } />
               

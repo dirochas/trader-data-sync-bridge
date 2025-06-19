@@ -245,7 +245,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                     <Button
                       type="button"
                       variant="outline"
-                      className="flex-1 text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                      className="flex-1 text-amber-700 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-800"
                       disabled={isLoading || isArchiving || isDeleting}
                     >
                       <Archive className="mr-2 h-4 w-4" />
@@ -282,7 +282,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                     <Button
                       type="button"
                       variant="outline"
-                      className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                      className="flex-1 text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400 hover:text-red-800"
                       disabled={isLoading || isArchiving || isDeleting}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />

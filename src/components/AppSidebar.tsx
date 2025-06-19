@@ -1,210 +1,114 @@
-
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Settings, 
-  Monitor, 
-  Server, 
-  Brain,
-  Calculator,
-  User,
-  Terminal
-} from 'lucide-react';
+import React from "react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/useAuth';
-import { usePermissions, getRoleDisplayName } from '@/hooks/usePermissions';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Sidebar } from "flowbite-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Home,
+  Settings,
+  Users,
+  Activity,
+   моз,
+  TrendingUp,
+  Archive,
+  Monitor,
+  ServerCog,
+   моз2,
+  ListChecks,
+  LayoutDashboard,
+} from "lucide-react";
 
-const menuItems = [
-  { 
-    title: 'Dashboard', 
-    url: '/dashboard', 
-    icon: LayoutDashboard,
-    permissionKey: 'canAccessDashboard' as const
-  },
-  { 
-    title: 'Account Monitor', 
-    url: '/accounts', 
-    icon: Monitor,
-    permissionKey: 'canAccessAccountMonitor' as const
-  },
-  { 
-    title: 'Hedge Simulator', 
-    url: '/simulations', 
-    icon: Calculator,
-    permissionKey: 'canAccessHedgeSimulator' as const
-  },
-  { 
-    title: 'Expert Management', 
-    url: '/experts', 
-    icon: Brain,
-    permissionKey: 'canAccessExpertManagement' as const
-  },
-  { 
-    title: 'VPS Management', 
-    url: '/vps', 
-    icon: Server,
-    permissionKey: 'canAccessVPS' as const
-  },
-  { 
-    title: 'Commands', 
-    url: '/commands', 
-    icon: Terminal,
-    permissionKey: 'canAccessCommands' as const
-  },
-  { 
-    title: 'User Management', 
-    url: '/users', 
-    icon: Users,
-    permissionKey: 'canAccessUserManagement' as const
-  },
-  { 
-    title: 'Settings', 
-    url: '/settings', 
-    icon: Settings,
-    permissionKey: 'canAccessSettings' as const
-  },
-];
-
-const getRoleColor = (role: string) => {
-  switch (role) {
-    case 'admin':
-      return 'from-red-400 to-red-500';
-    case 'manager':
-      return 'from-blue-400 to-blue-500';
-    case 'client_trader':
-      return 'from-emerald-400 to-teal-400';
-    case 'client_investor':
-      return 'from-purple-400 to-purple-500';
-    default:
-      return 'from-gray-400 to-gray-500';
-  }
-};
-
-export function AppSidebar() {
-  const { state } = useSidebar();
-  const location = useLocation();
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile } = useAuth();
-  const permissions = usePermissions();
-  const currentPath = location.pathname;
-  
-  const isCollapsed = state === 'collapsed';
+  const location = useLocation();
 
-  const isActive = (path: string) => {
-    if (path === '/accounts') {
-      return currentPath === '/' || currentPath === '/accounts';
-    }
-    return currentPath === path;
-  };
-
-  const userRole = profile?.role || 'client_trader';
-  const displayName = getRoleDisplayName(userRole);
-  const roleColor = getRoleColor(userRole);
-
-  // Filter menu items based on permissions
-  const availableMenuItems = menuItems.filter(item => 
-    permissions[item.permissionKey]
-  );
+  const menuItems = [
+    {
+      title: "Trading",
+      icon: TrendingUp,
+      items: [
+        { title: "Account Monitor", url: "/accounts", icon: Monitor },
+        ...(profile?.role && ['admin', 'manager'].includes(profile.role) ? [
+          { title: "Accounts Management", url: "/accounts-management", icon: Archive }
+        ] : []),
+      ]
+    },
+    {
+      title: "Management",
+      icon: моз,
+      items: [
+        { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+        { title: "Simulations", url: "/simulations", icon: Activity },
+        { title: "Experts", url: "/experts", icon: моз2 },
+        { title: "VPS", url: "/vps", icon: ServerCog },
+      ]
+    },
+    {
+      title: "Admin",
+      icon: Users,
+      items: [
+        { title: "Commands", url: "/commands", icon: ListChecks },
+        { title: "Users", url: "/users", icon: Users },
+      ]
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: Settings,
+    },
+  ];
 
   return (
-    <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-64'} border-r`}
-      collapsible="icon"
-      style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}
-    >
-      <div className="p-4 border-b" style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
-            <img 
-              src="/lovable-uploads/39ba8fe9-453c-4813-8fc2-4add8c8536b2.png" 
-              alt="TraderLab Logo" 
-              className="w-8 h-8 object-contain"
-            />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <img 
-                src="/lovable-uploads/9a7101c2-5cb9-4ab1-a575-4a699474138e.png" 
-                alt="TRADERLAB" 
-                className="h-6 object-contain"
-              />
-              <p className="text-xs text-gray-400 mt-1">Trading System</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <SidebarContent className="px-3 py-4" style={{ backgroundColor: '#0E1016' }}>
-        <SidebarGroup>
-          <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-xs text-gray-400 uppercase tracking-wider mb-2`}>
-            Navigation
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
-              {availableMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-11">
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group ${
-                        isActive(item.url)
-                          ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30' 
-                          : 'hover:bg-gray-800 text-gray-300 hover:text-white hover:translate-x-1'
-                      }`}
-                    >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                        isActive(item.url) ? 'text-sky-400' : 'group-hover:text-sky-400'
-                      }`} />
-                      {!isCollapsed && (
-                        <span className="text-sm font-medium truncate">
-                          {item.title}
-                        </span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* User Profile Section */}
-        <div className="mt-auto p-3">
-          <div className={`bg-gray-800/50 border border-gray-700 rounded-xl p-3 backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                <User className="w-4 h-4 text-white" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{displayName}</p>
-                  <p className="text-xs text-gray-400">{profile?.email || 'user@traderlab.com'}</p>
-                  {permissions.isInvestor && (
-                    <p className="text-xs text-purple-400 mt-1">View Only Access</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </SidebarContent>
-
-      <div className="p-3 border-t" style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
-        <SidebarTrigger className="w-full h-11 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-300 hover:text-white" />
-      </div>
-    </Sidebar>
+    <Sheet {...props}>
+      <SheetTrigger asChild>
+        <Sidebar.CaretRight className="lg:hidden" />
+      </SheetTrigger>
+      <SheetContent side="left" className="z-50 w-64 p-0">
+        <SheetHeader className="px-4 pt-4 pb-2">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Explore as funcionalidades do sistema
+          </SheetDescription>
+        </SheetHeader>
+        <Sidebar className="h-full border-r-none rounded-none">
+          <Sidebar.Items>
+            {menuItems.map((menu, index) => (
+              <React.Fragment key={index}>
+                {menu.title && menu.items ? (
+                  <Sidebar.ItemGroup title={menu.title}>
+                    {menu.items.map((item, i) => (
+                      <Sidebar.Item
+                        key={i}
+                        href={item.url}
+                        active={location.pathname === item.url}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Sidebar.Item>
+                    ))}
+                  </Sidebar.ItemGroup>
+                ) : (
+                  <Sidebar.Item
+                    href={menu.url}
+                    icon={Home}
+                    active={location.pathname === menu.url}
+                  >
+                    <menu.icon className="h-4 w-4" />
+                    <span>{menu.title}</span>
+                  </Sidebar.Item>
+                )}
+              </React.Fragment>
+            ))}
+          </Sidebar.Items>
+        </Sidebar>
+      </SheetContent>
+    </Sheet>
   );
 }

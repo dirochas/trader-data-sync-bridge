@@ -14,14 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    // Trading Data Endpoint - Version: STABLE v1.3 - 2024-06-19 ✅
-    // ✅ ETAPA 4: Integração com tabela vps_servers
+    // Trading Data Endpoint - Version: STABLE v1.4 - 2024-06-19 ✅
+    // ✅ ETAPA 5: Correção para não sobrescrever nomes editados
     // ✅ Funcionalidades testadas e confirmadas:
     // - Recebe dados de trading via POST
     // - Salva contas, margem, posições e histórico
     // - Suporte a VPS ID e USER EMAIL
     // - Processamento automático de VPS único vs display
     // - Integração com tabela vps_servers centralizada
+    // - CORREÇÃO: Não sobrescrever display_name editado manualmente
     // - Logs detalhados para debug
     console.log('=== TRADING DATA ENDPOINT CHAMADO ===')
     console.log('Method:', req.method)
@@ -88,23 +89,33 @@ serve(async (req) => {
       if (processedVpsId) {
         vpsUniqueId = processedVpsId;
         
-        // Upsert na tabela vps_servers para garantir que o VPS existe
-        const { error: vpsError } = await supabase
+        // 🚀 CORREÇÃO: Verificar se VPS já existe antes de fazer upsert
+        const { data: existingVps } = await supabase
           .from('vps_servers')
-          .upsert({
-            vps_unique_id: processedVpsId,
-            display_name: vpsDisplayName,
-          }, {
-            onConflict: 'vps_unique_id'
-          });
+          .select('display_name')
+          .eq('vps_unique_id', processedVpsId)
+          .single();
 
-        if (vpsError) {
-          console.error('Erro ao salvar VPS:', vpsError);
+        if (existingVps) {
+          // VPS já existe - NÃO sobrescrever o display_name
+          console.log('✅ VPS já existe - mantendo nome atual:', existingVps.display_name);
         } else {
-          console.log('✅ VPS processado e salvo:', { 
-            único: processedVpsId, 
-            display: vpsDisplayName 
-          });
+          // VPS novo - criar com nome gerado automaticamente
+          const { error: vpsError } = await supabase
+            .from('vps_servers')
+            .insert({
+              vps_unique_id: processedVpsId,
+              display_name: vpsDisplayName,
+            });
+
+          if (vpsError) {
+            console.error('Erro ao criar novo VPS:', vpsError);
+          } else {
+            console.log('✅ VPS novo criado:', { 
+              único: processedVpsId, 
+              display: vpsDisplayName 
+            });
+          }
         }
       }
     }

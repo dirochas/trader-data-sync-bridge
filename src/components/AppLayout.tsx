@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -14,7 +14,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <SidebarInset className="flex-1">
+        <div className="flex-1 flex flex-col min-w-0 transition-all duration-200 ease-linear">
           {/* Header */}
           <header className="h-16 border-b bg-card/80 backdrop-blur-sm flex items-center px-4 md:px-6 gap-4 shadow-sm">
             <SidebarTrigger className="bg-card border border-border hover:bg-accent p-2 rounded-lg transition-colors" />
@@ -42,7 +42,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <main className="flex-1 overflow-auto bg-background">
             {children}
           </main>
-        </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );

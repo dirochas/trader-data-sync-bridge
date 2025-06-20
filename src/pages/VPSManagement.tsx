@@ -78,7 +78,6 @@ const VPSManagement = () => {
   };
 
   const handleViewVPS = (vpsUniqueId: string) => {
-    // Navigate to accounts page with VPS filter
     navigate('/accounts', { state: { vpsFilter: vpsUniqueId } });
   };
 
@@ -90,9 +89,77 @@ const VPSManagement = () => {
     
     setSelectedVPS({
       vpsUniqueId: vps.vpsUniqueId,
-      displayName: vps.vpsDisplayName
+      displayName: vps.vpsDisplayName,
+      host: vps.host,
+      port: vps.port,
+      username: vps.username,
+      password: vps.password
     });
     setEditVPSModalOpen(true);
+  };
+
+  const handleConnectVPS = async (vps: any) => {
+    // Buscar dados de conexão do banco
+    try {
+      const { data: vpsData, error } = await supabase
+        .from('vps_servers')
+        .select('host, port, username, password')
+        .eq('vps_unique_id', vps.vpsUniqueId)
+        .single();
+
+      if (error || !vpsData?.host) {
+        toast({
+          title: "Configuração necessária",
+          description: "Configure primeiro os dados de conexão RDP deste VPS.",
+          variant: "destructive",
+        });
+        handleEditVPS(vps);
+        return;
+      }
+
+      // Gerar arquivo RDP automaticamente
+      const rdpContent = [
+        'screen mode id:i:2',
+        'use multimon:i:0',
+        'desktopwidth:i:1920',
+        'desktopheight:i:1080',
+        'session bpp:i:32',
+        'compression:i:1',
+        'keyboardhook:i:2',
+        'audiocapturemode:i:0',
+        'videoplaybackmode:i:1',
+        'connection type:i:7',
+        'displayconnectionbar:i:1',
+        'autoreconnection enabled:i:1',
+        'authentication level:i:2',
+        'prompt for credentials:i:0',
+        `full address:s:${vpsData.host}:${vpsData.port || '3389'}`,
+        `username:s:${vpsData.username || ''}`,
+        `password 51:b:${btoa(vpsData.password || '')}`,
+      ].join('\r\n');
+
+      const blob = new Blob([rdpContent], { type: 'application/x-rdp' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${vps.vpsDisplayName}.rdp`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Conectando ao VPS",
+        description: "Arquivo RDP baixado. Execute-o para conectar.",
+      });
+    } catch (error) {
+      console.error('Erro ao conectar VPS:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a conexão RDP.",
+        variant: "destructive",
+      });
+    }
   };
 
   const totalVPS = vpsData.length;
@@ -241,6 +308,16 @@ const VPSManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
+                              onClick={() => handleConnectVPS(vps)}
+                              title="Conectar via RDP"
+                            >
+                              <Monitor className="h-4 w-4 mr-1" />
+                              RDP
+                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 

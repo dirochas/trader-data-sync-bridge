@@ -120,7 +120,7 @@ const VPSManagement = () => {
         return;
       }
 
-      // Gerar arquivo RDP automaticamente
+      // Gerar arquivo RDP corrigido - SEM senha salva no arquivo
       const rdpContent = [
         'screen mode id:i:2',
         'use multimon:i:0',
@@ -138,7 +138,7 @@ const VPSManagement = () => {
         'prompt for credentials:i:0',
         `full address:s:${vpsData.host}:${vpsData.port || '3389'}`,
         `username:s:${vpsData.username || ''}`,
-        `password 51:b:${btoa(vpsData.password || '')}`,
+        // Removido: linha da senha - deixa o Windows pedir
       ].join('\r\n');
 
       const blob = new Blob([rdpContent], { type: 'application/x-rdp' });
@@ -153,7 +153,7 @@ const VPSManagement = () => {
 
       toast({
         title: "Conectando ao VPS",
-        description: "Arquivo RDP baixado. Execute-o para conectar.",
+        description: "Arquivo RDP baixado. O Windows pedirá a senha na conexão.",
       });
     } catch (error) {
       console.error('Erro ao conectar VPS:', error);

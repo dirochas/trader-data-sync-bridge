@@ -102,6 +102,7 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
       return;
     }
 
+    // Formato correto para arquivos RDP
     const rdpContent = [
       'screen mode id:i:2',
       'use multimon:i:0',
@@ -147,7 +148,8 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
       'gatewaybrokeringtype:i:0',
       `full address:s:${formData.host}:${formData.port}`,
       `username:s:${formData.username}`,
-      `password 51:b:${btoa(formData.password)}`,
+      // Removendo a linha de senha completamente - deixa o Windows pedir a senha
+      // Isso é mais seguro e compatível
     ].join('\r\n');
 
     const blob = new Blob([rdpContent], { type: 'application/x-rdp' });
@@ -162,7 +164,7 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
 
     toast({
       title: "Arquivo RDP gerado",
-      description: "O arquivo RDP foi baixado. Execute-o para conectar ao VPS.",
+      description: "O arquivo RDP foi baixado. O Windows pedirá a senha na conexão.",
     });
   };
 
@@ -296,6 +298,9 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
                       )}
                     </Button>
                   </div>
+                  <p className="text-xs text-amber-600">
+                    💡 Por segurança, a senha não será salva no arquivo RDP. O Windows pedirá a senha na conexão.
+                  </p>
                 </div>
 
                 {formData.host && formData.username && (

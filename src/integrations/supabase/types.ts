@@ -462,8 +462,10 @@ export type Database = {
       }
       vps_servers: {
         Row: {
+          cost: number | null
           created_at: string
           display_name: string
+          due_date: string | null
           host: string | null
           id: string
           password: string | null
@@ -473,8 +475,10 @@ export type Database = {
           vps_unique_id: string
         }
         Insert: {
+          cost?: number | null
           created_at?: string
           display_name: string
+          due_date?: string | null
           host?: string | null
           id?: string
           password?: string | null
@@ -484,8 +488,10 @@ export type Database = {
           vps_unique_id: string
         }
         Update: {
+          cost?: number | null
           created_at?: string
           display_name?: string
+          due_date?: string | null
           host?: string | null
           id?: string
           password?: string | null

@@ -15,7 +15,7 @@ import {
   Wifi,
   WifiOff,
   Users,
-  Activity
+  DollarSign
 } from 'lucide-react';
 
 const VPSManagement = () => {
@@ -39,16 +39,14 @@ const VPSManagement = () => {
         accounts: [],
         totalAccounts: 0,
         connectedAccounts: 0,
-        totalBalance: 0,
-        totalEquity: 0,
-        lastUpdate: new Date(0)
+        lastUpdate: new Date(0),
+        cost: 0,
+        due_date: null
       };
     }
     
     acc[vpsUniqueId].accounts.push(account);
     acc[vpsUniqueId].totalAccounts++;
-    acc[vpsUniqueId].totalBalance += Number(account.balance) || 0;
-    acc[vpsUniqueId].totalEquity += Number(account.equity) || 0;
     
     const accountUpdate = new Date(account.updated_at);
     if (accountUpdate > acc[vpsUniqueId].lastUpdate) {
@@ -65,7 +63,44 @@ const VPSManagement = () => {
     return acc;
   }, {} as Record<string, any>);
 
-  const vpsData = Object.values(vpsGroups);
+  // Buscar dados de VPS servers para obter cost e due_date
+  const [vpsServersData, setVpsServersData] = useState<Record<string, any>>({});
+
+  React.useEffect(() => {
+    const fetchVPSServersData = async () => {
+      try {
+        const { data: vpsData, error } = await supabase
+          .from('vps_servers')
+          .select('vps_unique_id, cost, due_date');
+
+        if (error) {
+          console.error('Erro ao buscar dados dos VPS servers:', error);
+          return;
+        }
+
+        const vpsMap = vpsData.reduce((acc, vps) => {
+          acc[vps.vps_unique_id] = {
+            cost: vps.cost || 0,
+            due_date: vps.due_date
+          };
+          return acc;
+        }, {});
+
+        setVpsServersData(vpsMap);
+      } catch (error) {
+        console.error('Erro ao buscar dados dos VPS servers:', error);
+      }
+    };
+
+    fetchVPSServersData();
+  }, []);
+
+  // Atualizar vpsGroups com dados de cost e due_date
+  const vpsData = Object.values(vpsGroups).map(vps => ({
+    ...vps,
+    cost: vpsServersData[vps.vpsUniqueId]?.cost || 0,
+    due_date: vpsServersData[vps.vpsUniqueId]?.due_date || null
+  }));
   
   const getVPSStatus = (vps: any) => {
     const now = new Date();
@@ -108,7 +143,9 @@ const VPSManagement = () => {
         host: vpsData?.host || '',
         port: vpsData?.port || '3389',
         username: vpsData?.username || '',
-        password: vpsData?.password || ''
+        password: vpsData?.password || '',
+        cost: vpsData?.cost || 0,
+        due_date: vpsData?.due_date || ''
       });
       setEditVPSModalOpen(true);
     } catch (error) {
@@ -120,7 +157,9 @@ const VPSManagement = () => {
         host: '',
         port: '3389',
         username: '',
-        password: ''
+        password: '',
+        cost: 0,
+        due_date: ''
       });
       setEditVPSModalOpen(true);
     }
@@ -193,7 +232,42 @@ const VPSManagement = () => {
   const totalVPS = vpsData.length;
   const onlineVPS = vpsData.filter(vps => getVPSStatus(vps).status === 'Online').length;
   const totalAccountsAcrossVPS = vpsData.reduce((sum, vps) => sum + vps.totalAccounts, 0);
-  const totalEquityAcrossVPS = vpsData.reduce((sum, vps) => sum + vps.totalEquity, 0);
+  const totalCostAcrossVPS = vpsData.reduce((sum, vps) => sum + (vps.cost || 0), 0);
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const handleVPSUpdated = () => {
+    // Recarregar dados dos VPS servers após atualização
+    const fetchVPSServersData = async () => {
+      try {
+        const { data: vpsData, error } = await supabase
+          .from('vps_servers')
+          .select('vps_unique_id, cost, due_date');
+
+        if (error) {
+          console.error('Erro ao buscar dados dos VPS servers:', error);
+          return;
+        }
+
+        const vpsMap = vpsData.reduce((acc, vps) => {
+          acc[vps.vps_unique_id] = {
+            cost: vps.cost || 0,
+            due_date: vps.due_date
+          };
+          return acc;
+        }, {});
+
+        setVpsServersData(vpsMap);
+      } catch (error) {
+        console.error('Erro ao buscar dados dos VPS servers:', error);
+      }
+    };
+
+    fetchVPSServersData();
+  };
 
   return (
     <AppLayout>
@@ -258,17 +332,17 @@ const VPSManagement = () => {
 
           <Card className="tech-card tech-card-hover card-yellow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Equity</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Cost</CardTitle>
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                <Activity className="h-5 w-5 text-amber-500" />
+                <DollarSign className="h-5 w-5 text-amber-500" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-medium text-gray-900 dark:text-white">
-                US$ {totalEquityAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                US$ {totalCostAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Equity total
+                Custo mensal total
               </p>
             </CardContent>
           </Card>
@@ -286,11 +360,10 @@ const VPSManagement = () => {
                   <TableRow>
                     <TableHead className="font-medium">Status</TableHead>
                     <TableHead className="font-medium">VPS Name</TableHead>
-                    <TableHead className="font-medium">Unique ID</TableHead>
                     <TableHead className="text-right font-medium">Accounts</TableHead>
                     <TableHead className="text-right font-medium">Connected</TableHead>
-                    <TableHead className="text-right font-medium">Total Balance</TableHead>
-                    <TableHead className="text-right font-medium">Total Equity</TableHead>
+                    <TableHead className="text-right font-medium">Cost (US$)</TableHead>
+                    <TableHead className="font-medium">Due Date</TableHead>
                     <TableHead className="font-medium">Last Update</TableHead>
                     <TableHead className="font-medium">Actions</TableHead>
                   </TableRow>
@@ -311,12 +384,6 @@ const VPSManagement = () => {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">{vps.vpsDisplayName}</TableCell>
-                        <TableCell className="font-mono text-xs text-gray-500">
-                          {vps.vpsUniqueId.length > 20 ? 
-                            `${vps.vpsUniqueId.substring(0, 20)}...` : 
-                            vps.vpsUniqueId
-                          }
-                        </TableCell>
                         <TableCell className="text-right font-medium">
                           {vps.totalAccounts}
                         </TableCell>
@@ -326,10 +393,10 @@ const VPSManagement = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">
-                          US$ {vps.totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {vps.cost ? vps.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          US$ {vps.totalEquity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <TableCell className="text-gray-500 text-sm">
+                          {formatDate(vps.due_date)}
                         </TableCell>
                         <TableCell className="text-gray-500 text-sm">
                           {vps.lastUpdate.toLocaleString('pt-BR')}
@@ -393,10 +460,7 @@ const VPSManagement = () => {
           isOpen={editVPSModalOpen}
           onClose={() => setEditVPSModalOpen(false)}
           vps={selectedVPS}
-          onVPSUpdated={() => {
-            // Invalidar queries para atualizar dados
-            // (será implementado no componente modal)
-          }}
+          onVPSUpdated={handleVPSUpdated}
         />
       )}
     </AppLayout>

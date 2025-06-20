@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,8 @@ interface EditVPSModalProps {
     port?: string;
     username?: string;
     password?: string;
+    cost?: number;
+    due_date?: string;
   } | null;
   onVPSUpdated: () => void;
 }
@@ -31,6 +32,8 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
     port: '3389',
     username: '',
     password: '',
+    cost: 0,
+    due_date: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +48,8 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
         port: vps.port || '3389',
         username: vps.username || '',
         password: vps.password || '',
+        cost: vps.cost || 0,
+        due_date: vps.due_date || '',
       });
     }
   }, [vps]);
@@ -62,6 +67,8 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
         port: formData.port.trim(),
         username: formData.username.trim(),
         password: formData.password.trim(),
+        cost: formData.cost,
+        due_date: formData.due_date || null,
       });
 
       const { error } = await supabase
@@ -73,6 +80,8 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
           port: formData.port.trim(),
           username: formData.username.trim(),
           password: formData.password.trim(),
+          cost: formData.cost,
+          due_date: formData.due_date || null,
         }, {
           onConflict: 'vps_unique_id'
         });
@@ -224,9 +233,10 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
         
         {vps && (
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Identificação</TabsTrigger>
               <TabsTrigger value="connection">Conexão RDP</TabsTrigger>
+              <TabsTrigger value="billing">Cobrança</TabsTrigger>
             </TabsList>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -343,6 +353,33 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
                     </Button>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="billing" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cost">Custo Mensal (US$)</Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.cost}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cost: Number(e.target.value) }))}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500">Custo mensal do VPS em dólares</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="due_date">Data de Vencimento</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                  />
+                  <p className="text-xs text-gray-500">Próxima data de vencimento do VPS</p>
+                </div>
               </TabsContent>
 
               <div className="flex justify-end space-x-2 pt-4">

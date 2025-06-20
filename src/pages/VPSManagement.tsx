@@ -6,6 +6,8 @@ import { useTradingAccounts } from '@/hooks/useTradingData';
 import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import EditVPSModal from '@/components/EditVPSModal';
 import { 
   Server, 
@@ -20,6 +22,7 @@ const VPSManagement = () => {
   const { data: accounts = [] } = useTradingAccounts();
   const navigate = useNavigate();
   const permissions = usePermissions();
+  const { toast } = useToast();
   
   const [editVPSModalOpen, setEditVPSModalOpen] = useState(false);
   const [selectedVPS, setSelectedVPS] = useState<any>(null);

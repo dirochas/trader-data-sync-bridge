@@ -1,7 +1,7 @@
 
-# TraderLab v1.6 - Professional Trading Management System
+# TraderLab v1.61 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Scroll Fix Applied
+**Status**: ✅ STABLE - Production Ready - VPS Management Enhanced
 
 ## 📊 Sobre o Projeto
 
@@ -16,6 +16,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🖥️ Simulador de Hedge**: Ferramenta para análise de estratégias
 - **⚡ Integração MetaTrader**: Conexão direta com EAs via API
 - **📱 Mobile Responsivo**: Scroll horizontal funcional em todas as tabelas
+- **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
 
 ### 🛠️ Tecnologias
 
@@ -25,14 +26,17 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **State Management**: TanStack React Query
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.6 - Mobile Scroll Fix
+### 🎯 Versão Atual: v1.61 - VPS Management Enhanced
 
 **Novidades:**
-- ✅ Correção crítica do scroll horizontal em mobile
-- ✅ AppLayout otimizado com min-w-0 para tabelas responsivas
-- ✅ Funcionalidade completa em Account Monitor e VPS Management
-- ✅ Sistema de separação de contas por usuário mantido
-- ✅ Performance otimizada para todos os dispositivos
+- ✅ Sistema completo de gerenciamento de VPS aprimorado
+- ✅ Controle de custos e datas de vencimento para cada VPS
+- ✅ Geração automática de arquivos RDP com configurações completas
+- ✅ Conexão direta ao VPS via protocolo RDP
+- ✅ Interface otimizada com foco em informações relevantes
+- ✅ Salvamento persistente de credenciais RDP para consulta
+- ✅ Card de resumo mostrando custo total de todos os VPS
+- ✅ Tabela focada em informações de cobrança (Cost/Due Date)
 
 ## Instalação e Desenvolvimento
 

@@ -31,7 +31,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Remove Lovable badge de forma segura
+    // Remove Lovable badge on app load
     startBadgeRemover();
   }, []);
 

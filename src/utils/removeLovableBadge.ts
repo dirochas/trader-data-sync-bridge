@@ -1,50 +1,55 @@
 
-// Utility to remove Lovable badge - VERSÃO SIMPLES E SEGURA
+// Utility to remove Lovable badge from the DOM
 export const removeLovableBadge = () => {
-  // Remove apenas elementos específicos do badge, sem afetar o React
-  const badgeSelectors = [
+  // Remove badge by common selectors
+  const selectors = [
     'div[data-lovable-badge]',
+    'div[class*="lovable"]',
+    'div[id*="lovable"]',
     'a[href*="lovable.dev"]',
-    '.lovable-badge'
+    'iframe[src*="lovable"]',
+    '.lovable-badge',
+    '[data-testid*="lovable"]'
   ];
 
-  badgeSelectors.forEach(selector => {
-    try {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        if (element && element.parentNode) {
-          console.log(`🗑️ Removendo badge: ${selector}`);
-          element.remove();
-        }
-      });
-    } catch (error) {
-      console.warn(`Erro ao remover seletor ${selector}:`, error);
+  selectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      element.remove();
+    });
+  });
+
+  // Remove by content (text-based search)
+  const allDivs = document.querySelectorAll('div, a');
+  allDivs.forEach(element => {
+    const text = element.textContent?.toLowerCase() || '';
+    if (text.includes('edit in lovable') || text.includes('lovable')) {
+      // Check if it's likely the badge (small, fixed position, etc.)
+      const style = window.getComputedStyle(element);
+      if (style.position === 'fixed' || 
+          style.position === 'absolute' ||
+          element.getBoundingClientRect().width < 200) {
+        element.remove();
+      }
     }
   });
 };
 
-// Versão segura que não interfere no React
+// Auto-run function to continuously remove badge
 export const startBadgeRemover = () => {
-  console.log('🚀 Iniciando Badge Remover SEGURO...');
-  
-  // Remove uma vez ao carregar
-  setTimeout(removeLovableBadge, 1000);
-  
-  // Observer mais conservador - só monitora adições simples
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach(mutation => {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Só remove se encontrar elementos específicos do badge
-        setTimeout(removeLovableBadge, 500);
-      }
-    });
+  // Remove immediately
+  removeLovableBadge();
+
+  // Set up observer to catch dynamically added badges
+  const observer = new MutationObserver(() => {
+    removeLovableBadge();
   });
 
-  // Observa apenas o body para novos elementos
   observer.observe(document.body, {
     childList: true,
-    subtree: false // Não observa muito profundo para evitar conflitos
+    subtree: true
   });
 
-  console.log('✅ Badge Remover SEGURO ativo!');
+  // Also run periodically as backup
+  setInterval(removeLovableBadge, 1000);
 };

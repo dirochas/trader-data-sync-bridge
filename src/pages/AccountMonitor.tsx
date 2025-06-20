@@ -506,15 +506,15 @@ const AccountMonitor = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
         {/* Header Section */}
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
+              <h1 className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white">
                 Account Monitor
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                 Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
                 {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
               </p>
@@ -524,7 +524,7 @@ const AccountMonitor = () => {
             <Button
               onClick={handleInactiveAccounts}
               variant="outline"
-              className="flex items-center gap-2 text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-colors"
+              className="flex items-center gap-2 text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-colors w-full md:w-auto"
             >
               <Archive className="h-4 w-4" />
               Contas Inativas
@@ -532,17 +532,17 @@ const AccountMonitor = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Summary Cards - MOBILE OPTIMIZED */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
-                <Users className="h-5 w-5 text-sky-500" />
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <Users className="h-4 w-4 md:h-5 md:w-5 text-sky-500" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccounts}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white">{totalAccounts}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {connectedAccounts} conectadas
               </p>
@@ -551,13 +551,13 @@ const AccountMonitor = () => {
 
           <Card className="tech-card tech-card-hover card-green">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Open Trades</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                <Activity className="h-5 w-5 text-emerald-500" />
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Open Trades</CardTitle>
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <Activity className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-emerald-500">{totalTrades}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl md:text-2xl font-medium text-emerald-500">{totalTrades}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Posições ativas
               </p>
@@ -566,13 +566,13 @@ const AccountMonitor = () => {
 
           <Card className="tech-card tech-card-hover card-green">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Earnings</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                <DollarSign className="h-5 w-5 text-emerald-500" />
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Total Earnings</CardTitle>
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-emerald-500">
+            <CardContent className="pb-3">
+              <div className="text-lg md:text-2xl font-medium text-emerald-500">
                 US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -583,13 +583,13 @@ const AccountMonitor = () => {
 
           <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Clients</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
-                <TrendingUp className="h-5 w-5 text-sky-500" />
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Active Clients</CardTitle>
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+                <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-sky-500" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalClients}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white">{totalClients}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Contas gerenciadas
               </p>
@@ -600,13 +600,13 @@ const AccountMonitor = () => {
         {/* Accounts Table */}
         <Card className="tech-card">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Trading Accounts</CardTitle>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-full sm:w-40">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -625,7 +625,7 @@ const AccountMonitor = () => {
                   <div className="flex items-center gap-2">
                     <UserCheck className="h-4 w-4 text-gray-500" />
                     <Select value={selectedClient} onValueChange={setSelectedClient}>
-                      <SelectTrigger className="w-40">
+                      <SelectTrigger className="w-full sm:w-40">
                         <SelectValue placeholder="Filter by client" />
                       </SelectTrigger>
                       <SelectContent>
@@ -641,9 +641,9 @@ const AccountMonitor = () => {
                 )}
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Results per page:</span>
+                  <span className="text-xs sm:text-sm text-gray-500">Results per page:</span>
                   <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-16 sm:w-20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -709,13 +709,13 @@ const AccountMonitor = () => {
                       </TableCell>
                       <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-2">
                           {/* BOTÃO CLOSE ALL - Apenas para quem tem permissão */}
                           {permissions.canCloseAllPositions && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="action-button-danger"
+                              className="action-button-danger text-xs"
                               onClick={() => handleCloseAllPositions(account)}
                               disabled={account.openTrades === 0}
                             >
@@ -728,7 +728,7 @@ const AccountMonitor = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300 text-xs"
                               onClick={() => handleEditAccount(account)}
                             >
                               Edit
@@ -739,7 +739,7 @@ const AccountMonitor = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
+                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300 text-xs"
                             onClick={() => handleViewAccount(account.account)}
                           >
                             Details
@@ -754,8 +754,8 @@ const AccountMonitor = () => {
 
             {/* Pagination */}
             {filteredAccounts.length > 0 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
-                <div className="text-sm text-gray-500">
+              <div className="flex flex-col sm:flex-row items-center justify-between px-4 md:px-6 py-4 border-t border-border/20 gap-4">
+                <div className="text-xs sm:text-sm text-gray-500">
                   Showing {startIndex} to {endIndex} of {filteredAccounts.length} results
                 </div>
                 

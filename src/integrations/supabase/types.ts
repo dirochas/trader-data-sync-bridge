@@ -464,22 +464,34 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string
+          host: string | null
           id: string
+          password: string | null
+          port: string | null
           updated_at: string
+          username: string | null
           vps_unique_id: string
         }
         Insert: {
           created_at?: string
           display_name: string
+          host?: string | null
           id?: string
+          password?: string | null
+          port?: string | null
           updated_at?: string
+          username?: string | null
           vps_unique_id: string
         }
         Update: {
           created_at?: string
           display_name?: string
+          host?: string | null
           id?: string
+          password?: string | null
+          port?: string | null
           updated_at?: string
+          username?: string | null
           vps_unique_id?: string
         }
         Relationships: []

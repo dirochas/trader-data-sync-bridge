@@ -358,29 +358,29 @@
 }
 
 .action-button-danger {
+  background-color: #1a0d0d;
   color: hsl(var(--red-light));
-  background-color: hsl(var(--red-light-bg));
-  border-color: hsl(var(--red-light-border));
+  border-color: #2d1616;
 }
 
 .action-button-danger:hover {
+  background-color: #220f0f;
   color: hsl(var(--red-light-hover));
-  background-color: hsl(var(--red-light-bg));
-  border-color: hsl(var(--red-light-border));
-  opacity: 0.9;
+  border-color: #3d1d1d;
+  opacity: 0.95;
 }
 
 .dark .action-button-danger {
+  background-color: #1a0d0d;
   color: hsl(var(--red-light));
-  background-color: hsl(var(--red-light-bg));
-  border-color: hsl(var(--red-light-border));
+  border-color: #2d1616;
 }
 
 .dark .action-button-danger:hover {
+  background-color: #220f0f;
   color: hsl(var(--red-light-hover));
-  background-color: hsl(var(--red-light-bg));
-  border-color: hsl(var(--red-light-border));
-  opacity: 0.9;
+  border-color: #3d1d1d;
+  opacity: 0.95;
 }
 
 .action-button-warning {

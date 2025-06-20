@@ -658,97 +658,99 @@ const AccountMonitor = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {createSortableHeader("Status", "status")}
-                  {createSortableHeader("Account Name", "name")}
-                  {createSortableHeader("Number", "account")}
-                  {permissions.isAdminOrManager && createSortableHeader("Client", "clientNickname")}
-                  {createSortableHeader("VPS", "vps")}
-                  {createSortableHeader("Balance", "balance", "text-right")}
-                  {createSortableHeader("Equity", "equity", "text-right")}
-                  {createSortableHeader("Trades", "openTrades", "text-right")}
-                  {createSortableHeader("Open P&L", "openPnL", "text-right")}
-                  {createSortableHeader("Day P&L", "dayProfit", "text-right")}
-                  {createSortableHeader("Server", "server")}
-                  <TableHead className="font-medium">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedAccounts.map((account) => (
-                  <TableRow key={account.id}>
-                    <TableCell>
-                      <ConnectionStatus lastUpdate={account.updated_at} />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {account.name}
-                    </TableCell>
-                    <TableCell className="font-mono">{account.account}</TableCell>
-                    {permissions.isAdminOrManager && (
-                      <TableCell className="font-medium">
-                        {account.clientNickname}
-                      </TableCell>
-                    )}
-                    <TableCell>{account.vps}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {account.openTrades}
-                    </TableCell>
-                    <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
-                      US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
-                      US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {/* BOTÃO CLOSE ALL - Apenas para quem tem permissão */}
-                        {permissions.canCloseAllPositions && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="action-button-danger"
-                            onClick={() => handleCloseAllPositions(account)}
-                            disabled={account.openTrades === 0}
-                          >
-                            Close All
-                          </Button>
-                        )}
-                        
-                        {/* BOTÃO EDIT - Apenas para quem tem permissão */}
-                        {permissions.canEditAccounts && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
-                            onClick={() => handleEditAccount(account)}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                        
-                        {/* BOTÃO DETAILS - Todos podem ver */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
-                          onClick={() => handleViewAccount(account.account)}
-                        >
-                          Details
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {createSortableHeader("Status", "status")}
+                    {createSortableHeader("Account Name", "name")}
+                    {createSortableHeader("Number", "account")}
+                    {permissions.isAdminOrManager && createSortableHeader("Client", "clientNickname")}
+                    {createSortableHeader("VPS", "vps")}
+                    {createSortableHeader("Balance", "balance", "text-right")}
+                    {createSortableHeader("Equity", "equity", "text-right")}
+                    {createSortableHeader("Trades", "openTrades", "text-right")}
+                    {createSortableHeader("Open P&L", "openPnL", "text-right")}
+                    {createSortableHeader("Day P&L", "dayProfit", "text-right")}
+                    {createSortableHeader("Server", "server")}
+                    <TableHead className="font-medium">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedAccounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell>
+                        <ConnectionStatus lastUpdate={account.updated_at} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {account.name}
+                      </TableCell>
+                      <TableCell className="font-mono">{account.account}</TableCell>
+                      {permissions.isAdminOrManager && (
+                        <TableCell className="font-medium">
+                          {account.clientNickname}
+                        </TableCell>
+                      )}
+                      <TableCell>{account.vps}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {account.openTrades}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
+                        US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
+                        US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {/* BOTÃO CLOSE ALL - Apenas para quem tem permissão */}
+                          {permissions.canCloseAllPositions && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="action-button-danger"
+                              onClick={() => handleCloseAllPositions(account)}
+                              disabled={account.openTrades === 0}
+                            >
+                              Close All
+                            </Button>
+                          )}
+                          
+                          {/* BOTÃO EDIT - Apenas para quem tem permissão */}
+                          {permissions.canEditAccounts && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
+                              onClick={() => handleEditAccount(account)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          
+                          {/* BOTÃO DETAILS - Todos podem ver */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
+                            onClick={() => handleViewAccount(account.account)}
+                          >
+                            Details
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             {/* Pagination */}
             {filteredAccounts.length > 0 && (

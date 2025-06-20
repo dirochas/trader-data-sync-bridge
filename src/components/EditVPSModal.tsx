@@ -55,6 +55,15 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
 
     setIsLoading(true);
     try {
+      console.log('💾 Salvando dados do VPS:', {
+        vps_unique_id: vps.vpsUniqueId,
+        display_name: formData.displayName.trim() || vps.vpsUniqueId,
+        host: formData.host.trim(),
+        port: formData.port.trim(),
+        username: formData.username.trim(),
+        password: formData.password.trim(),
+      });
+
       const { error } = await supabase
         .from('vps_servers')
         .upsert({
@@ -68,20 +77,26 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
           onConflict: 'vps_unique_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao salvar VPS:', error);
+        throw error;
+      }
+
+      console.log('✅ VPS salvo com sucesso!');
 
       toast({
         title: "VPS atualizado",
         description: "Configurações do VPS foram salvas com sucesso.",
       });
 
+      // Invalidar todas as queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['account'] });
       
       onVPSUpdated();
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar VPS:', error);
+      console.error('❌ Erro ao atualizar VPS:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar as configurações do VPS.",
@@ -298,6 +313,9 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
                       )}
                     </Button>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    💾 A senha será salva para facilitar a consulta. Você pode copiá-la quando precisar conectar manualmente.
+                  </p>
                   <p className="text-xs text-amber-600">
                     💡 Por segurança, a senha não será salva no arquivo RDP. O Windows pedirá a senha na conexão.
                   </p>
@@ -337,7 +355,7 @@ const EditVPSModal = ({ isOpen, onClose, vps, onVPSUpdated }: EditVPSModalProps)
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Salvando...' : 'Salvar'}
+                  {isLoading ? 'Salvando...' : 'Salvar Configurações'}
                 </Button>
               </div>
             </form>

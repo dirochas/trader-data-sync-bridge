@@ -84,21 +84,46 @@ const VPSManagement = () => {
     navigate('/accounts', { state: { vpsFilter: vpsUniqueId } });
   };
 
-  const handleEditVPS = (vps: any) => {
+  const handleEditVPS = async (vps: any) => {
     if (!permissions.canEditVPSDisplayName) {
       console.log('⚠️ Usuário sem permissão para editar nomes de VPS');
       return;
     }
     
-    setSelectedVPS({
-      vpsUniqueId: vps.vpsUniqueId,
-      displayName: vps.vpsDisplayName,
-      host: vps.host,
-      port: vps.port,
-      username: vps.username,
-      password: vps.password
-    });
-    setEditVPSModalOpen(true);
+    // Buscar dados completos do VPS do banco de dados
+    try {
+      const { data: vpsData, error } = await supabase
+        .from('vps_servers')
+        .select('*')
+        .eq('vps_unique_id', vps.vpsUniqueId)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar dados do VPS:', error);
+      }
+
+      setSelectedVPS({
+        vpsUniqueId: vps.vpsUniqueId,
+        displayName: vps.vpsDisplayName,
+        host: vpsData?.host || '',
+        port: vpsData?.port || '3389',
+        username: vpsData?.username || '',
+        password: vpsData?.password || ''
+      });
+      setEditVPSModalOpen(true);
+    } catch (error) {
+      console.error('Erro ao buscar dados do VPS:', error);
+      // Fallback para dados básicos
+      setSelectedVPS({
+        vpsUniqueId: vps.vpsUniqueId,
+        displayName: vps.vpsDisplayName,
+        host: '',
+        port: '3389',
+        username: '',
+        password: ''
+      });
+      setEditVPSModalOpen(true);
+    }
   };
 
   const handleConnectVPS = async (vps: any) => {

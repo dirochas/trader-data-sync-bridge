@@ -1,7 +1,7 @@
 
-# TraderLab v1.63.1 - Professional Trading Management System
+# TraderLab v1.63.2 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Security Enhancements
+**Status**: ✅ STABLE - Production Ready - Hedge Simulations User Isolation Fixed
 
 ## 📊 Sobre o Projeto
 
@@ -11,9 +11,9 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 
 - **📈 Monitoramento em Tempo Real**: Acompanhe saldo, equity, margem e posições abertas
 - **👥 Gestão Multi-Usuário**: Sistema de roles (Admin, Manager, Cliente) com permissões específicas
-- **🔒 Segurança Avançada**: Cada usuário vê apenas suas próprias contas
+- **🔒 Segurança Avançada**: Cada usuário vê apenas suas próprias contas e simulações
 - **📊 Análise de Trading**: Histórico completo de trades e estatísticas
-- **🖥️ Simulador de Hedge**: Ferramenta para análise de estratégias
+- **🖥️ Simulador de Hedge**: Ferramenta para análise de estratégias com isolamento por usuário
 - **⚡ Integração MetaTrader**: Conexão direta com EAs via API
 - **📱 Mobile Responsivo**: Scroll horizontal funcional em todas as tabelas
 - **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
@@ -30,9 +30,16 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.63.1 - Security Enhancements
+### 🎯 Versão Atual: v1.63.2 - Hedge Simulations User Isolation Fixed
 
-**Novidades v1.63.1:**
+**Novidades v1.63.2:**
+- ✅ Correção definitiva do isolamento de usuários nas simulações hedge
+- ✅ Implementação do campo `user_email` na tabela `hedge_simulations`
+- ✅ Filtros por email funcionando corretamente para usuários não-admin
+- ✅ Cada usuário agora vê apenas suas próprias simulações
+- ✅ Sistema de permissões alinhado com o padrão das contas
+
+**Histórico v1.63.1:**
 - ✅ Sistema global de segurança implementado
 - ✅ Sanitização automática de texto com proteção XSS
 - ✅ Validação robusta de arquivos (.ex4/.ex5, limite 2MB)
@@ -89,6 +96,7 @@ O projeto agora conta com um sistema robusto de segurança:
 - **Validação de Arquivos**: Controle de tamanho e tipo de arquivo
 - **Logging de Segurança**: Auditoria de eventos críticos
 - **Implementação Gradual**: Sistema modular para aplicação em novas páginas
+- **Isolamento de Usuários**: Cada usuário vê apenas seus próprios dados
 
 Consulte `src/utils/SECURITY_GUIDE.md` para implementação em novas funcionalidades.
 

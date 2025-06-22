@@ -34,27 +34,49 @@ export const useExpertAdvisors = () => {
   return useQuery({
     queryKey: ['expert-advisors'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log('Fetching Expert Advisors...');
+      
+      // Primeiro, buscar os EAs
+      const { data: easData, error: easError } = await supabase
         .from('expert_advisors')
-        .select(`
-          *,
-          uploader_profile:profiles!uploaded_by (
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Transform data to match our interface
-      return (data || []).map(item => ({
-        ...item,
-        uploader_profile: Array.isArray(item.uploader_profile) 
-          ? item.uploader_profile[0] 
-          : item.uploader_profile
+      if (easError) {
+        console.error('Error fetching EAs:', easError);
+        throw easError;
+      }
+
+      console.log('EAs found:', easData?.length || 0);
+
+      if (!easData || easData.length === 0) {
+        return [];
+      }
+
+      // Depois, buscar os perfis dos uploaders
+      const uploaderIds = [...new Set(easData.map(ea => ea.uploaded_by))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', uploaderIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Não quebrar por causa dos perfis, apenas continuar sem eles
+      }
+
+      // Combinar os dados
+      const result = easData.map(ea => ({
+        ...ea,
+        uploader_profile: profilesData?.find(profile => profile.id === ea.uploaded_by) || {
+          email: 'Usuário não encontrado',
+          first_name: '',
+          last_name: ''
+        }
       })) as ExpertAdvisor[];
+
+      console.log('Final result:', result);
+      return result;
     },
   });
 };

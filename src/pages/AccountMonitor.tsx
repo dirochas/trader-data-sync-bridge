@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -714,6 +715,7 @@ const AccountMonitor = () => {
                               onClick={previousPage}
                               className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                             />
+                          </PaginationItem>
                           
                           {renderPaginationItems()}
                           

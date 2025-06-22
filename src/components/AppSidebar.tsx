@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,7 +11,9 @@ import {
   Calculator,
   User,
   Terminal,
-  Archive
+  Archive,
+  LogOut,
+  UserCog
 } from 'lucide-react';
 import {
   Sidebar,
@@ -25,6 +27,14 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions, getRoleDisplayName } from '@/hooks/usePermissions';
 
@@ -97,7 +107,8 @@ const getRoleColor = (role: string) => {
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const permissions = usePermissions();
   const currentPath = location.pathname;
   
@@ -108,6 +119,19 @@ export function AppSidebar() {
       return currentPath === '/' || currentPath === '/accounts';
     }
     return currentPath === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  const handleSettings = () => {
+    navigate('/settings');
   };
 
   const userRole = profile?.role || 'client_trader';
@@ -182,24 +206,56 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User Profile Section */}
+        {/* User Profile Section with Dropdown */}
         <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'}`}>
-          <div className={`bg-gray-800/50 border border-gray-700 rounded-xl ${isCollapsed ? 'p-2' : 'p-3'} backdrop-blur-sm ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                <User className="w-4 h-4 text-white" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{displayName}</p>
-                  <p className="text-xs text-gray-400">{profile?.email || 'user@traderlab.com'}</p>
-                  {permissions.isInvestor && (
-                    <p className="text-xs text-purple-400 mt-1">View Only Access</p>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className={`bg-gray-800/50 border border-gray-700 rounded-xl ${isCollapsed ? 'p-2' : 'p-3'} backdrop-blur-sm cursor-pointer hover:bg-gray-700/50 transition-colors ${isCollapsed ? 'flex justify-center' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white">{displayName}</p>
+                      <p className="text-xs text-gray-400 truncate">{profile?.email || 'user@traderlab.com'}</p>
+                      {permissions.isInvestor && (
+                        <p className="text-xs text-purple-400 mt-1">View Only Access</p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 bg-gray-800 border-gray-700"
+              side={isCollapsed ? "right" : "top"}
+            >
+              <DropdownMenuLabel className="text-gray-300">
+                Minha Conta
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              
+              <DropdownMenuItem 
+                onClick={handleSettings}
+                className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-gray-700" />
+              
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-400 hover:bg-red-900/20 hover:text-red-300 cursor-pointer"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair do Sistema
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </SidebarContent>
 

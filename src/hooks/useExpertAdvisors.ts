@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,13 +32,10 @@ export const useExpertAdvisors = () => {
     queryFn: async () => {
       console.log('Fetching Expert Advisors...');
       
-      // Buscar os EAs com join direto na query para pegar o role do uploader
+      // Primeiro, buscar os EAs
       const { data: easData, error: easError } = await supabase
         .from('expert_advisors')
-        .select(`
-          *,
-          uploader:profiles!expert_advisors_uploaded_by_fkey(role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (easError) {
@@ -46,17 +44,33 @@ export const useExpertAdvisors = () => {
       }
 
       console.log('EAs found:', easData?.length || 0);
-      console.log('Raw EAs data:', easData);
 
       if (!easData || easData.length === 0) {
         return [];
       }
 
-      // Mapear os dados para incluir o uploader_role
-      const result = easData.map(ea => ({
-        ...ea,
-        uploader_role: ea.uploader?.role || 'client_trader'
-      })) as ExpertAdvisor[];
+      // Buscar os roles dos uploaders
+      const uploaderIds = [...new Set(easData.map(ea => ea.uploaded_by))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .in('id', uploaderIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Não quebrar por causa dos perfis, apenas continuar sem eles
+      }
+
+      console.log('Profiles data:', profilesData);
+
+      // Combinar os dados com o role correto do uploader
+      const result = easData.map(ea => {
+        const uploaderProfile = profilesData?.find(profile => profile.id === ea.uploaded_by);
+        return {
+          ...ea,
+          uploader_role: uploaderProfile?.role || 'client_trader'
+        };
+      }) as ExpertAdvisor[];
 
       console.log('Final result with uploader roles:', result);
       return result;

@@ -23,6 +23,7 @@ import VPSManagement from './pages/VPSManagement';
 import CommandsManagement from './pages/CommandsManagement';
 import UserManagement from './pages/UserManagement';
 import Settings from './pages/Settings';
+import SystemDiagnosticsPage from './pages/SystemDiagnosticsPage';
 import Auth from './pages/Auth';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
@@ -121,6 +122,13 @@ const App = () => {
                 <Route path="/settings" element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* System Diagnostics - Apenas Admin */}
+                <Route path="/diagnostics" element={
+                  <ProtectedRoute requiredRoles={['admin']}>
+                    <SystemDiagnosticsPage />
                   </ProtectedRoute>
                 } />
                 

@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useTradingAccounts } from '@/hooks/useTradingData';
-import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
@@ -270,200 +269,205 @@ const VPSManagement = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        {/* Header Section */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
-            VPS Management
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Gerenciamento de servidores VPS e infraestrutura de trading
-            {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
-          </p>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
+          VPS Management
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Gerenciamento de servidores VPS e infraestrutura de trading
+          {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
+        </p>
+      </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="tech-card tech-card-hover card-blue">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total VPS</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
-                <Server className="h-5 w-5 text-sky-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalVPS}</div>
-              <p className="text-xs text-emerald-500">
-                {onlineVPS} online
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="tech-card tech-card-hover card-green">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Online VPS</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
-                <Wifi className="h-5 w-5 text-emerald-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-emerald-500">{onlineVPS}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {totalVPS > 0 ? ((onlineVPS / totalVPS) * 100).toFixed(0) : 0}% uptime
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="tech-card tech-card-hover card-purple">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-                <Users className="h-5 w-5 text-purple-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccountsAcrossVPS}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Distribuídas nos VPS
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="tech-card tech-card-hover card-yellow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Cost</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                <DollarSign className="h-5 w-5 text-amber-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium text-gray-900 dark:text-white">
-                US$ {totalCostAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Custo mensal total
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* VPS Table */}
-        <Card className="tech-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">VPS Servers</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-medium">Status</TableHead>
-                    <TableHead className="font-medium">VPS Name</TableHead>
-                    <TableHead className="text-right font-medium">Accounts</TableHead>
-                    <TableHead className="text-right font-medium">Connected</TableHead>
-                    <TableHead className="text-right font-medium">Cost (US$)</TableHead>
-                    <TableHead className="font-medium">Due Date</TableHead>
-                    <TableHead className="font-medium">Last Update</TableHead>
-                    <TableHead className="font-medium">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {vpsData.map((vps) => {
-                    const status = getVPSStatus(vps);
-                    const StatusIcon = status.icon;
-                    
-                    return (
-                      <TableRow key={vps.vpsUniqueId}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <StatusIcon className={`h-4 w-4 ${status.color}`} />
-                            <span className={`text-sm font-medium ${status.color}`}>
-                              {status.status}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{vps.vpsDisplayName}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          {vps.totalAccounts}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className={vps.connectedAccounts > 0 ? 'text-emerald-500 font-medium' : 'text-rose-400 font-medium'}>
-                            {vps.connectedAccounts}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          {vps.cost ? vps.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
-                        </TableCell>
-                        <TableCell className="text-gray-500 text-sm">
-                          {formatDate(vps.due_date)}
-                        </TableCell>
-                        <TableCell className="text-gray-500 text-sm">
-                          {vps.lastUpdate.toLocaleString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
-                              onClick={() => handleConnectVPS(vps)}
-                              title="Conectar via RDP"
-                            >
-                              <Monitor className="h-4 w-4 mr-1" />
-                              RDP
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
-                              onClick={() => handleViewVPS(vps.vpsUniqueId)}
-                            >
-                              <Monitor className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            {permissions.canEditVPSDisplayName && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                                onClick={() => handleEditVPS(vps)}
-                              >
-                                Edit
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="tech-card tech-card-hover card-blue">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total VPS</CardTitle>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+              <Server className="h-5 w-5 text-sky-500" />
             </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalVPS}</div>
+            <p className="text-xs text-emerald-500">
+              {onlineVPS} online
+            </p>
+          </CardContent>
+        </Card>
 
-            {vpsData.length === 0 && (
-              <div className="text-center py-12">
-                <Server className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Nenhum VPS detectado</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Conecte seus EAs para começar a detectar VPS automaticamente
-                </p>
-              </div>
-            )}
+        <Card className="tech-card tech-card-hover card-green">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Online VPS</CardTitle>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+              <Wifi className="h-5 w-5 text-emerald-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-medium text-emerald-500">{onlineVPS}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {totalVPS > 0 ? ((onlineVPS / totalVPS) * 100).toFixed(0) : 0}% uptime
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="tech-card tech-card-hover card-purple">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Accounts</CardTitle>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+              <Users className="h-5 w-5 text-purple-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccountsAcrossVPS}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Distribuídas nos VPS
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="tech-card tech-card-hover card-yellow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Cost</CardTitle>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
+              <DollarSign className="h-5 w-5 text-amber-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-medium text-gray-900 dark:text-white">
+              US$ {totalCostAcrossVPS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Custo mensal total
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Modal para editar VPS */}
-      {permissions.canEditVPSDisplayName && (
+      {/* VPS Table */}
+      <Card className="tech-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">VPS Servers</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-medium">Status</TableHead>
+                  <TableHead className="font-medium">VPS Name</TableHead>
+                  <TableHead className="text-right font-medium">Accounts</TableHead>
+                  <TableHead className="text-right font-medium">Connected</TableHead>
+                  <TableHead className="text-right font-medium">Cost (US$)</TableHead>
+                  <TableHead className="font-medium">Due Date</TableHead>
+                  <TableHead className="font-medium">Last Update</TableHead>
+                  <TableHead className="font-medium">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vpsData.map((vps) => {
+                  const status = getVPSStatus(vps);
+                  const StatusIcon = status.icon;
+                  
+                  return (
+                    <TableRow key={vps.vpsUniqueId}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <StatusIcon className={`h-4 w-4 ${status.color}`} />
+                          <span className={`text-sm font-medium ${status.color}`}>
+                            {status.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {vps.vpsDisplayName}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {vps.totalAccounts}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={vps.connectedAccounts === vps.totalAccounts ? 'text-emerald-500' : 'text-amber-500'}>
+                          {vps.connectedAccounts}/{vps.totalAccounts}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {vps.cost > 0 ? vps.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(vps.due_date)}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {vps.lastUpdate.toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewVPS(vps.vpsUniqueId)}
+                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
+                          >
+                            View
+                          </Button>
+                          {!permissions.isInvestor && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleConnectVPS(vps)}
+                                className="text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+                              >
+                                <Monitor className="h-3 w-3 mr-1" />
+                                Connect
+                              </Button>
+                              {permissions.canEditVPSDisplayName && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditVPS(vps)}
+                                  className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+                                >
+                                  Edit
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {vpsData.length === 0 && (
+            <div className="text-center py-12">
+              <Server className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Nenhum VPS encontrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                VPS aparecerão aqui quando as contas começarem a enviar dados
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit VPS Modal */}
+      {!permissions.isInvestor && selectedVPS && (
         <EditVPSModal
           isOpen={editVPSModalOpen}
-          onClose={() => setEditVPSModalOpen(false)}
-          vps={selectedVPS}
+          onClose={() => {
+            setEditVPSModalOpen(false);
+            setSelectedVPS(null);
+          }}
+          vpsData={selectedVPS}
           onVPSUpdated={handleVPSUpdated}
         />
       )}
-    </AppLayout>
+    </div>
   );
 };
 

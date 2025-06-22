@@ -1,19 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, FileText, X } from 'lucide-react';
-import { useCreateExpertAdvisor, CreateExpertAdvisorData } from '@/hooks/useExpertAdvisors';
+import { useCreateExpertAdvisor, CreateExpertAdvisorData, ExpertAdvisor } from '@/hooks/useExpertAdvisors';
 
 interface UploadEAModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editingEA?: ExpertAdvisor | null;
 }
 
-export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
+export const UploadEAModal = ({ open, onOpenChange, editingEA }: UploadEAModalProps) => {
   const [formData, setFormData] = useState<CreateExpertAdvisorData>({
     name: '',
     version: '',
@@ -23,6 +24,21 @@ export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
   const [ex5File, setEx5File] = useState<File | null>(null);
 
   const createEA = useCreateExpertAdvisor();
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (editingEA) {
+      setFormData({
+        name: editingEA.name,
+        version: editingEA.version,
+        description: editingEA.description || '',
+      });
+    } else {
+      setFormData({ name: '', version: '', description: '' });
+    }
+    setEx4File(null);
+    setEx5File(null);
+  }, [editingEA, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +88,12 @@ export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
     <div className="space-y-2">
       <Label htmlFor={`${type}-file`}>
         Arquivo .{type.toUpperCase()} {type === 'ex4' ? '(MT4)' : '(MT5)'}
+        {editingEA && (
+          <span className="text-xs text-muted-foreground ml-2">
+            {type === 'ex4' && editingEA.ex4_file_path && '(arquivo atual disponível)'}
+            {type === 'ex5' && editingEA.ex5_file_path && '(arquivo atual disponível)'}
+          </span>
+        )}
       </Label>
       <div className="flex items-center gap-2">
         <div className="flex-1">
@@ -90,7 +112,7 @@ export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
             className="flex items-center justify-center w-full h-10 px-3 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md cursor-pointer transition-colors"
           >
             <Upload className="w-4 h-4 mr-2" />
-            {file ? file.name : `Selecionar arquivo .${type}`}
+            {file ? file.name : `${editingEA ? 'Substituir' : 'Selecionar'} arquivo .${type}`}
           </label>
         </div>
         {file && (
@@ -117,7 +139,9 @@ export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Upload Expert Advisor</DialogTitle>
+          <DialogTitle>
+            {editingEA ? 'Editar Expert Advisor' : 'Upload Expert Advisor'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -166,12 +190,19 @@ export const UploadEAModal = ({ open, onOpenChange }: UploadEAModalProps) => {
             onFileChange={(file) => handleFileSelect('ex5', file)}
           />
 
+          {editingEA && (
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+              <strong>Nota:</strong> Ao editar, você pode alterar as informações e opcionalmente substituir os arquivos. 
+              Se não selecionar novos arquivos, os arquivos atuais serão mantidos.
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createEA.isPending}>
-              {createEA.isPending ? 'Salvando...' : 'Salvar EA'}
+              {createEA.isPending ? 'Salvando...' : editingEA ? 'Atualizar EA' : 'Salvar EA'}
             </Button>
           </div>
         </form>

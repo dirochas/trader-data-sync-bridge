@@ -121,8 +121,6 @@ export const useUpdateUser = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: ProfileUpdate & { id: string }) => {
-      console.log('🔧 [DEBUG] Iniciando atualização do usuário:', { id, updates });
-      
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -131,21 +129,15 @@ export const useUpdateUser = () => {
         .single();
       
       if (error) {
-        console.error('❌ [DEBUG] Erro na atualização:', error);
         throw error;
       }
       
-      console.log('✅ [DEBUG] Sucesso na atualização:', data);
       return data as Profile;
     },
     onSuccess: (data) => {
-      console.log('🎉 [DEBUG] Mutation onSuccess:', data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', data.id] });
     },
-    onError: (error) => {
-      console.error('💥 [DEBUG] Mutation onError:', error);
-    }
   });
 };
 

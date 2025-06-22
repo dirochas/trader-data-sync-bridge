@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -56,19 +55,16 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
           console.log('⚠️ Cliente sem email - não mostrará contas');
           return [];
         }
-      } else if (profile?.role === 'admin') {
-        // Admin sempre vê todas as contas
-        console.log('👑 Admin - mostrando todas as contas');
-      } else if (profile?.role === 'manager') {
-        // Manager vê baseado na configuração do sistema
+      } else if (profile?.role === 'admin' || profile?.role === 'manager') {
+        // Admin e Manager veem baseado na configuração do sistema
         const showTraderData = showTraderDataSetting?.setting_value ?? false;
         
         if (!showTraderData) {
           // Se configuração desabilitada, filtrar para mostrar apenas contas não-trader
           query = query.not('user_email', 'like', '%@trader%'); // ou outro critério para identificar traders
-          console.log('👔 Manager - modo restrito (sem dados Cliente Trader)');
+          console.log(`${profile.role === 'admin' ? '👑' : '👔'} ${profile.role} - modo restrito (sem dados Cliente Trader)`);
         } else {
-          console.log('👔 Manager - modo debug ativo (visualizando dados Cliente Trader)');
+          console.log(`${profile.role === 'admin' ? '👑' : '👔'} ${profile.role} - modo debug ativo (visualizando dados Cliente Trader)`);
         }
       }
       
@@ -115,8 +111,8 @@ export const useTradingAccount = (accountNumber?: string) => {
         } else {
           return null; // Cliente sem email não vê nada
         }
-      } else if (profile?.role === 'manager') {
-        // Manager vê baseado na configuração do sistema
+      } else if (profile?.role === 'admin' || profile?.role === 'manager') {
+        // Admin e Manager veem baseado na configuração do sistema
         const showTraderData = showTraderDataSetting?.setting_value ?? false;
         
         if (!showTraderData) {
@@ -124,7 +120,6 @@ export const useTradingAccount = (accountNumber?: string) => {
           query = query.not('user_email', 'like', '%@trader%');
         }
       }
-      // Admin sempre vê todas as contas (sem filtro adicional)
       
       const { data, error } = await query
         .order('updated_at', { ascending: false })
@@ -173,7 +168,7 @@ export const useMarginInfo = (accountNumber?: string) => {
         } else {
           return null;
         }
-      } else if (profile?.role === 'manager') {
+      } else if (profile?.role === 'admin' || profile?.role === 'manager') {
         const showTraderData = showTraderDataSetting?.setting_value ?? false;
         if (!showTraderData) {
           accountQuery = accountQuery.not('user_email', 'like', '%@trader%');
@@ -225,7 +220,7 @@ export const useOpenPositions = (accountNumber?: string) => {
         } else {
           return [];
         }
-      } else if (profile?.role === 'manager') {
+      } else if (profile?.role === 'admin' || profile?.role === 'manager') {
         const showTraderData = showTraderDataSetting?.setting_value ?? false;
         if (!showTraderData) {
           accountQuery = accountQuery.not('user_email', 'like', '%@trader%');
@@ -275,7 +270,7 @@ export const useTradeHistory = (accountNumber?: string) => {
         } else {
           return [];
         }
-      } else if (profile?.role === 'manager') {
+      } else if (profile?.role === 'admin' || profile?.role === 'manager') {
         const showTraderData = showTraderDataSetting?.setting_value ?? false;
         if (!showTraderData) {
           accountQuery = accountQuery.not('user_email', 'like', '%@trader%');

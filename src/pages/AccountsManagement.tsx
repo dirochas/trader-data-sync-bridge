@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const AccountsManagement = () => {
   const [isPermanentDeleting, setIsPermanentDeleting] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { isAdmin, isManager } = usePermissions();
+  const { isAdmin, isManager, isAdminOrManager } = usePermissions();
   const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   // Buscar contas arquivadas e deletadas
@@ -136,8 +137,8 @@ const AccountsManagement = () => {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        {/* Alert quando modo debug ativo para Manager */}
-        {isManager && showTraderDataSetting?.setting_value && (
+        {/* Alert quando modo debug ativo para Admin e Manager */}
+        {isAdminOrManager && showTraderDataSetting?.setting_value && (
           <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800 dark:text-orange-200">

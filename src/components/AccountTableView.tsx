@@ -31,11 +31,12 @@ interface Account {
 interface AccountTableViewProps {
   accounts: Account[];
   onEditAccount: (account: Account) => void;
+  onCloseAllPositions: (account: Account) => void;
   sortConfig?: { key: string; direction: 'asc' | 'desc' | null } | null;
   onSort?: (key: string) => void;
 }
 
-export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }: AccountTableViewProps) => {
+export const AccountTableView = ({ accounts, onEditAccount, onCloseAllPositions, sortConfig, onSort }: AccountTableViewProps) => {
   const permissions = usePermissions();
   const navigate = useNavigate();
 
@@ -130,6 +131,7 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
             const connectionStatus = getConnectionStatus(account.updated_at);
             const isOpenPnLProfit = (account.openPnL || 0) >= 0;
             const isDayPnLProfit = (account.dayProfit || 0) >= 0;
+            const hasOpenTrades = (account.openTrades || 0) > 0;
             
             return (
               <TableRow key={account.id} className="hover:bg-muted/30 transition-colors">
@@ -170,7 +172,7 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
                 </TableCell>
                 <TableCell className="text-right">
                   <div className={`flex items-center justify-end gap-1 font-mono ${
-                    isOpenPnLProfit ? 'text-green-600' : 'text-red-600'
+                    isOpenPnLProfit ? 'text-green-600' : 'text-red-300'
                   }`}>
                     {isOpenPnLProfit ? (
                       <TrendingUp className="w-4 h-4" />
@@ -182,7 +184,7 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
                 </TableCell>
                 <TableCell className="text-right">
                   <div className={`flex items-center justify-end gap-1 font-mono ${
-                    isDayPnLProfit ? 'text-green-600' : 'text-red-600'
+                    isDayPnLProfit ? 'text-green-600' : 'text-red-300'
                   }`}>
                     {formatCurrency(account.dayProfit || 0)}
                   </div>
@@ -197,9 +199,9 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {}} // Close All placeholder
-                      className="text-xs text-orange-600 border-orange-200 hover:bg-orange-50"
-                      disabled={!permissions.canCloseAllPositions}
+                      onClick={() => onCloseAllPositions(account)}
+                      className="text-xs text-red-400 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!permissions.canCloseAllPositions || !hasOpenTrades}
                     >
                       Close All
                     </Button>
@@ -207,7 +209,7 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
                       variant="outline"
                       size="sm"
                       onClick={() => onEditAccount(account)}
-                      className="text-xs"
+                      className="text-xs text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                       disabled={!permissions.canEditAccounts}
                     >
                       <Edit className="w-3 h-3" />
@@ -217,7 +219,7 @@ export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }
                       variant="outline"
                       size="sm"
                       onClick={() => handleViewAccount(account.account)}
-                      className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+                      className="text-xs text-sky-500 border-sky-300 hover:bg-sky-50 hover:border-sky-400 transition-colors"
                     >
                       <ExternalLink className="w-3 h-3" />
                       Details

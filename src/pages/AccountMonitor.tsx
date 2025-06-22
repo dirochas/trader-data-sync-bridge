@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -696,6 +695,7 @@ const AccountMonitor = () => {
                 <AccountTableView 
                   accounts={sortedAccounts}
                   onEditAccount={handleEditAccount}
+                  onCloseAllPositions={handleCloseAllPositions}
                   sortConfig={sortConfig}
                   onSort={requestSort}
                 />

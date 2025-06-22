@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -13,12 +12,19 @@ export const useUsers = () => {
   return useQuery({
     queryKey: ['users'],
     queryFn: async () => {
+      console.log('🔍 [DEBUG] Iniciando consulta de usuários...');
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [DEBUG] Erro na consulta de usuários:', error);
+        throw error;
+      }
+      
+      console.log('✅ [DEBUG] Consulta de usuários bem-sucedida:', data?.length, 'usuários encontrados');
       return data as Profile[];
     },
     refetchInterval: 30000,
@@ -32,13 +38,20 @@ export const useUser = (id?: string) => {
     queryFn: async () => {
       if (!id) return null;
       
+      console.log('🔍 [DEBUG] Buscando usuário específico:', id);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [DEBUG] Erro ao buscar usuário específico:', error);
+        throw error;
+      }
+      
+      console.log('✅ [DEBUG] Usuário específico encontrado:', data?.email);
       return data as Profile;
     },
     enabled: !!id,
@@ -60,7 +73,7 @@ export const useCreateUser = () => {
       company?: string;
       notes?: string;
     }) => {
-      console.log('Creating user with data:', userData);
+      console.log('🔧 [DEBUG] Criando usuário:', userData.email);
       
       // Create auth user first
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -76,7 +89,7 @@ export const useCreateUser = () => {
       });
       
       if (authError) {
-        console.error('Auth error:', authError);
+        console.error('❌ [DEBUG] Erro na criação do auth user:', authError);
         throw authError;
       }
       
@@ -84,9 +97,11 @@ export const useCreateUser = () => {
         throw new Error('Failed to create user');
       }
       
-      console.log('Auth user created:', authData.user.id);
+      console.log('✅ [DEBUG] Auth user criado:', authData.user.id);
       
       // Update the profile with additional data
+      console.log('🔧 [DEBUG] Atualizando perfil do usuário...');
+      
       const { data, error } = await supabase
         .from('profiles')
         .update({
@@ -102,16 +117,20 @@ export const useCreateUser = () => {
         .single();
       
       if (error) {
-        console.error('Profile update error:', error);
+        console.error('❌ [DEBUG] Erro na atualização do perfil:', error);
         throw error;
       }
       
-      console.log('Profile updated:', data);
+      console.log('✅ [DEBUG] Perfil atualizado com sucesso:', data?.email);
       return data as Profile;
     },
     onSuccess: () => {
+      console.log('🎉 [DEBUG] Usuário criado com sucesso - invalidando cache');
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    onError: (error) => {
+      console.error('💥 [DEBUG] Erro na criação do usuário:', error);
+    }
   });
 };
 
@@ -121,6 +140,8 @@ export const useUpdateUser = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: ProfileUpdate & { id: string }) => {
+      console.log('🔧 [DEBUG] Iniciando atualização do usuário:', id, updates);
+      
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -129,15 +150,21 @@ export const useUpdateUser = () => {
         .single();
       
       if (error) {
+        console.error('❌ [DEBUG] Erro na atualização do usuário:', error);
         throw error;
       }
       
+      console.log('✅ [DEBUG] Usuário atualizado com sucesso:', data?.email);
       return data as Profile;
     },
     onSuccess: (data) => {
+      console.log('🎉 [DEBUG] Atualização bem-sucedida - invalidando cache');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', data.id] });
     },
+    onError: (error) => {
+      console.error('💥 [DEBUG] Erro na mutation de atualização:', error);
+    }
   });
 };
 

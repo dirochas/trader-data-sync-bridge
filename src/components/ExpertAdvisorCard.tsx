@@ -105,44 +105,50 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
         </div>
 
         {/* Indicadores de arquivos disponíveis */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs text-muted-foreground">Disponível para:</span>
-          {ea.ex4_file_path && (
-            <Badge variant="outline" className="text-xs">MT4</Badge>
-          )}
-          {ea.ex5_file_path && (
-            <Badge variant="outline" className="text-xs">MT5</Badge>
-          )}
-          {!ea.ex4_file_path && !ea.ex5_file_path && (
-            <Badge variant="destructive" className="text-xs">Nenhum arquivo</Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Disponível para:</span>
+            {ea.ex4_file_path && (
+              <Badge variant="outline" className="text-xs">MT4</Badge>
+            )}
+            {ea.ex5_file_path && (
+              <Badge variant="outline" className="text-xs">MT5</Badge>
+            )}
+            {!ea.ex4_file_path && !ea.ex5_file_path && (
+              <Badge variant="destructive" className="text-xs">Nenhum arquivo</Badge>
+            )}
+          </div>
+
+          {/* Botões de Admin/Manager */}
+          {permissions.isAdminOrManager && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEdit}
+                className="flex items-center gap-1 text-xs"
+              >
+                <Edit className="w-3 h-3" />
+                Editar
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleteEA.isPending}
+                className="flex items-center gap-1 text-xs"
+                style={{ 
+                  borderColor: 'hsl(11.6deg 58.8% 47.2%)', 
+                  color: 'hsl(11.6deg 58.8% 47.2%)' 
+                }}
+              >
+                <Trash2 className="w-3 h-3" />
+                Deletar
+              </Button>
+            </div>
           )}
         </div>
-
-        {/* Botões de Admin/Manager na parte inferior */}
-        {permissions.isAdminOrManager && (
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEdit}
-              className="flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Editar
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              disabled={deleteEA.isPending}
-              className="flex items-center gap-2 text-destructive hover:text-destructive border-destructive/20 hover:border-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4" />
-              Deletar
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

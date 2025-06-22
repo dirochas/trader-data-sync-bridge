@@ -1,7 +1,7 @@
 
-# TraderLab v1.62 - Professional Trading Management System
+# TraderLab v1.63 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Debug Mode Auto-Disable
+**Status**: ✅ STABLE - Production Ready - Expert Advisors Role Management
 
 ## 📊 Sobre o Projeto
 
@@ -18,6 +18,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **📱 Mobile Responsivo**: Scroll horizontal funcional em todas as tabelas
 - **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
 - **🔧 Modo Debug Seguro**: Visualização temporária de dados Cliente Trader com auto-desativação
+- **🤖 Gerenciamento de Expert Advisors**: Sistema completo de upload e download de EAs com controle de permissões
 
 ### 🛠️ Tecnologias
 
@@ -27,16 +28,17 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **State Management**: TanStack React Query
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.62 - Debug Mode Auto-Disable
+### 🎯 Versão Atual: v1.63 - Expert Advisors Role Management
 
 **Novidades:**
-- ✅ Sistema completo de configurações do sistema para admins
-- ✅ Modo debug seguro para visualização de dados Cliente Trader
-- ✅ Controle de acesso baseado em roles e configurações dinâmicas
-- ✅ Auto-desativação do modo debug após 10 minutos
-- ✅ Countdown em tempo real e notificações de segurança
-- ✅ Interface administrativa com confirmação e alertas visuais
-- ✅ Isolamento de dados por padrão para manter privacidade
+- ✅ Sistema completo de gerenciamento de Expert Advisors
+- ✅ Upload e download seguro de arquivos .ex4 e .ex5
+- ✅ Controle de permissões por roles (Admin/Manager podem gerenciar, Clientes podem apenas baixar)
+- ✅ Armazenamento correto do cargo do uploader na base de dados
+- ✅ Interface otimizada para visualização do histórico de uploads
+- ✅ Contador de downloads por EA
+- ✅ Sistema de versionamento para Expert Advisors
+- ✅ Descrições detalhadas e metadados dos EAs
 
 ## Instalação e Desenvolvimento
 

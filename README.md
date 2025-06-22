@@ -1,7 +1,7 @@
 
-# TraderLab v1.61 - Professional Trading Management System
+# TraderLab v1.62 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - VPS Management Enhanced
+**Status**: ✅ STABLE - Production Ready - Debug Mode Auto-Disable
 
 ## 📊 Sobre o Projeto
 
@@ -17,6 +17,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **⚡ Integração MetaTrader**: Conexão direta com EAs via API
 - **📱 Mobile Responsivo**: Scroll horizontal funcional em todas as tabelas
 - **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
+- **🔧 Modo Debug Seguro**: Visualização temporária de dados Cliente Trader com auto-desativação
 
 ### 🛠️ Tecnologias
 
@@ -26,17 +27,16 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **State Management**: TanStack React Query
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.61 - VPS Management Enhanced
+### 🎯 Versão Atual: v1.62 - Debug Mode Auto-Disable
 
 **Novidades:**
-- ✅ Sistema completo de gerenciamento de VPS aprimorado
-- ✅ Controle de custos e datas de vencimento para cada VPS
-- ✅ Geração automática de arquivos RDP com configurações completas
-- ✅ Conexão direta ao VPS via protocolo RDP
-- ✅ Interface otimizada com foco em informações relevantes
-- ✅ Salvamento persistente de credenciais RDP para consulta
-- ✅ Card de resumo mostrando custo total de todos os VPS
-- ✅ Tabela focada em informações de cobrança (Cost/Due Date)
+- ✅ Sistema completo de configurações do sistema para admins
+- ✅ Modo debug seguro para visualização de dados Cliente Trader
+- ✅ Controle de acesso baseado em roles e configurações dinâmicas
+- ✅ Auto-desativação do modo debug após 10 minutos
+- ✅ Countdown em tempo real e notificações de segurança
+- ✅ Interface administrativa com confirmação e alertas visuais
+- ✅ Isolamento de dados por padrão para manter privacidade
 
 ## Instalação e Desenvolvimento
 

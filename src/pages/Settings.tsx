@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Save, Eye, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Eye, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import {
 import { AppLayout } from '@/components/AppLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useShowTraderDataSetting } from '@/hooks/useSystemSettings';
+import { useAutoDisableDebugMode } from '@/hooks/useAutoDisableDebugMode';
 
 const Settings = () => {
   const { isAdmin } = usePermissions();
@@ -26,6 +27,9 @@ const Settings = () => {
   
   // Hook para gerenciar a configuração do sistema
   const { isEnabled: showTraderData, toggle: toggleTraderData, isLoading } = useShowTraderDataSetting();
+  
+  // Hook para auto-desativação
+  const { timeRemainingSeconds, autoDisableMinutes } = useAutoDisableDebugMode();
 
   const handleToggleChange = (checked: boolean) => {
     if (checked) {
@@ -40,6 +44,12 @@ const Settings = () => {
   const handleConfirmActivation = () => {
     toggleTraderData(true);
     setShowConfirmDialog(false);
+  };
+
+  const formatTimeRemaining = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -66,6 +76,12 @@ const Settings = () => {
               <div className="flex items-center justify-between">
                 <span>
                   <strong>Modo Debug Ativo:</strong> Visualizando dados de Cliente Trader para suporte técnico
+                  {timeRemainingSeconds !== null && (
+                    <span className="block text-sm mt-1">
+                      <Clock className="w-3 h-3 inline mr-1" />
+                      Desativação automática em: <strong>{formatTimeRemaining(timeRemainingSeconds)}</strong>
+                    </span>
+                  )}
                 </span>
                 <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
                   <Eye className="w-3 h-3 mr-1" />
@@ -92,16 +108,24 @@ const Settings = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium">Mostrar dados Cliente Trader</h3>
                     {showTraderData && (
-                      <Badge variant="secondary" className="text-xs">
-                        Ativo
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          Ativo
+                        </Badge>
+                        {timeRemainingSeconds !== null && (
+                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {formatTimeRemaining(timeRemainingSeconds)}
+                          </Badge>
+                        )}
+                      </div>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Permite visualizar contas e VPS de usuários Cliente Trader para suporte técnico.
                     <br />
                     <span className="text-xs text-orange-600 dark:text-orange-400">
-                      Por padrão desabilitado para manter isolamento de dados.
+                      Por padrão desabilitado para manter isolamento de dados. Auto-desativa em {autoDisableMinutes} minutos.
                     </span>
                   </p>
                 </div>
@@ -156,7 +180,7 @@ const Settings = () => {
                 <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded border border-orange-200 dark:border-orange-800">
                   <p className="text-sm text-orange-800 dark:text-orange-200">
                     <strong>⚠️ Atenção:</strong> Este modo é destinado apenas para suporte técnico 
-                    e deve ser usado temporariamente.
+                    e será <strong>automaticamente desativado em {autoDisableMinutes} minutos</strong>.
                   </p>
                 </div>
                 <p className="text-sm">

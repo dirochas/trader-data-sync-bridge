@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Archive, Trash2, RotateCcw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Archive, Trash2, RotateCcw, Eye, EyeOff, AlertTriangle, Clock } from 'lucide-react';
 import { useTradingAccounts } from '@/hooks/useTradingData';
 import { useSystemSetting } from '@/hooks/useSystemSettings';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -16,6 +15,7 @@ import { getConnectionStatus } from '@/hooks/useTradingData';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAutoDisableDebugMode } from '@/hooks/useAutoDisableDebugMode';
 
 const AccountsManagement = () => {
   const [showArchived, setShowArchived] = useState(true);
@@ -26,6 +26,7 @@ const AccountsManagement = () => {
   const { toast } = useToast();
   const { isAdmin, isManager, isAdminOrManager } = usePermissions();
   const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
+  const { timeRemainingSeconds } = useAutoDisableDebugMode();
   
   // Buscar contas arquivadas e deletadas
   const { data: accounts, isLoading, refetch } = useTradingAccounts(showArchived, showDeleted);
@@ -124,6 +125,12 @@ const AccountsManagement = () => {
     return Math.max(0, daysRemaining);
   };
 
+  const formatTimeRemaining = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -145,6 +152,12 @@ const AccountsManagement = () => {
               <div className="flex items-center justify-between">
                 <span>
                   <strong>Modo Debug Ativo:</strong> Visualizando dados de Cliente Trader para suporte técnico
+                  {timeRemainingSeconds !== null && (
+                    <span className="block text-sm mt-1">
+                      <Clock className="w-3 h-3 inline mr-1" />
+                      Desativação automática em: <strong>{formatTimeRemaining(timeRemainingSeconds)}</strong>
+                    </span>
+                  )}
                 </span>
                 <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
                   <Eye className="w-3 h-3 mr-1" />

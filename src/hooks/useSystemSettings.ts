@@ -7,6 +7,7 @@ interface SystemSetting {
   id: string;
   setting_key: string;
   setting_value: boolean;
+  activated_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -45,13 +46,22 @@ export const useUpdateSystemSetting = () => {
         throw new Error('Apenas administradores podem alterar configurações do sistema');
       }
       
+      const updateData: any = { 
+        setting_key: settingKey, 
+        setting_value: value 
+      };
+
+      // Se está ativando, definir timestamp; se desativando, limpar timestamp
+      if (value) {
+        updateData.activated_at = new Date().toISOString();
+      } else {
+        updateData.activated_at = null;
+      }
+      
       const { data, error } = await supabase
         .from('system_settings')
         .upsert(
-          { 
-            setting_key: settingKey, 
-            setting_value: value 
-          },
+          updateData,
           { 
             onConflict: 'setting_key' 
           }
@@ -69,6 +79,9 @@ export const useUpdateSystemSetting = () => {
       });
       
       console.log('✅ Configuração atualizada:', data.setting_key, '=', data.setting_value);
+      if (data.activated_at) {
+        console.log('🕒 Timestamp de ativação:', data.activated_at);
+      }
     },
     onError: (error) => {
       console.error('❌ Erro ao atualizar configuração:', error);
@@ -95,5 +108,6 @@ export const useShowTraderDataSetting = () => {
     toggle,
     isLoading: settingQuery.isLoading || updateMutation.isPending,
     error: settingQuery.error || updateMutation.error,
+    activatedAt: settingQuery.data?.activated_at,
   };
 };

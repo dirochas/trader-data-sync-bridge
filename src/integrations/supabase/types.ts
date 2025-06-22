@@ -462,6 +462,7 @@ export type Database = {
       }
       system_settings: {
         Row: {
+          activated_at: string | null
           created_at: string
           id: string
           setting_key: string
@@ -469,6 +470,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activated_at?: string | null
           created_at?: string
           id?: string
           setting_key: string
@@ -476,6 +478,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activated_at?: string | null
           created_at?: string
           id?: string
           setting_key?: string

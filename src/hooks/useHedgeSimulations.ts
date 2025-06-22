@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export interface HedgeSimulation {
   id: string;
@@ -73,25 +74,33 @@ export interface HedgeSimulation {
   calculated_at?: string;
 }
 
-// Hook para listar todas as simulações (filtrando pelo usuário autenticado)
+// Hook para listar todas as simulações com lógica de permissões similar ao sistema
 export const useHedgeSimulations = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { isAdmin } = usePermissions();
   
   return useQuery({
-    queryKey: ['hedge-simulations', user?.id],
+    queryKey: ['hedge-simulations', user?.id, isAdmin],
     queryFn: async () => {
-      if (!user?.id) {
+      if (!user?.id || !profile) {
         console.log('No user authenticated, returning empty array');
         return [];
       }
 
-      console.log('Fetching simulations for user:', user.id);
+      console.log('Fetching simulations for user:', user.id, 'isAdmin:', isAdmin);
       
-      const { data, error } = await supabase
-        .from('hedge_simulations')
-        .select('*')
-        .eq('user_id', user.id) // Filtragem explicita adicional
-        .order('created_at', { ascending: false });
+      let query = supabase.from('hedge_simulations').select('*');
+      
+      // Aplicar filtro baseado no role, similar ao sistema de settings
+      if (!isAdmin) {
+        // Usuários não-admin só veem suas próprias simulações
+        query = query.eq('user_id', user.id);
+        console.log('Applying user filter for non-admin user:', user.id);
+      } else {
+        console.log('Admin user - showing all simulations');
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching simulations:', error);
@@ -101,28 +110,32 @@ export const useHedgeSimulations = () => {
       console.log('Fetched simulations:', data?.length || 0, 'items');
       return data as HedgeSimulation[];
     },
-    enabled: !!user?.id, // Só executa se o usuário estiver autenticado
+    enabled: !!(user?.id && profile),
     refetchInterval: 30000,
   });
 };
 
 // Hook para buscar uma simulação específica
 export const useHedgeSimulation = (id?: string) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { isAdmin } = usePermissions();
   
   return useQuery({
-    queryKey: ['hedge-simulation', id, user?.id],
+    queryKey: ['hedge-simulation', id, user?.id, isAdmin],
     queryFn: async () => {
-      if (!id || !user?.id) return null;
+      if (!id || !user?.id || !profile) return null;
       
-      console.log('Fetching simulation:', id, 'for user:', user.id);
+      console.log('Fetching simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
       
-      const { data, error } = await supabase
-        .from('hedge_simulations')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', user.id) // Filtragem explicita adicional
-        .single();
+      let query = supabase.from('hedge_simulations').select('*').eq('id', id);
+      
+      // Aplicar filtro de segurança similar ao sistema existente
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+        console.log('Applying user filter for simulation access');
+      }
+      
+      const { data, error } = await query.single();
       
       if (error) {
         console.error('Error fetching simulation:', error);
@@ -131,7 +144,7 @@ export const useHedgeSimulation = (id?: string) => {
       
       return data as HedgeSimulation;
     },
-    enabled: !!(id && user?.id),
+    enabled: !!(id && user?.id && profile),
   });
 };
 
@@ -139,6 +152,7 @@ export const useHedgeSimulation = (id?: string) => {
 export const useCreateHedgeSimulation = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   
   return useMutation({
     mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
@@ -148,7 +162,7 @@ export const useCreateHedgeSimulation = () => {
 
       console.log('Creating simulation for user:', user.id);
       
-      // Explicitamente definir o user_id para garantir que seja associado ao usuário correto
+      // Sempre associar ao usuário atual, mesmo se for admin
       const simulationWithUser = {
         ...simulation,
         user_id: user.id
@@ -169,7 +183,7 @@ export const useCreateHedgeSimulation = () => {
       return data as HedgeSimulation;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
     },
   });
 };
@@ -178,6 +192,7 @@ export const useCreateHedgeSimulation = () => {
 export const useUpdateHedgeSimulation = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   
   return useMutation({
     mutationFn: async ({ id, user_id, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
@@ -185,20 +200,23 @@ export const useUpdateHedgeSimulation = () => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Updating simulation:', id, 'for user:', user.id);
+      console.log('Updating simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
       
-      // Remove user_id do updates para não tentar alterá-lo e adiciona verificação explicita
-      const { data, error } = await supabase
-        .from('hedge_simulations')
+      let query = supabase.from('hedge_simulations')
         .update({
           ...updates,
           updated_at: new Date().toISOString(),
           calculated_at: new Date().toISOString()
         })
-        .eq('id', id)
-        .eq('user_id', user.id) // Verifica se pertence ao usuário
-        .select()
-        .single();
+        .eq('id', id);
+      
+      // Aplicar verificação de permissão similar ao sistema existente
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+        console.log('Applying user filter for simulation update');
+      }
+      
+      const { data, error } = await query.select().single();
       
       if (error) {
         console.error('Error updating simulation:', error);
@@ -208,8 +226,8 @@ export const useUpdateHedgeSimulation = () => {
       return data as HedgeSimulation;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id, user?.id, isAdmin] });
     },
   });
 };
@@ -218,6 +236,7 @@ export const useUpdateHedgeSimulation = () => {
 export const useDeleteHedgeSimulation = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -225,13 +244,17 @@ export const useDeleteHedgeSimulation = () => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Deleting simulation:', id, 'for user:', user.id);
+      console.log('Deleting simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
       
-      const { error } = await supabase
-        .from('hedge_simulations')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id); // Verifica se pertence ao usuário
+      let query = supabase.from('hedge_simulations').delete().eq('id', id);
+      
+      // Aplicar verificação de permissão similar ao sistema existente
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+        console.log('Applying user filter for simulation deletion');
+      }
+      
+      const { error } = await query;
       
       if (error) {
         console.error('Error deleting simulation:', error);
@@ -239,7 +262,7 @@ export const useDeleteHedgeSimulation = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
     },
   });
 };

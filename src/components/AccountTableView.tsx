@@ -3,7 +3,7 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react';
+import { Edit, ExternalLink, TrendingUp, TrendingDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
@@ -31,9 +31,11 @@ interface Account {
 interface AccountTableViewProps {
   accounts: Account[];
   onEditAccount: (account: Account) => void;
+  sortConfig?: { key: string; direction: 'asc' | 'desc' | null } | null;
+  onSort?: (key: string) => void;
 }
 
-export const AccountTableView = ({ accounts, onEditAccount }: AccountTableViewProps) => {
+export const AccountTableView = ({ accounts, onEditAccount, sortConfig, onSort }: AccountTableViewProps) => {
   const permissions = usePermissions();
   const navigate = useNavigate();
 
@@ -72,22 +74,54 @@ export const AccountTableView = ({ accounts, onEditAccount }: AccountTableViewPr
     navigate(`/account/${accountNumber}`);
   };
 
+  const getSortIcon = (columnKey: string) => {
+    if (!sortConfig || sortConfig.key !== columnKey) {
+      return <span className="text-xs opacity-60 ml-1">↕️</span>;
+    }
+    if (sortConfig.direction === 'asc') {
+      return <ArrowUp className="w-3 h-3 ml-1 opacity-60" />;
+    }
+    return <ArrowDown className="w-3 h-3 ml-1 opacity-60" />;
+  };
+
+  const createSortableHeader = (label: string, sortKey: string, className: string = "") => {
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onSort) {
+        onSort(sortKey);
+      }
+    };
+
+    return (
+      <TableHead 
+        className={`cursor-pointer select-none font-medium ${className}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-center">
+          {label}
+          {getSortIcon(sortKey)}
+        </div>
+      </TableHead>
+    );
+  };
+
   return (
     <div className="overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="w-[80px]">Status</TableHead>
-            <TableHead>Account Name</TableHead>
-            <TableHead className="text-center">Number</TableHead>
-            <TableHead className="text-center">Client</TableHead>
-            <TableHead className="text-center">VPS</TableHead>
-            <TableHead className="text-right">Balance</TableHead>
-            <TableHead className="text-right">Equity</TableHead>
-            <TableHead className="text-center">Trades</TableHead>
-            <TableHead className="text-right">Open P&L</TableHead>
-            <TableHead className="text-right">Day P&L</TableHead>
-            <TableHead>Server</TableHead>
+            {createSortableHeader("Status", "status", "w-[80px]")}
+            {createSortableHeader("Account Name", "name")}
+            {createSortableHeader("Number", "account", "text-center")}
+            {createSortableHeader("Client", "clientNickname", "text-center")}
+            {createSortableHeader("VPS", "vps", "text-center")}
+            {createSortableHeader("Balance", "balance", "text-right")}
+            {createSortableHeader("Equity", "equity", "text-right")}
+            {createSortableHeader("Trades", "openTrades", "text-center")}
+            {createSortableHeader("Open P&L", "openPnL", "text-right")}
+            {createSortableHeader("Day P&L", "dayProfit", "text-right")}
+            {createSortableHeader("Server", "server")}
             <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>

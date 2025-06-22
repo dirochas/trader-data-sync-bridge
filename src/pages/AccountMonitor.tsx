@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -327,7 +326,7 @@ const AccountMonitor = () => {
   } = usePagination(filteredAccounts, viewMode === 'table' ? itemsPerPage : filteredAccounts.length);
 
   // Configuração de ordenação com cache inteligente ativado - apenas para vista de tabela
-  const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(
+  const { sortedData: sortedAccounts, requestSort, getSortIcon, sortConfig } = useSorting(
     paginatedData,
     { key: 'openTrades', direction: 'desc' }, // Ordenação padrão por trades abertas
     {
@@ -696,6 +695,8 @@ const AccountMonitor = () => {
                 <AccountTableView 
                   accounts={sortedAccounts}
                   onEditAccount={handleEditAccount}
+                  sortConfig={sortConfig}
+                  onSort={requestSort}
                 />
 
                 {/* Pagination - apenas para visualização de tabela */}
@@ -713,7 +714,6 @@ const AccountMonitor = () => {
                               onClick={previousPage}
                               className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                             />
-                          </PaginationItem>
                           
                           {renderPaginationItems()}
                           

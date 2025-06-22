@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,7 +31,7 @@ export const useExpertAdvisors = () => {
     queryFn: async () => {
       console.log('Fetching Expert Advisors...');
       
-      // Primeiro, buscar os EAs
+      // Buscar os EAs diretamente com a coluna uploader_role
       const { data: easData, error: easError } = await supabase
         .from('expert_advisors')
         .select('*')
@@ -44,36 +43,9 @@ export const useExpertAdvisors = () => {
       }
 
       console.log('EAs found:', easData?.length || 0);
+      console.log('EAs data with uploader roles:', easData);
 
-      if (!easData || easData.length === 0) {
-        return [];
-      }
-
-      // Buscar os roles dos uploaders
-      const uploaderIds = [...new Set(easData.map(ea => ea.uploaded_by))];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .in('id', uploaderIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        // Não quebrar por causa dos perfis, apenas continuar sem eles
-      }
-
-      console.log('Profiles data:', profilesData);
-
-      // Combinar os dados com o role correto do uploader
-      const result = easData.map(ea => {
-        const uploaderProfile = profilesData?.find(profile => profile.id === ea.uploaded_by);
-        return {
-          ...ea,
-          uploader_role: uploaderProfile?.role || 'client_trader'
-        };
-      }) as ExpertAdvisor[];
-
-      console.log('Final result with uploader roles:', result);
-      return result;
+      return easData as ExpertAdvisor[] || [];
     },
   });
 };
@@ -85,6 +57,18 @@ export const useCreateExpertAdvisor = () => {
   return useMutation({
     mutationFn: async (data: CreateExpertAdvisorData) => {
       if (!user) throw new Error('User not authenticated');
+
+      // Primeiro, buscar o role do usuário atual
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        throw new Error('Erro ao buscar informações do usuário');
+      }
 
       let ex4FilePath: string | undefined;
       let ex5FilePath: string | undefined;
@@ -110,7 +94,7 @@ export const useCreateExpertAdvisor = () => {
         ex5FilePath = uploadData.path;
       }
 
-      // Criar registro do EA
+      // Criar registro do EA com o role do uploader
       const { data: eaData, error } = await supabase
         .from('expert_advisors')
         .insert({
@@ -120,6 +104,7 @@ export const useCreateExpertAdvisor = () => {
           ex4_file_path: ex4FilePath,
           ex5_file_path: ex5FilePath,
           uploaded_by: user.id,
+          uploader_role: profileData.role, // Armazenar o role do uploader
         })
         .select()
         .single();

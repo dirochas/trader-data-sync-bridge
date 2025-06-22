@@ -123,6 +123,7 @@ export type Database = {
           name: string
           updated_at: string
           uploaded_by: string
+          uploader_role: Database["public"]["Enums"]["user_role"]
           version: string
         }
         Insert: {
@@ -135,6 +136,7 @@ export type Database = {
           name: string
           updated_at?: string
           uploaded_by: string
+          uploader_role: Database["public"]["Enums"]["user_role"]
           version: string
         }
         Update: {
@@ -147,6 +149,7 @@ export type Database = {
           name?: string
           updated_at?: string
           uploaded_by?: string
+          uploader_role?: Database["public"]["Enums"]["user_role"]
           version?: string
         }
         Relationships: []

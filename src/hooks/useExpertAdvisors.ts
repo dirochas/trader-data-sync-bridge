@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { getRoleDisplayName } from '@/hooks/usePermissions';
 
 export interface ExpertAdvisor {
   id: string;
@@ -15,11 +15,7 @@ export interface ExpertAdvisor {
   download_count: number;
   created_at: string;
   updated_at: string;
-  uploader_profile?: {
-    first_name?: string;
-    last_name?: string;
-    email: string;
-  };
+  uploader_role?: string;
 }
 
 export interface CreateExpertAdvisorData {
@@ -53,11 +49,11 @@ export const useExpertAdvisors = () => {
         return [];
       }
 
-      // Depois, buscar os perfis dos uploaders
+      // Depois, buscar apenas o role dos uploaders
       const uploaderIds = [...new Set(easData.map(ea => ea.uploaded_by))];
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email')
+        .select('id, role')
         .in('id', uploaderIds);
 
       if (profilesError) {
@@ -65,14 +61,10 @@ export const useExpertAdvisors = () => {
         // Não quebrar por causa dos perfis, apenas continuar sem eles
       }
 
-      // Combinar os dados
+      // Combinar os dados com apenas o role
       const result = easData.map(ea => ({
         ...ea,
-        uploader_profile: profilesData?.find(profile => profile.id === ea.uploaded_by) || {
-          email: 'Usuário não encontrado',
-          first_name: '',
-          last_name: ''
-        }
+        uploader_role: profilesData?.find(profile => profile.id === ea.uploaded_by)?.role || 'client_trader'
       })) as ExpertAdvisor[];
 
       console.log('Final result:', result);

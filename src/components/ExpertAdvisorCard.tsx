@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, Edit, Trash2, FileText, Calendar, User } from 'lucide-react';
 import { ExpertAdvisor, downloadFile, useIncrementDownloadCount, useDeleteExpertAdvisor } from '@/hooks/useExpertAdvisors';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermissions, getRoleDisplayName } from '@/hooks/usePermissions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -40,9 +40,9 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
     }
   };
 
-  const uploaderName = ea.uploader_profile?.first_name && ea.uploader_profile?.last_name
-    ? `${ea.uploader_profile.first_name} ${ea.uploader_profile.last_name}`
-    : ea.uploader_profile?.email || 'Usuário não encontrado';
+  const uploaderRoleDisplay = ea.uploader_role 
+    ? getRoleDisplayName(ea.uploader_role as any)
+    : 'Usuário';
 
   return (
     <Card className="w-full">
@@ -63,7 +63,7 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <User className="w-3 h-3" />
-                {uploaderName}
+                Postado por: {uploaderRoleDisplay}
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />

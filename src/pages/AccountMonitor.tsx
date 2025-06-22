@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
 import { usePagination } from '@/hooks/usePagination';
@@ -11,7 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/AppLayout';
-import ConnectionStatus from '@/components/ConnectionStatus';
+import { AccountTableView } from '@/components/AccountTableView';
+import { AccountGroupView } from '@/components/AccountGroupView';
 import EditAccountModal from '@/components/EditAccountModal';
 import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -23,7 +25,9 @@ import {
   Activity,
   Filter,
   Archive,
-  UserCheck
+  UserCheck,
+  LayoutGrid,
+  Table
 } from 'lucide-react';
 
 const AccountMonitor = () => {
@@ -40,6 +44,7 @@ const AccountMonitor = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState<'table' | 'groups'>('table');
 
   // Query para buscar lista de clientes únicos usando nickname (apenas para admin/manager)
   const { data: clientsList = [] } = useQuery({
@@ -307,7 +312,7 @@ const AccountMonitor = () => {
     return filtered;
   }, [enrichedAccounts, selectedStatus, selectedClient, permissions.isAdminOrManager]);
 
-  // Configuração de paginação
+  // Configuração de paginação - apenas para vista de tabela
   const {
     currentPage,
     totalPages,
@@ -317,9 +322,9 @@ const AccountMonitor = () => {
     previousPage,
     hasNextPage,
     hasPreviousPage,
-  } = usePagination(filteredAccounts, itemsPerPage);
+  } = usePagination(filteredAccounts, viewMode === 'table' ? itemsPerPage : filteredAccounts.length);
 
-  // Configuração de ordenação com cache inteligente ativado
+  // Configuração de ordenação com cache inteligente ativado - apenas para vista de tabela
   const { sortedData: sortedAccounts, requestSort, getSortIcon } = useSorting(
     paginatedData,
     { key: 'openTrades', direction: 'desc' }, // Ordenação padrão por trades abertas
@@ -362,6 +367,7 @@ const AccountMonitor = () => {
       vps_unique_id: account.vps_unique_id,
       broker: account.broker,
       server: account.server,
+      group_id: account.group_id,
     });
     setEditModalOpen(true);
   };
@@ -603,6 +609,27 @@ const AccountMonitor = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Trading Accounts</CardTitle>
               <div className="flex items-center gap-4">
+                {/* Toggle de Visualização */}
+                <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Table className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="view-mode" className="text-sm font-medium">
+                      Tabela
+                    </Label>
+                  </div>
+                  <Switch
+                    id="view-mode"
+                    checked={viewMode === 'groups'}
+                    onCheckedChange={(checked) => setViewMode(checked ? 'groups' : 'table')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="view-mode" className="text-sm font-medium">
+                      Grupos
+                    </Label>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -640,146 +667,72 @@ const AccountMonitor = () => {
                   </div>
                 )}
                 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Results per page:</span>
-                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Itens por página - apenas na visualização de tabela */}
+                {viewMode === 'table' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Results per page:</span>
+                    <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {createSortableHeader("Status", "status")}
-                    {createSortableHeader("Account Name", "name")}
-                    {createSortableHeader("Number", "account")}
-                    {permissions.isAdminOrManager && createSortableHeader("Client", "clientNickname")}
-                    {createSortableHeader("VPS", "vps")}
-                    {createSortableHeader("Balance", "balance", "text-right")}
-                    {createSortableHeader("Equity", "equity", "text-right")}
-                    {createSortableHeader("Trades", "openTrades", "text-right")}
-                    {createSortableHeader("Open P&L", "openPnL", "text-right")}
-                    {createSortableHeader("Day P&L", "dayProfit", "text-right")}
-                    {createSortableHeader("Server", "server")}
-                    <TableHead className="font-medium">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell>
-                        <ConnectionStatus lastUpdate={account.updated_at} />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {account.name}
-                      </TableCell>
-                      <TableCell className="font-mono">{account.account}</TableCell>
-                      {permissions.isAdminOrManager && (
-                        <TableCell className="font-medium">
-                          {account.clientNickname}
-                        </TableCell>
-                      )}
-                      <TableCell>{account.vps}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        US$ {Number(account.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        US$ {Number(account.equity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {account.openTrades}
-                      </TableCell>
-                      <TableCell className={`text-right font-mono ${account.openPnL >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
-                        US$ {account.openPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className={`text-right font-mono ${account.dayProfit >= 0 ? 'text-emerald-600' : 'metric-negative'}`}>
-                        US$ {account.dayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="font-medium">{account.server || 'N/A'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {/* BOTÃO CLOSE ALL - Apenas para quem tem permissão */}
-                          {permissions.canCloseAllPositions && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="action-button-danger"
-                              onClick={() => handleCloseAllPositions(account)}
-                              disabled={account.openTrades === 0}
-                            >
-                              Close All
-                            </Button>
-                          )}
-                          
-                          {/* BOTÃO EDIT - Apenas para quem tem permissão */}
-                          {permissions.canEditAccounts && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300"
-                              onClick={() => handleEditAccount(account)}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          
-                          {/* BOTÃO DETAILS - Todos podem ver */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-sky-600 border-sky-200 hover:bg-sky-50 hover:border-sky-300"
-                            onClick={() => handleViewAccount(account.account)}
-                          >
-                            Details
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            {/* Renderização Condicional baseada no modo de visualização */}
+            {viewMode === 'table' ? (
+              <>
+                <AccountTableView 
+                  accounts={sortedAccounts}
+                  onEditAccount={handleEditAccount}
+                />
 
-            {/* Pagination */}
-            {filteredAccounts.length > 0 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
-                <div className="text-sm text-gray-500">
-                  Showing {startIndex} to {endIndex} of {filteredAccounts.length} results
-                </div>
-                
-                {totalPages > 1 && (
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={previousPage}
-                          className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                        />
-                      </PaginationItem>
-                      
-                      {renderPaginationItems()}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={nextPage}
-                          className={hasNextPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+                {/* Pagination - apenas para visualização de tabela */}
+                {filteredAccounts.length > 0 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
+                    <div className="text-sm text-gray-500">
+                      Showing {startIndex} to {endIndex} of {filteredAccounts.length} results
+                    </div>
+                    
+                    {totalPages > 1 && (
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={previousPage}
+                              className={hasPreviousPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                            />
+                          </PaginationItem>
+                          
+                          {renderPaginationItems()}
+                          
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={nextPage}
+                              className={hasNextPage ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </div>
                 )}
+              </>
+            ) : (
+              <div className="p-6">
+                <AccountGroupView 
+                  accounts={filteredAccounts}
+                  onEditAccount={handleEditAccount}
+                />
               </div>
             )}
 

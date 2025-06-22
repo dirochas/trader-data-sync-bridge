@@ -30,7 +30,7 @@ interface EditAccountModalProps {
 const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
   const [formData, setFormData] = useState({
     name: account?.name || '',
-    group_id: account?.group_id || '',
+    group_id: account?.group_id || 'none',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -42,7 +42,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
     if (account) {
       setFormData({
         name: account.name || '',
-        group_id: account.group_id || '',
+        group_id: account.group_id || 'none',
       });
     }
   }, [account]);
@@ -57,7 +57,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         .from('accounts')
         .update({
           name: formData.name.trim() || null,
-          group_id: formData.group_id || null,
+          group_id: formData.group_id === 'none' ? null : formData.group_id,
         })
         .eq('id', account.id);
 
@@ -180,7 +180,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                   <SelectValue placeholder="Selecione um grupo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum grupo</SelectItem>
+                  <SelectItem value="none">Nenhum grupo</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id}>
                       <div className="flex items-center gap-2">

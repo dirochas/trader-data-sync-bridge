@@ -149,7 +149,7 @@ export function AppSidebar() {
       collapsible="icon"
       style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}
     >
-      <div className="p-4 border-b" style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
+      <div className="px-4 pt-3 pb-3 border-b" style={{ backgroundColor: '#0E1016', borderColor: '#1F2937' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
             <img 

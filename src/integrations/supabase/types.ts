@@ -112,6 +112,45 @@ export type Database = {
           },
         ]
       }
+      expert_advisors: {
+        Row: {
+          created_at: string
+          description: string | null
+          download_count: number | null
+          ex4_file_path: string | null
+          ex5_file_path: string | null
+          id: string
+          name: string
+          updated_at: string
+          uploaded_by: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          download_count?: number | null
+          ex4_file_path?: string | null
+          ex5_file_path?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          uploaded_by: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          download_count?: number | null
+          ex4_file_path?: string | null
+          ex5_file_path?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          uploaded_by?: string
+          version?: string
+        }
+        Relationships: []
+      }
       hedge_simulations: {
         Row: {
           account_size: number

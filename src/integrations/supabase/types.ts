@@ -205,6 +205,7 @@ export type Database = {
           total_withdraw: number | null
           trader_profit_share: number | null
           updated_at: string | null
+          user_email: string | null
           user_id: string
         }
         Insert: {
@@ -257,6 +258,7 @@ export type Database = {
           total_withdraw?: number | null
           trader_profit_share?: number | null
           updated_at?: string | null
+          user_email?: string | null
           user_id?: string
         }
         Update: {
@@ -309,6 +311,7 @@ export type Database = {
           total_withdraw?: number | null
           trader_profit_share?: number | null
           updated_at?: string | null
+          user_email?: string | null
           user_id?: string
         }
         Relationships: []

@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 export interface HedgeSimulation {
   id: string;
   user_id: string;
+  user_email?: string;
   simulation_name?: string;
   
   // Input Parameters
@@ -74,28 +75,28 @@ export interface HedgeSimulation {
   calculated_at?: string;
 }
 
-// Hook para listar todas as simulações com lógica de permissões similar ao sistema
+// Hook para listar todas as simulações seguindo o padrão de accounts/settings
 export const useHedgeSimulations = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = usePermissions();
   
   return useQuery({
-    queryKey: ['hedge-simulations', user?.id, isAdmin],
+    queryKey: ['hedge-simulations', user?.email, isAdmin],
     queryFn: async () => {
-      if (!user?.id || !profile) {
+      if (!user?.email || !profile) {
         console.log('No user authenticated, returning empty array');
         return [];
       }
 
-      console.log('Fetching simulations for user:', user.id, 'isAdmin:', isAdmin);
+      console.log('Fetching simulations for user:', user.email, 'isAdmin:', isAdmin);
       
       let query = supabase.from('hedge_simulations').select('*');
       
-      // Aplicar filtro baseado no role, similar ao sistema de settings
+      // Aplicar filtro baseado no role, igual como funciona em accounts
       if (!isAdmin) {
         // Usuários não-admin só veem suas próprias simulações
-        query = query.eq('user_id', user.id);
-        console.log('Applying user filter for non-admin user:', user.id);
+        query = query.eq('user_email', user.email);
+        console.log('Applying email filter for non-admin user:', user.email);
       } else {
         console.log('Admin user - showing all simulations');
       }
@@ -110,7 +111,7 @@ export const useHedgeSimulations = () => {
       console.log('Fetched simulations:', data?.length || 0, 'items');
       return data as HedgeSimulation[];
     },
-    enabled: !!(user?.id && profile),
+    enabled: !!(user?.email && profile),
     refetchInterval: 30000,
   });
 };
@@ -121,18 +122,18 @@ export const useHedgeSimulation = (id?: string) => {
   const { isAdmin } = usePermissions();
   
   return useQuery({
-    queryKey: ['hedge-simulation', id, user?.id, isAdmin],
+    queryKey: ['hedge-simulation', id, user?.email, isAdmin],
     queryFn: async () => {
-      if (!id || !user?.id || !profile) return null;
+      if (!id || !user?.email || !profile) return null;
       
-      console.log('Fetching simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
+      console.log('Fetching simulation:', id, 'for user:', user.email, 'isAdmin:', isAdmin);
       
       let query = supabase.from('hedge_simulations').select('*').eq('id', id);
       
-      // Aplicar filtro de segurança similar ao sistema existente
+      // Aplicar filtro de segurança igual como funciona em accounts
       if (!isAdmin) {
-        query = query.eq('user_id', user.id);
-        console.log('Applying user filter for simulation access');
+        query = query.eq('user_email', user.email);
+        console.log('Applying email filter for simulation access');
       }
       
       const { data, error } = await query.single();
@@ -144,7 +145,7 @@ export const useHedgeSimulation = (id?: string) => {
       
       return data as HedgeSimulation;
     },
-    enabled: !!(id && user?.id && profile),
+    enabled: !!(id && user?.email && profile),
   });
 };
 
@@ -155,17 +156,18 @@ export const useCreateHedgeSimulation = () => {
   const { isAdmin } = usePermissions();
   
   return useMutation({
-    mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-      if (!user?.id) {
+    mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'user_id' | 'user_email' | 'created_at' | 'updated_at'>) => {
+      if (!user?.id || !user?.email) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Creating simulation for user:', user.id);
+      console.log('Creating simulation for user:', user.email);
       
-      // Sempre associar ao usuário atual, mesmo se for admin
+      // Sempre associar ao email do usuário atual
       const simulationWithUser = {
         ...simulation,
-        user_id: user.id
+        user_id: user.id,
+        user_email: user.email
       };
       
       const { data, error } = await supabase
@@ -183,7 +185,7 @@ export const useCreateHedgeSimulation = () => {
       return data as HedgeSimulation;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.email, isAdmin] });
     },
   });
 };
@@ -195,12 +197,12 @@ export const useUpdateHedgeSimulation = () => {
   const { isAdmin } = usePermissions();
   
   return useMutation({
-    mutationFn: async ({ id, user_id, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
-      if (!user?.id) {
+    mutationFn: async ({ id, user_id, user_email, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
+      if (!user?.email) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Updating simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
+      console.log('Updating simulation:', id, 'for user:', user.email, 'isAdmin:', isAdmin);
       
       let query = supabase.from('hedge_simulations')
         .update({
@@ -210,10 +212,10 @@ export const useUpdateHedgeSimulation = () => {
         })
         .eq('id', id);
       
-      // Aplicar verificação de permissão similar ao sistema existente
+      // Aplicar verificação de permissão igual como funciona em accounts
       if (!isAdmin) {
-        query = query.eq('user_id', user.id);
-        console.log('Applying user filter for simulation update');
+        query = query.eq('user_email', user.email);
+        console.log('Applying email filter for simulation update');
       }
       
       const { data, error } = await query.select().single();
@@ -226,8 +228,8 @@ export const useUpdateHedgeSimulation = () => {
       return data as HedgeSimulation;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id, user?.id, isAdmin] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.email, isAdmin] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id, user?.email, isAdmin] });
     },
   });
 };
@@ -240,18 +242,18 @@ export const useDeleteHedgeSimulation = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!user?.id) {
+      if (!user?.email) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Deleting simulation:', id, 'for user:', user.id, 'isAdmin:', isAdmin);
+      console.log('Deleting simulation:', id, 'for user:', user.email, 'isAdmin:', isAdmin);
       
       let query = supabase.from('hedge_simulations').delete().eq('id', id);
       
-      // Aplicar verificação de permissão similar ao sistema existente
+      // Aplicar verificação de permissão igual como funciona em accounts
       if (!isAdmin) {
-        query = query.eq('user_id', user.id);
-        console.log('Applying user filter for simulation deletion');
+        query = query.eq('user_email', user.email);
+        console.log('Applying email filter for simulation deletion');
       }
       
       const { error } = await query;
@@ -262,7 +264,7 @@ export const useDeleteHedgeSimulation = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id, isAdmin] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.email, isAdmin] });
     },
   });
 };

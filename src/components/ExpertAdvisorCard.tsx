@@ -34,6 +34,12 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
     }
   };
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(ea);
+    }
+  };
+
   const uploaderName = ea.uploader_profile?.first_name && ea.uploader_profile?.last_name
     ? `${ea.uploader_profile.first_name} ${ea.uploader_profile.last_name}`
     : ea.uploader_profile?.email || 'Usuário não encontrado';
@@ -70,8 +76,8 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
             </div>
           </div>
 
+          {/* Botões de Download */}
           <div className="flex items-center gap-2 ml-4">
-            {/* Botões de Download */}
             {ea.ex4_file_path && (
               <Button
                 variant="outline"
@@ -95,36 +101,11 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
                 .EX5
               </Button>
             )}
-
-            {/* Botões de Admin/Manager */}
-            {permissions.isAdminOrManager && (
-              <>
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(ea)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                )}
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleteEA.isPending}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </>
-            )}
           </div>
         </div>
 
         {/* Indicadores de arquivos disponíveis */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-4">
           <span className="text-xs text-muted-foreground">Disponível para:</span>
           {ea.ex4_file_path && (
             <Badge variant="outline" className="text-xs">MT4</Badge>
@@ -136,6 +117,32 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
             <Badge variant="destructive" className="text-xs">Nenhum arquivo</Badge>
           )}
         </div>
+
+        {/* Botões de Admin/Manager na parte inferior */}
+        {permissions.isAdminOrManager && (
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Editar
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleteEA.isPending}
+              className="flex items-center gap-2 text-destructive hover:text-destructive border-destructive/20 hover:border-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4" />
+              Deletar
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

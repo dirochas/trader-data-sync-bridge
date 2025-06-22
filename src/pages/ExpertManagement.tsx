@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Upload, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/AppLayout';
-import { useExpertAdvisors } from '@/hooks/useExpertAdvisors';
+import { useExpertAdvisors, ExpertAdvisor } from '@/hooks/useExpertAdvisors';
 import { usePermissions } from '@/hooks/usePermissions';
 import { UploadEAModal } from '@/components/UploadEAModal';
 import { ExpertAdvisorCard } from '@/components/ExpertAdvisorCard';
@@ -13,6 +13,17 @@ const ExpertManagement = () => {
   const { data: expertAdvisors, isLoading, error } = useExpertAdvisors();
   const permissions = usePermissions();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [editingEA, setEditingEA] = useState<ExpertAdvisor | null>(null);
+
+  const handleEdit = (ea: ExpertAdvisor) => {
+    setEditingEA(ea);
+    setShowUploadModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowUploadModal(false);
+    setEditingEA(null);
+  };
 
   if (isLoading) {
     return (
@@ -69,7 +80,11 @@ const ExpertManagement = () => {
             
             <div className="space-y-3">
               {expertAdvisors.map((ea) => (
-                <ExpertAdvisorCard key={ea.id} ea={ea} />
+                <ExpertAdvisorCard 
+                  key={ea.id} 
+                  ea={ea} 
+                  onEdit={handleEdit}
+                />
               ))}
             </div>
           </div>
@@ -102,10 +117,11 @@ const ExpertManagement = () => {
           </Card>
         )}
 
-        {/* Modal de Upload */}
+        {/* Modal de Upload/Edição */}
         <UploadEAModal 
           open={showUploadModal} 
-          onOpenChange={setShowUploadModal} 
+          onOpenChange={handleCloseModal}
+          editingEA={editingEA}
         />
       </div>
     </AppLayout>

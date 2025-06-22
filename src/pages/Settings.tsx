@@ -1,11 +1,44 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Eye, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AppLayout } from '@/components/AppLayout';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Settings = () => {
+  const { isAdmin } = usePermissions();
+  const [showTraderData, setShowTraderData] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const handleToggleChange = (checked: boolean) => {
+    if (checked) {
+      // Ativando - mostrar modal de confirmação
+      setShowConfirmDialog(true);
+    } else {
+      // Desativando - direto
+      setShowTraderData(false);
+    }
+  };
+
+  const handleConfirmActivation = () => {
+    setShowTraderData(true);
+    setShowConfirmDialog(false);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -16,12 +49,69 @@ const Settings = () => {
               Configurações do sistema e parâmetros operacionais
             </p>
           </div>
-          <Button>
+          <Button disabled>
             <Save className="w-4 h-4 mr-2" />
             Save Changes
           </Button>
         </div>
 
+        {/* Alert quando modo debug ativo */}
+        {isAdmin && showTraderData && (
+          <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              <div className="flex items-center justify-between">
+                <span>
+                  <strong>Modo Debug Ativo:</strong> Visualizando dados de Cliente Trader para suporte técnico
+                </span>
+                <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
+                  <Eye className="w-3 h-3 mr-1" />
+                  Visualização Ampliada
+                </Badge>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Card de Configurações do Sistema - Apenas para Admin */}
+        {isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5" />
+                Configurações do Sistema
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Toggle Mostrar Dados Cliente Trader */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">Mostrar dados Cliente Trader</h3>
+                    {showTraderData && (
+                      <Badge variant="secondary" className="text-xs">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Permite visualizar contas e VPS de usuários Cliente Trader para suporte técnico.
+                    <br />
+                    <span className="text-xs text-orange-600 dark:text-orange-400">
+                      Por padrão desabilitado para manter isolamento de dados.
+                    </span>
+                  </p>
+                </div>
+                <Switch
+                  checked={showTraderData}
+                  onCheckedChange={handleToggleChange}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card Original - Placeholder para outras configurações */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -45,6 +135,39 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal de Confirmação */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Ativar Visualização de Dados Cliente Trader?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>
+                  Você está prestes a <strong>ativar o modo debug</strong> que permite visualizar 
+                  contas e VPS de usuários Cliente Trader.
+                </p>
+                <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded border border-orange-200 dark:border-orange-800">
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    <strong>⚠️ Atenção:</strong> Este modo é destinado apenas para suporte técnico 
+                    e deve ser usado temporariamente.
+                  </p>
+                </div>
+                <p className="text-sm">
+                  Deseja continuar?
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmActivation}>
+                Sim, Ativar Modo Debug
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );

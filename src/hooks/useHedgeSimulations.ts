@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface HedgeSimulation {
   id: string;
@@ -72,61 +73,103 @@ export interface HedgeSimulation {
   calculated_at?: string;
 }
 
-// Hook para listar todas as simulações (agora filtrada automaticamente pelo RLS)
+// Hook para listar todas as simulações (filtrando pelo usuário autenticado)
 export const useHedgeSimulations = () => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['hedge-simulations'],
+    queryKey: ['hedge-simulations', user?.id],
     queryFn: async () => {
+      if (!user?.id) {
+        console.log('No user authenticated, returning empty array');
+        return [];
+      }
+
+      console.log('Fetching simulations for user:', user.id);
+      
       const { data, error } = await supabase
         .from('hedge_simulations')
         .select('*')
+        .eq('user_id', user.id) // Filtragem explicita adicional
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching simulations:', error);
+        throw error;
+      }
+      
+      console.log('Fetched simulations:', data?.length || 0, 'items');
       return data as HedgeSimulation[];
     },
+    enabled: !!user?.id, // Só executa se o usuário estiver autenticado
     refetchInterval: 30000,
   });
 };
 
 // Hook para buscar uma simulação específica
 export const useHedgeSimulation = (id?: string) => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['hedge-simulation', id],
+    queryKey: ['hedge-simulation', id, user?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !user?.id) return null;
+      
+      console.log('Fetching simulation:', id, 'for user:', user.id);
       
       const { data, error } = await supabase
         .from('hedge_simulations')
         .select('*')
         .eq('id', id)
+        .eq('user_id', user.id) // Filtragem explicita adicional
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching simulation:', error);
+        throw error;
+      }
+      
       return data as HedgeSimulation;
     },
-    enabled: !!id,
+    enabled: !!(id && user?.id),
   });
 };
 
 // Hook para criar nova simulação
 export const useCreateHedgeSimulation = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-      // user_id será automaticamente definido pelo padrão da coluna (auth.uid())
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Creating simulation for user:', user.id);
+      
+      // Explicitamente definir o user_id para garantir que seja associado ao usuário correto
+      const simulationWithUser = {
+        ...simulation,
+        user_id: user.id
+      };
+      
       const { data, error } = await supabase
         .from('hedge_simulations')
-        .insert([simulation])
+        .insert([simulationWithUser])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating simulation:', error);
+        throw error;
+      }
+      
+      console.log('Created simulation:', data.id);
       return data as HedgeSimulation;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations'] });
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
     },
   });
 };
@@ -134,10 +177,17 @@ export const useCreateHedgeSimulation = () => {
 // Hook para atualizar simulação
 export const useUpdateHedgeSimulation = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async ({ id, user_id, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
-      // Remove user_id do updates para não tentar alterá-lo (seria bloqueado pelo RLS de qualquer forma)
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Updating simulation:', id, 'for user:', user.id);
+      
+      // Remove user_id do updates para não tentar alterá-lo e adiciona verificação explicita
       const { data, error } = await supabase
         .from('hedge_simulations')
         .update({
@@ -146,15 +196,20 @@ export const useUpdateHedgeSimulation = () => {
           calculated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('user_id', user.id) // Verifica se pertence ao usuário
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating simulation:', error);
+        throw error;
+      }
+      
       return data as HedgeSimulation;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations'] });
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulation', data.id, user?.id] });
     },
   });
 };
@@ -162,18 +217,29 @@ export const useUpdateHedgeSimulation = () => {
 // Hook para deletar simulação
 export const useDeleteHedgeSimulation = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Deleting simulation:', id, 'for user:', user.id);
+      
       const { error } = await supabase
         .from('hedge_simulations')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // Verifica se pertence ao usuário
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting simulation:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hedge-simulations'] });
+      queryClient.invalidateQueries({ queryKey: ['hedge-simulations', user?.id] });
     },
   });
 };

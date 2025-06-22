@@ -47,7 +47,14 @@ export const useExpertAdvisors = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as ExpertAdvisor[];
+      
+      // Transform data to match our interface
+      return (data || []).map(item => ({
+        ...item,
+        uploader_profile: Array.isArray(item.uploader_profile) 
+          ? item.uploader_profile[0] 
+          : item.uploader_profile
+      })) as ExpertAdvisor[];
     },
   });
 };
@@ -156,10 +163,20 @@ export const useIncrementDownloadCount = () => {
 
   return useMutation({
     mutationFn: async (eaId: string) => {
+      // Get current download count
+      const { data: currentEA, error: fetchError } = await supabase
+        .from('expert_advisors')
+        .select('download_count')
+        .eq('id', eaId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Increment the count
       const { error } = await supabase
         .from('expert_advisors')
         .update({ 
-          download_count: supabase.raw('download_count + 1') 
+          download_count: (currentEA.download_count || 0) + 1
         })
         .eq('id', eaId);
 

@@ -1,7 +1,7 @@
 
-# TraderLab v1.63 - Professional Trading Management System
+# TraderLab v1.63.1 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Expert Advisors Role Management
+**Status**: ✅ STABLE - Production Ready - Security Enhancements
 
 ## 📊 Sobre o Projeto
 
@@ -19,6 +19,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
 - **🔧 Modo Debug Seguro**: Visualização temporária de dados Cliente Trader com auto-desativação
 - **🤖 Gerenciamento de Expert Advisors**: Sistema completo de upload e download de EAs com controle de permissões
+- **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
 
 ### 🛠️ Tecnologias
 
@@ -26,11 +27,21 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **UI Components**: Shadcn/UI + Radix UI
 - **Backend**: Supabase (Database + Auth + Edge Functions)
 - **State Management**: TanStack React Query
+- **Security**: DOMPurify + Custom Validation System
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.63 - Expert Advisors Role Management
+### 🎯 Versão Atual: v1.63.1 - Security Enhancements
 
-**Novidades:**
+**Novidades v1.63.1:**
+- ✅ Sistema global de segurança implementado
+- ✅ Sanitização automática de texto com proteção XSS
+- ✅ Validação robusta de arquivos (.ex4/.ex5, limite 2MB)
+- ✅ Funções reutilizáveis para formulários seguros
+- ✅ Logging de eventos de segurança para auditoria
+- ✅ Correções de TypeScript para validação de tipos
+- ✅ Guia de implementação gradual de segurança
+
+**Histórico v1.63:**
 - ✅ Sistema completo de gerenciamento de Expert Advisors
 - ✅ Upload e download seguro de arquivos .ex4 e .ex5
 - ✅ Controle de permissões por roles (Admin/Manager podem gerenciar, Clientes podem apenas baixar)
@@ -68,6 +79,18 @@ Este projeto foi desenvolvido com:
 - shadcn-ui
 - Tailwind CSS
 - Supabase
+- DOMPurify (Segurança)
+
+## 🛡️ Sistema de Segurança
+
+O projeto agora conta com um sistema robusto de segurança:
+
+- **Sanitização de Texto**: Proteção contra XSS e caracteres maliciosos
+- **Validação de Arquivos**: Controle de tamanho e tipo de arquivo
+- **Logging de Segurança**: Auditoria de eventos críticos
+- **Implementação Gradual**: Sistema modular para aplicação em novas páginas
+
+Consulte `src/utils/SECURITY_GUIDE.md` para implementação em novas funcionalidades.
 
 ## Deploy
 

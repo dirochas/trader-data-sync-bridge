@@ -10,7 +10,7 @@ export const SECURITY_CONFIG = {
   
   // Tipos de arquivo permitidos
   ALLOWED_FILE_TYPES: {
-    EA_FILES: ['.ex4', '.ex5'],
+    EA_FILES: ['.ex4', '.ex5'] as const,
     MIME_TYPES: ['application/octet-stream', 'application/x-msdownload']
   },
   
@@ -89,7 +89,7 @@ export const validateEAFile = (file: File): { isValid: boolean; error?: string }
   
   // Verifica extensão
   const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-  if (!SECURITY_CONFIG.ALLOWED_FILE_TYPES.EA_FILES.includes(fileExtension)) {
+  if (!SECURITY_CONFIG.ALLOWED_FILE_TYPES.EA_FILES.includes(fileExtension as '.ex4' | '.ex5')) {
     return { 
       isValid: false, 
       error: 'Tipo de arquivo não permitido. Use apenas .ex4 ou .ex5' 

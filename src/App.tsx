@@ -4,63 +4,144 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import AccountMonitor from "./pages/AccountMonitor";
-import AccountDetails from "./pages/AccountDetails";
-import Settings from "./pages/Settings";
-import SystemDiagnosticsPage from "./pages/SystemDiagnosticsPage";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import Unauthorized from "./pages/Unauthorized";
-import UserManagement from "./pages/UserManagement";
-import VPSManagement from "./pages/VPSManagement";
-import GroupsManagement from "./pages/GroupsManagement";
-import ExpertManagement from "./pages/ExpertManagement";
-import CommandsManagement from "./pages/CommandsManagement";
-import SimulationManagement from "./pages/SimulationManagement";
-import AccountsManagement from "./pages/AccountsManagement";
-import InactiveAccounts from "./pages/InactiveAccounts";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { AuthProvider } from "./hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AppLayout from "./components/AppLayout";
+import InactiveAccounts from './pages/InactiveAccounts';
+import { useEffect } from 'react';
+import { startBadgeRemover } from './utils/removeLovableBadge';
+
+// Pages
+import Index from './pages/Index';
+import Dashboard from './pages/Dashboard';
+import AccountMonitor from './pages/AccountMonitor';
+import AccountDetails from './pages/AccountDetails';
+import AccountsManagement from './pages/AccountsManagement';
+import SimulationManagement from './pages/SimulationManagement';
+import ExpertManagement from './pages/ExpertManagement';
+import VPSManagement from './pages/VPSManagement';
+import CommandsManagement from './pages/CommandsManagement';
+import UserManagement from './pages/UserManagement';
+import Settings from './pages/Settings';
+import SystemDiagnosticsPage from './pages/SystemDiagnosticsPage';
+import Auth from './pages/Auth';
+import Unauthorized from './pages/Unauthorized';
+import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
+  useEffect(() => {
+    // Remove Lovable badge on app load
+    startBadgeRemover();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme" enableSystem>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route path="/" element={<AppLayout />}>
-                <Route index element={<Index />} />
-                <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="accounts" element={<ProtectedRoute><AccountMonitor /></ProtectedRoute>} />
-                <Route path="account/:accountNumber" element={<ProtectedRoute><AccountDetails /></ProtectedRoute>} />
-                <Route path="settings" element={<ProtectedRoute requiredRoles={["admin"]}><Settings /></ProtectedRoute>} />
-                <Route path="diagnostics" element={<ProtectedRoute requiredRoles={["admin"]}><SystemDiagnosticsPage /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute requiredRoles={["admin"]}><UserManagement /></ProtectedRoute>} />
-                <Route path="vps" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><VPSManagement /></ProtectedRoute>} />
-                <Route path="groups" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><GroupsManagement /></ProtectedRoute>} />
-                <Route path="experts" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><ExpertManagement /></ProtectedRoute>} />
-                <Route path="commands" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><CommandsManagement /></ProtectedRoute>} />
-                <Route path="simulations" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><SimulationManagement /></ProtectedRoute>} />
-                <Route path="accounts-management" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><AccountsManagement /></ProtectedRoute>} />
-                <Route path="inactive-accounts" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><InactiveAccounts /></ProtectedRoute>} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AuthProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Account Monitor - Todos podem acessar (inclusive investidores) */}
+                <Route path="/accounts" element={
+                  <ProtectedRoute>
+                    <AccountMonitor />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Account Details - Todos podem acessar (inclusive investidores) */}
+                <Route path="/account/:accountId" element={
+                  <ProtectedRoute>
+                    <AccountDetails />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Accounts Management - Apenas Admin e Manager */}
+                <Route path="/accounts-management" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                    <AccountsManagement />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Inactive Accounts - Todos podem acessar */}
+                <Route path="/inactive-accounts" element={
+                  <ProtectedRoute>
+                    <InactiveAccounts />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/simulations" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
+                    <SimulationManagement />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/experts" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager', 'client_trader']}>
+                    <ExpertManagement />
+                  </ProtectedRoute>
+                } />
+                
+                {/* VPS Management - Todos podem acessar (investidores com funcionalidades limitadas) */}
+                <Route path="/vps" element={
+                  <ProtectedRoute>
+                    <VPSManagement />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/commands" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                    <CommandsManagement />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/users" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* System Diagnostics - Apenas Admin */}
+                <Route path="/diagnostics" element={
+                  <ProtectedRoute requiredRoles={['admin']}>
+                    <SystemDiagnosticsPage />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <Sonner />
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

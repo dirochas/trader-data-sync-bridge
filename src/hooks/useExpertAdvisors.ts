@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { validateAndSanitizeEAForm, logSecurityEvent } from '@/utils/security';
 
 export interface ExpertAdvisor {
   id: string;
@@ -58,6 +59,27 @@ export const useCreateExpertAdvisor = () => {
     mutationFn: async (data: CreateExpertAdvisorData) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Validação e sanitização de segurança
+      const validation = validateAndSanitizeEAForm(data);
+      
+      if (!validation.isValid) {
+        logSecurityEvent('EA_UPLOAD_VALIDATION_FAILED', { 
+          userId: user.id, 
+          errors: validation.errors 
+        });
+        throw new Error(validation.errors.join(', '));
+      }
+
+      // Usa dados sanitizados
+      const sanitizedData = validation.sanitizedData;
+      
+      logSecurityEvent('EA_UPLOAD_STARTED', { 
+        userId: user.id, 
+        eaName: sanitizedData.name,
+        hasEx4: !!sanitizedData.ex4File,
+        hasEx5: !!sanitizedData.ex5File
+      });
+
       // Primeiro, buscar o role do usuário atual
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -74,23 +96,37 @@ export const useCreateExpertAdvisor = () => {
       let ex5FilePath: string | undefined;
 
       // Upload arquivos se fornecidos
-      if (data.ex4File) {
-        const fileName = `${Date.now()}_${data.ex4File.name}`;
+      if (sanitizedData.ex4File) {
+        const fileName = `${Date.now()}_${sanitizedData.ex4File.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('expert-advisors')
-          .upload(fileName, data.ex4File);
+          .upload(fileName, sanitizedData.ex4File);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          logSecurityEvent('EA_FILE_UPLOAD_FAILED', { 
+            userId: user.id, 
+            fileType: 'ex4',
+            error: uploadError.message 
+          });
+          throw uploadError;
+        }
         ex4FilePath = uploadData.path;
       }
 
-      if (data.ex5File) {
-        const fileName = `${Date.now()}_${data.ex5File.name}`;
+      if (sanitizedData.ex5File) {
+        const fileName = `${Date.now()}_${sanitizedData.ex5File.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('expert-advisors')
-          .upload(fileName, data.ex5File);
+          .upload(fileName, sanitizedData.ex5File);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          logSecurityEvent('EA_FILE_UPLOAD_FAILED', { 
+            userId: user.id, 
+            fileType: 'ex5',
+            error: uploadError.message 
+          });
+          throw uploadError;
+        }
         ex5FilePath = uploadData.path;
       }
 
@@ -98,18 +134,31 @@ export const useCreateExpertAdvisor = () => {
       const { data: eaData, error } = await supabase
         .from('expert_advisors')
         .insert({
-          name: data.name,
-          version: data.version,
-          description: data.description,
+          name: sanitizedData.name,
+          version: sanitizedData.version,
+          description: sanitizedData.description,
           ex4_file_path: ex4FilePath,
           ex5_file_path: ex5FilePath,
           uploaded_by: user.id,
-          uploader_role: profileData.role, // Armazenar o role do uploader
+          uploader_role: profileData.role,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logSecurityEvent('EA_DATABASE_INSERT_FAILED', { 
+          userId: user.id, 
+          error: error.message 
+        });
+        throw error;
+      }
+
+      logSecurityEvent('EA_UPLOAD_SUCCESS', { 
+        userId: user.id, 
+        eaId: eaData.id,
+        eaName: eaData.name 
+      });
+
       return eaData;
     },
     onSuccess: () => {
@@ -118,7 +167,7 @@ export const useCreateExpertAdvisor = () => {
     },
     onError: (error: any) => {
       console.error('Error creating EA:', error);
-      toast.error('Erro ao criar Expert Advisor');
+      toast.error('Erro ao criar Expert Advisor: ' + error.message);
     },
   });
 };

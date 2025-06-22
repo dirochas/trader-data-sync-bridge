@@ -1,7 +1,7 @@
 
-# TraderLab v1.63.2 - Professional Trading Management System
+# TraderLab v1.7 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Hedge Simulations User Isolation Fixed
+**Status**: ✅ STABLE - Production Ready - Visual Alignment & Modal Improvements
 
 ## 📊 Sobre o Projeto
 
@@ -30,9 +30,16 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.63.2 - Hedge Simulations User Isolation Fixed
+### 🎯 Versão Atual: v1.7 - Visual Alignment & Modal Improvements
 
-**Novidades v1.63.2:**
+**Novidades v1.7:**
+- ✅ Alinhamento perfeito entre sidebar e header (4.3rem de altura)
+- ✅ Modal profissional para confirmação de exclusão de Expert Advisors
+- ✅ Substituição de window.confirm() por AlertDialog moderno
+- ✅ Interface mais polida e consistente
+- ✅ Melhor experiência do usuário em operações críticas
+
+**Histórico v1.63.2:**
 - ✅ Correção definitiva do isolamento de usuários nas simulações hedge
 - ✅ Implementação do campo `user_email` na tabela `hedge_simulations`
 - ✅ Filtros por email funcionando corretamente para usuários não-admin

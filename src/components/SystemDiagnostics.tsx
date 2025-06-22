@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import type { Database } from '@/integrations/supabase/types';
+import type { Database as DatabaseType } from '@/integrations/supabase/types';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-type UserRole = Database['public']['Enums']['user_role'];
+type Profile = DatabaseType['public']['Tables']['profiles']['Row'];
+type UserRole = DatabaseType['public']['Enums']['user_role'];
 
 interface DiagnosticResult {
   test: string;

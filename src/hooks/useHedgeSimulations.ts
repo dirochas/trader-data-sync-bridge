@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface HedgeSimulation {
   id: string;
+  user_id: string;
   simulation_name?: string;
   
   // Input Parameters
@@ -71,7 +72,7 @@ export interface HedgeSimulation {
   calculated_at?: string;
 }
 
-// Hook para listar todas as simulações
+// Hook para listar todas as simulações (agora filtrada automaticamente pelo RLS)
 export const useHedgeSimulations = () => {
   return useQuery({
     queryKey: ['hedge-simulations'],
@@ -113,7 +114,8 @@ export const useCreateHedgeSimulation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (simulation: Omit<HedgeSimulation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+      // user_id será automaticamente definido pelo padrão da coluna (auth.uid())
       const { data, error } = await supabase
         .from('hedge_simulations')
         .insert([simulation])
@@ -134,7 +136,8 @@ export const useUpdateHedgeSimulation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
+    mutationFn: async ({ id, user_id, ...updates }: Partial<HedgeSimulation> & { id: string }) => {
+      // Remove user_id do updates para não tentar alterá-lo (seria bloqueado pelo RLS de qualquer forma)
       const { data, error } = await supabase
         .from('hedge_simulations')
         .update({

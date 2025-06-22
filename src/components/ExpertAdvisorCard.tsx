@@ -40,6 +40,7 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
     }
   };
 
+  // Garantir que sempre mostramos o role de quem fez upload do EA
   const uploaderRoleDisplay = ea.uploader_role 
     ? getRoleDisplayName(ea.uploader_role as any)
     : 'Usuário';

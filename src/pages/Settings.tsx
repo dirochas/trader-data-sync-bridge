@@ -18,11 +18,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { AppLayout } from '@/components/AppLayout';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useShowTraderDataSetting } from '@/hooks/useSystemSettings';
 
 const Settings = () => {
   const { isAdmin } = usePermissions();
-  const [showTraderData, setShowTraderData] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  // Hook para gerenciar a configuração do sistema
+  const { isEnabled: showTraderData, toggle: toggleTraderData, isLoading } = useShowTraderDataSetting();
 
   const handleToggleChange = (checked: boolean) => {
     if (checked) {
@@ -30,12 +33,12 @@ const Settings = () => {
       setShowConfirmDialog(true);
     } else {
       // Desativando - direto
-      setShowTraderData(false);
+      toggleTraderData(false);
     }
   };
 
   const handleConfirmActivation = () => {
-    setShowTraderData(true);
+    toggleTraderData(true);
     setShowConfirmDialog(false);
   };
 
@@ -105,6 +108,7 @@ const Settings = () => {
                 <Switch
                   checked={showTraderData}
                   onCheckedChange={handleToggleChange}
+                  disabled={isLoading}
                 />
               </div>
             </CardContent>

@@ -43,16 +43,16 @@ function App() {
                 <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="accounts" element={<ProtectedRoute><AccountMonitor /></ProtectedRoute>} />
                 <Route path="account/:accountNumber" element={<ProtectedRoute><AccountDetails /></ProtectedRoute>} />
-                <Route path="settings" element={<ProtectedRoute requiredRole="admin"><Settings /></ProtectedRoute>} />
-                <Route path="diagnostics" element={<ProtectedRoute requiredRole="admin"><SystemDiagnosticsPage /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
-                <Route path="vps" element={<ProtectedRoute requiredRole={["admin", "manager"]}><VPSManagement /></ProtectedRoute>} />
-                <Route path="groups" element={<ProtectedRoute requiredRole={["admin", "manager"]}><GroupsManagement /></ProtectedRoute>} />
-                <Route path="experts" element={<ProtectedRoute requiredRole={["admin", "manager"]}><ExpertManagement /></ProtectedRoute>} />
-                <Route path="commands" element={<ProtectedRoute requiredRole={["admin", "manager"]}><CommandsManagement /></ProtectedRoute>} />
-                <Route path="simulations" element={<ProtectedRoute requiredRole={["admin", "manager"]}><SimulationManagement /></ProtectedRoute>} />
-                <Route path="accounts-management" element={<ProtectedRoute requiredRole={["admin", "manager"]}><AccountsManagement /></ProtectedRoute>} />
-                <Route path="inactive-accounts" element={<ProtectedRoute requiredRole={["admin", "manager"]}><InactiveAccounts /></ProtectedRoute>} />
+                <Route path="settings" element={<ProtectedRoute requiredRoles={["admin"]}><Settings /></ProtectedRoute>} />
+                <Route path="diagnostics" element={<ProtectedRoute requiredRoles={["admin"]}><SystemDiagnosticsPage /></ProtectedRoute>} />
+                <Route path="users" element={<ProtectedRoute requiredRoles={["admin"]}><UserManagement /></ProtectedRoute>} />
+                <Route path="vps" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><VPSManagement /></ProtectedRoute>} />
+                <Route path="groups" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><GroupsManagement /></ProtectedRoute>} />
+                <Route path="experts" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><ExpertManagement /></ProtectedRoute>} />
+                <Route path="commands" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><CommandsManagement /></ProtectedRoute>} />
+                <Route path="simulations" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><SimulationManagement /></ProtectedRoute>} />
+                <Route path="accounts-management" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><AccountsManagement /></ProtectedRoute>} />
+                <Route path="inactive-accounts" element={<ProtectedRoute requiredRoles={["admin", "manager"]}><InactiveAccounts /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

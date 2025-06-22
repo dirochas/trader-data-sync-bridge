@@ -1,16 +1,13 @@
 
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from './AppSidebar';
+import { Outlet } from 'react-router-dom';
+import AppSidebar from './AppSidebar';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleDisplayName } from '@/hooks/usePermissions';
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-}
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout() {
   const { profile } = useAuth();
 
   const getGreeting = () => {
@@ -58,10 +55,12 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
+export default AppLayout;

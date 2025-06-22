@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Archive, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { Archive, Trash2, RotateCcw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useTradingAccounts } from '@/hooks/useTradingData';
+import { useSystemSetting } from '@/hooks/useSystemSettings';
+import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AccountsManagement = () => {
   const [showArchived, setShowArchived] = useState(true);
@@ -21,6 +23,8 @@ const AccountsManagement = () => {
   const [isPermanentDeleting, setIsPermanentDeleting] = useState<string | null>(null);
   
   const { toast } = useToast();
+  const { isAdmin, isManager } = usePermissions();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   // Buscar contas arquivadas e deletadas
   const { data: accounts, isLoading, refetch } = useTradingAccounts(showArchived, showDeleted);
@@ -132,6 +136,24 @@ const AccountsManagement = () => {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
+        {/* Alert quando modo debug ativo para Manager */}
+        {isManager && showTraderDataSetting?.setting_value && (
+          <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              <div className="flex items-center justify-between">
+                <span>
+                  <strong>Modo Debug Ativo:</strong> Visualizando dados de Cliente Trader para suporte técnico
+                </span>
+                <Badge variant="outline" className="ml-2 border-orange-300 text-orange-700">
+                  <Eye className="w-3 h-3 mr-1" />
+                  Visualização Ampliada
+                </Badge>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Contas</h1>
@@ -319,8 +341,11 @@ const AccountsManagement = () => {
                                         A conta <strong>{account.name || account.account}</strong> e TODOS os seus dados serão permanentemente deletados:
                                         <br />
                                         • Histórico de trades
+                                        <br />
                                         • Posições abertas
+                                        <br />
                                         • Dados de margem
+                                        <br />
                                         • Comandos
                                         <br /><br />
                                         <strong>Esta ação NÃO pode ser desfeita!</strong>

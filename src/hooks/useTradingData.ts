@@ -1,7 +1,9 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSystemSetting } from '@/hooks/useSystemSettings';
 
 // Função para calcular o status da conexão baseado na última atualização
 export const getConnectionStatus = (lastUpdate: string) => {
@@ -24,9 +26,10 @@ export const getConnectionStatus = (lastUpdate: string) => {
 // Por padrão, mostra apenas contas ativas
 export const useTradingAccounts = (includeArchived = false, includeDeleted = false) => {
   const { profile } = useAuth();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   return useQuery({
-    queryKey: ['accounts', profile?.email, includeArchived, includeDeleted],
+    queryKey: ['accounts', profile?.email, includeArchived, includeDeleted, showTraderDataSetting?.setting_value],
     queryFn: async () => {
       let query = supabase
         .from('accounts')
@@ -43,9 +46,9 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
       
       query = query.in('status', statusFilter);
       
-      // ADMIN e MANAGER veem todas as contas
-      // CLIENTE vê apenas suas próprias contas
+      // Lógica de filtro baseada no papel do usuário e configuração do sistema
       if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        // Clientes sempre veem apenas suas próprias contas
         if (profile.email) {
           query = query.eq('user_email', profile.email);
           console.log('🔍 Filtrando contas para usuário cliente:', profile.email);
@@ -53,8 +56,20 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
           console.log('⚠️ Cliente sem email - não mostrará contas');
           return [];
         }
-      } else {
-        console.log('👑 Admin/Manager - mostrando todas as contas');
+      } else if (profile?.role === 'admin') {
+        // Admin sempre vê todas as contas
+        console.log('👑 Admin - mostrando todas as contas');
+      } else if (profile?.role === 'manager') {
+        // Manager vê baseado na configuração do sistema
+        const showTraderData = showTraderDataSetting?.setting_value ?? false;
+        
+        if (!showTraderData) {
+          // Se configuração desabilitada, filtrar para mostrar apenas contas não-trader
+          query = query.not('user_email', 'like', '%@trader%'); // ou outro critério para identificar traders
+          console.log('👔 Manager - modo restrito (sem dados Cliente Trader)');
+        } else {
+          console.log('👔 Manager - modo debug ativo (visualizando dados Cliente Trader)');
+        }
       }
       
       const { data, error } = await query.order('updated_at', { ascending: false });
@@ -77,9 +92,10 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
 // Hook para buscar UMA conta específica (com verificação de permissão e JOIN com VPS)
 export const useTradingAccount = (accountNumber?: string) => {
   const { profile } = useAuth();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   return useQuery({
-    queryKey: ['account', accountNumber, profile?.email],
+    queryKey: ['account', accountNumber, profile?.email, showTraderDataSetting?.setting_value],
     queryFn: async () => {
       if (!accountNumber) return null;
       
@@ -91,14 +107,24 @@ export const useTradingAccount = (accountNumber?: string) => {
         `)
         .eq('account', accountNumber);
       
-      // Se for cliente, verifica se a conta pertence a ele
+      // Lógica de filtro baseada no papel do usuário e configuração do sistema
       if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
+        // Clientes sempre veem apenas suas próprias contas
         if (profile.email) {
           query = query.eq('user_email', profile.email);
         } else {
           return null; // Cliente sem email não vê nada
         }
+      } else if (profile?.role === 'manager') {
+        // Manager vê baseado na configuração do sistema
+        const showTraderData = showTraderDataSetting?.setting_value ?? false;
+        
+        if (!showTraderData) {
+          // Se configuração desabilitada, filtrar para mostrar apenas contas não-trader
+          query = query.not('user_email', 'like', '%@trader%');
+        }
       }
+      // Admin sempre vê todas as contas (sem filtro adicional)
       
       const { data, error } = await query
         .order('updated_at', { ascending: false })
@@ -127,9 +153,10 @@ export const useTradingAccount = (accountNumber?: string) => {
 // Hook para buscar informações de margem por conta (com verificação de permissão)
 export const useMarginInfo = (accountNumber?: string) => {
   const { profile } = useAuth();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   return useQuery({
-    queryKey: ['margin-info', accountNumber, profile?.email],
+    queryKey: ['margin-info', accountNumber, profile?.email, showTraderDataSetting?.setting_value],
     queryFn: async () => {
       if (!accountNumber) return null;
       
@@ -139,11 +166,17 @@ export const useMarginInfo = (accountNumber?: string) => {
         .select('id')
         .eq('account', accountNumber);
       
+      // Aplicar mesma lógica de filtro
       if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
         if (profile.email) {
           accountQuery = accountQuery.eq('user_email', profile.email);
         } else {
           return null;
+        }
+      } else if (profile?.role === 'manager') {
+        const showTraderData = showTraderDataSetting?.setting_value ?? false;
+        if (!showTraderData) {
+          accountQuery = accountQuery.not('user_email', 'like', '%@trader%');
         }
       }
       
@@ -172,9 +205,10 @@ export const useMarginInfo = (accountNumber?: string) => {
 // Hook para buscar posições abertas por conta (com verificação de permissão)
 export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   return useQuery({
-    queryKey: ['positions', accountNumber, profile?.email],
+    queryKey: ['positions', accountNumber, profile?.email, showTraderDataSetting?.setting_value],
     queryFn: async () => {
       if (!accountNumber) return [];
       
@@ -184,11 +218,17 @@ export const useOpenPositions = (accountNumber?: string) => {
         .select('id')
         .eq('account', accountNumber);
       
+      // Aplicar mesma lógica de filtro
       if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
         if (profile.email) {
           accountQuery = accountQuery.eq('user_email', profile.email);
         } else {
           return [];
+        }
+      } else if (profile?.role === 'manager') {
+        const showTraderData = showTraderDataSetting?.setting_value ?? false;
+        if (!showTraderData) {
+          accountQuery = accountQuery.not('user_email', 'like', '%@trader%');
         }
       }
       
@@ -215,9 +255,10 @@ export const useOpenPositions = (accountNumber?: string) => {
 // Hook para buscar histórico de trades por conta (com verificação de permissão)
 export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
+  const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
   
   return useQuery({
-    queryKey: ['history', accountNumber, profile?.email],
+    queryKey: ['history', accountNumber, profile?.email, showTraderDataSetting?.setting_value],
     queryFn: async () => {
       if (!accountNumber) return [];
       
@@ -227,11 +268,17 @@ export const useTradeHistory = (accountNumber?: string) => {
         .select('id')
         .eq('account', accountNumber);
       
+      // Aplicar mesma lógica de filtro
       if (profile?.role && ['client_trader', 'client_investor'].includes(profile.role)) {
         if (profile.email) {
           accountQuery = accountQuery.eq('user_email', profile.email);
         } else {
           return [];
+        }
+      } else if (profile?.role === 'manager') {
+        const showTraderData = showTraderDataSetting?.setting_value ?? false;
+        if (!showTraderData) {
+          accountQuery = accountQuery.not('user_email', 'like', '%@trader%');
         }
       }
       

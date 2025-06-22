@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppLayout } from '@/components/AppLayout';
 import AccountInfo from '@/components/AccountInfo';
 import MarginInfo from '@/components/MarginInfo';
 import OpenPositions from '@/components/OpenPositions';
@@ -44,60 +43,58 @@ const Index = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Account Monitor</h1>
-            <p className="text-gray-600 mt-1">
-              Bem-vindo, {profile?.first_name || profile?.email}! 
-              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                {profile?.role}
-              </span>
-            </p>
-          </div>
-          
-          {/* Botão para Accounts Management - aparece para TODOS os usuários */}
-          {permissions.canAccessAccountsManagement && (
-            <Button
-              onClick={handleAccountsManagement}
-              variant="outline"
-              className="flex items-center gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
-            >
-              <Archive className="h-4 w-4" />
-              VER contas INATIVAS
-            </Button>
-          )}
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Account Monitor</h1>
+          <p className="text-gray-600 mt-1">
+            Bem-vindo, {profile?.first_name || profile?.email}! 
+            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+              {profile?.role}
+            </span>
+          </p>
         </div>
         
-        {/* Row 1: Account Info and Margin Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccountInfo />
-          <MarginInfo />
-        </div>
-        
-        {/* Row 2: Open Positions and Trade History */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <OpenPositions />
-          <TradeHistory />
-        </div>
-        
-        {/* Footer com informação sobre integração */}
-        <div className="bg-green-50 border-t border-green-200 p-4 mt-8 rounded-lg">
-          <div className="text-center">
-            <p className="text-sm text-green-700">
-              🟢 <strong>Status:</strong> Integração Supabase ATIVA - Dados em tempo real
-            </p>
-            <p className="text-xs text-green-600 mt-1">
-              <strong>Endpoint MT4/MT5:</strong> https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data
-            </p>
-            <p className="text-xs text-blue-600 mt-1">
-              Configure seu Expert Advisor com este endpoint para começar a enviar dados reais
-            </p>
-          </div>
+        {/* Botão para Accounts Management - aparece para TODOS os usuários */}
+        {permissions.canAccessAccountsManagement && (
+          <Button
+            onClick={handleAccountsManagement}
+            variant="outline"
+            className="flex items-center gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+          >
+            <Archive className="h-4 w-4" />
+            VER contas INATIVAS
+          </Button>
+        )}
+      </div>
+      
+      {/* Row 1: Account Info and Margin Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AccountInfo />
+        <MarginInfo />
+      </div>
+      
+      {/* Row 2: Open Positions and Trade History */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OpenPositions />
+        <TradeHistory />
+      </div>
+      
+      {/* Footer com informação sobre integração */}
+      <div className="bg-green-50 border-t border-green-200 p-4 mt-8 rounded-lg">
+        <div className="text-center">
+          <p className="text-sm text-green-700">
+            🟢 <strong>Status:</strong> Integração Supabase ATIVA - Dados em tempo real
+          </p>
+          <p className="text-xs text-green-600 mt-1">
+            <strong>Endpoint MT4/MT5:</strong> https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Configure seu Expert Advisor com este endpoint para começar a enviar dados reais
+          </p>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

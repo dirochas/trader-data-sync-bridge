@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
@@ -128,20 +127,73 @@ export const useUpdateUser = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: ProfileUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      console.log('🔧 [DEBUG] Iniciando atualização do usuário:', { id, updates });
       
-      if (error) throw error;
-      return data as Profile;
+      try {
+        // Verificar se o usuário atual é admin/manager
+        const { data: currentUser, error: currentUserError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+
+        console.log('🔧 [DEBUG] Usuário atual:', currentUser);
+        
+        if (currentUserError) {
+          console.error('❌ [DEBUG] Erro ao buscar usuário atual:', currentUserError);
+          throw currentUserError;
+        }
+
+        // Se for admin/manager, usar supabaseAdmin para evitar RLS
+        if (currentUser?.role === 'admin' || currentUser?.role === 'manager') {
+          console.log('🔧 [DEBUG] Usando supabaseAdmin para atualização (admin/manager)');
+          
+          const { data, error } = await supabaseAdmin
+            .from('profiles')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+          
+          if (error) {
+            console.error('❌ [DEBUG] Erro na atualização via supabaseAdmin:', error);
+            throw error;
+          }
+          
+          console.log('✅ [DEBUG] Sucesso na atualização via supabaseAdmin:', data);
+          return data as Profile;
+        } else {
+          // Usuário normal, usar cliente padrão (só pode atualizar próprio perfil)
+          console.log('🔧 [DEBUG] Usando supabase regular para atualização (usuário normal)');
+          
+          const { data, error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+          
+          if (error) {
+            console.error('❌ [DEBUG] Erro na atualização via supabase regular:', error);
+            throw error;
+          }
+          
+          console.log('✅ [DEBUG] Sucesso na atualização via supabase regular:', data);
+          return data as Profile;
+        }
+      } catch (error) {
+        console.error('💥 [DEBUG] Erro geral na atualização:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log('🎉 [DEBUG] Mutation onSuccess:', data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', data.id] });
     },
+    onError: (error) => {
+      console.error('💥 [DEBUG] Mutation onError:', error);
+    }
   });
 };
 

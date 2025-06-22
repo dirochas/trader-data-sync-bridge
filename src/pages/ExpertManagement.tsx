@@ -56,7 +56,10 @@ const ExpertManagement = () => {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold">Expert Management</h1>
             <p className="text-muted-foreground">
-              Gerenciamento de Expert Advisors, estratégias e backtests
+              {permissions.isAdminOrManager 
+                ? 'Gerenciamento de Expert Advisors, estratégias e backtests'
+                : 'Acesso aos Expert Advisors disponíveis para download'
+              }
             </p>
           </div>
           
@@ -74,7 +77,7 @@ const ExpertManagement = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Expert Advisors Disponíveis</h2>
               <div className="text-sm text-muted-foreground">
-                {expertAdvisors.length} EA{expertAdvisors.length !== 1 ? 's' : ''} cadastrado{expertAdvisors.length !== 1 ? 's' : ''}
+                {expertAdvisors.length} EA{expertAdvisors.length !== 1 ? 's' : ''} disponível{expertAdvisors.length !== 1 ? 'eis' : ''}
               </div>
             </div>
             
@@ -83,7 +86,7 @@ const ExpertManagement = () => {
                 <ExpertAdvisorCard 
                   key={ea.id} 
                   ea={ea} 
-                  onEdit={handleEdit}
+                  onEdit={permissions.isAdminOrManager ? handleEdit : undefined}
                 />
               ))}
             </div>
@@ -93,17 +96,25 @@ const ExpertManagement = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
-                Nenhum Expert Advisor Cadastrado
+                {permissions.isAdminOrManager 
+                  ? 'Nenhum Expert Advisor Cadastrado'
+                  : 'Nenhum Expert Advisor Disponível'
+                }
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Brain className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Comece a Gerenciar EAs</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {permissions.isAdminOrManager 
+                    ? 'Comece a Gerenciar EAs'
+                    : 'Aguarde Expert Advisors'
+                  }
+                </h3>
                 <p className="text-muted-foreground mb-6">
                   {permissions.isAdminOrManager 
                     ? 'Faça upload do primeiro Expert Advisor para começar.' 
-                    : 'Aguarde os administradores adicionarem Expert Advisors.'}
+                    : 'Aguarde os administradores adicionarem Expert Advisors para download.'}
                 </p>
                 
                 {permissions.isAdminOrManager && (
@@ -117,12 +128,14 @@ const ExpertManagement = () => {
           </Card>
         )}
 
-        {/* Modal de Upload/Edição */}
-        <UploadEAModal 
-          open={showUploadModal} 
-          onOpenChange={handleCloseModal}
-          editingEA={editingEA}
-        />
+        {/* Modal de Upload/Edição - apenas para Admin/Manager */}
+        {permissions.isAdminOrManager && (
+          <UploadEAModal 
+            open={showUploadModal} 
+            onOpenChange={handleCloseModal}
+            editingEA={editingEA}
+          />
+        )}
       </div>
     </AppLayout>
   );

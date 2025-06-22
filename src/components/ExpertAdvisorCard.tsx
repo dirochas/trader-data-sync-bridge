@@ -119,8 +119,8 @@ export const ExpertAdvisorCard = ({ ea, onEdit }: ExpertAdvisorCardProps) => {
             )}
           </div>
 
-          {/* Botões de Admin/Manager */}
-          {permissions.isAdminOrManager && (
+          {/* Botões de Admin/Manager - apenas para usuários com permissão */}
+          {permissions.isAdminOrManager && onEdit && (
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

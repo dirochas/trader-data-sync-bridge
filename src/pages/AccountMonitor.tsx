@@ -736,6 +736,8 @@ const AccountMonitor = () => {
                 <AccountGroupView 
                   accounts={filteredAccounts}
                   onEditAccount={handleEditAccount}
+                  onViewAccount={handleViewAccount}
+                  onCloseAllPositions={handleCloseAllPositions}
                 />
               </div>
             )}

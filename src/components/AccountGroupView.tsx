@@ -3,9 +3,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, TrendingUp, TrendingDown, Folder, Users } from 'lucide-react';
+import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X } from 'lucide-react';
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { useAccountGroups } from '@/hooks/useAccountGroups';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Account {
   id: string;
@@ -21,15 +22,26 @@ interface Account {
   updated_at: string;
   status?: string;
   group_id?: string | null;
+  openTrades?: number;
+  dayProfit?: number;
+  clientNickname?: string;
 }
 
 interface AccountGroupViewProps {
   accounts: Account[];
   onEditAccount: (account: Account) => void;
+  onViewAccount?: (accountNumber: string) => void;
+  onCloseAllPositions?: (account: Account) => void;
 }
 
-export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewProps) => {
+export const AccountGroupView = ({ 
+  accounts, 
+  onEditAccount, 
+  onViewAccount,
+  onCloseAllPositions 
+}: AccountGroupViewProps) => {
   const { data: groups = [] } = useAccountGroups();
+  const permissions = usePermissions();
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -39,9 +51,37 @@ export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewPr
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    const percentage = ((value / 100000) * 100);
+  const formatPercentage = (value: number, balance: number) => {
+    if (!balance || balance === 0) return '0.00%';
+    const percentage = ((value / balance) * 100);
     return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
+  };
+
+  const getBrokerName = (account: Account) => {
+    if (account.broker && account.broker !== 'N/A' && account.broker.trim() !== '') {
+      return account.broker;
+    }
+    
+    if (account.server) {
+      let brokerName = account.server.replace(/^(MT[45]-?)/i, '');
+      
+      const patterns = [
+        /^([A-Za-z]+)(-|\.|_)/,
+        /^([A-Za-z\s]+)\d/,
+        /^([A-Za-z]+)/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = brokerName.match(pattern);
+        if (match && match[1].length > 2) {
+          return match[1].trim();
+        }
+      }
+      
+      return brokerName.split(/[-._\d]/)[0] || account.server;
+    }
+    
+    return 'N/A';
   };
 
   // Agrupar contas por grupo
@@ -76,9 +116,10 @@ export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewPr
     const totalBalance = groupAccounts.reduce((sum, acc) => sum + acc.balance, 0);
     const totalEquity = groupAccounts.reduce((sum, acc) => sum + acc.equity, 0);
     const totalProfit = groupAccounts.reduce((sum, acc) => sum + acc.profit, 0);
+    const totalTrades = groupAccounts.reduce((sum, acc) => sum + (acc.openTrades || 0), 0);
     const isProfit = totalProfit >= 0;
     
-    return { totalBalance, totalEquity, totalProfit, isProfit };
+    return { totalBalance, totalEquity, totalProfit, totalTrades, isProfit };
   };
 
   return (
@@ -113,7 +154,7 @@ export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewPr
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4 text-right">
+                <div className="flex items-center gap-6 text-right">
                   <div>
                     <div className="text-sm text-muted-foreground">Total P&L</div>
                     <div className={`font-mono font-semibold flex items-center gap-1 ${
@@ -128,6 +169,10 @@ export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewPr
                     </div>
                   </div>
                   <div>
+                    <div className="text-sm text-muted-foreground">Trades</div>
+                    <div className="font-semibold text-blue-600">{stats.totalTrades}</div>
+                  </div>
+                  <div>
                     <div className="text-sm text-muted-foreground">Contas</div>
                     <div className="font-semibold">{groupAccounts.length}</div>
                   </div>
@@ -136,65 +181,141 @@ export const AccountGroupView = ({ accounts, onEditAccount }: AccountGroupViewPr
             </CardHeader>
             
             <CardContent className="pt-0">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {groupAccounts.map((account) => {
                   const connectionStatus = getConnectionStatus(account.updated_at);
                   const isProfit = account.profit >= 0;
+                  const isDayProfit = (account.dayProfit || 0) >= 0;
+                  const brokerName = getBrokerName(account);
                   
                   return (
                     <div
                       key={account.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card/50 hover:bg-accent/50 transition-colors"
+                      className="grid grid-cols-12 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-accent/50 transition-colors items-center text-sm"
                     >
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <div className="font-mono font-semibold text-sm">
-                            {account.account}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {account.name || `Conta ${account.account}`}
-                          </div>
-                        </div>
-                        
-                        <div className="hidden sm:flex items-center gap-3">
-                          <Badge variant="secondary" className="text-xs">
-                            {account.vps}
-                          </Badge>
-                          <Badge variant="outline" className="font-mono text-xs">
-                            1:{account.leverage}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-mono text-sm">
-                            {formatCurrency(account.equity)}
-                          </div>
-                          <div className={`font-mono text-xs flex items-center gap-1 ${
-                            isProfit ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {formatCurrency(account.profit)}
-                            <span className="opacity-75">
-                              ({formatPercentage(account.profit)})
-                            </span>
-                          </div>
-                        </div>
-                        
+                      {/* Status */}
+                      <div className="col-span-1 flex items-center">
                         <Badge 
                           variant="outline" 
                           className={`text-xs ${connectionStatus.color}`}
                         >
                           {connectionStatus.icon}
                         </Badge>
+                      </div>
+                      
+                      {/* Account Name */}
+                      <div className="col-span-2">
+                        <div className="font-semibold text-foreground">
+                          {account.name || `Account ${account.account}`}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {account.clientNickname || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      {/* Number */}
+                      <div className="col-span-1">
+                        <div className="font-mono text-xs">{account.account}</div>
+                      </div>
+                      
+                      {/* Client */}
+                      <div className="col-span-1">
+                        <div className="text-xs">{account.clientNickname || 'N/A'}</div>
+                      </div>
+                      
+                      {/* VPS */}
+                      <div className="col-span-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {account.vps}
+                        </Badge>
+                      </div>
+                      
+                      {/* Balance */}
+                      <div className="col-span-1 text-right">
+                        <div className="font-mono text-xs">
+                          {formatCurrency(account.balance)}
+                        </div>
+                      </div>
+                      
+                      {/* Equity */}
+                      <div className="col-span-1 text-right">
+                        <div className="font-mono text-xs font-semibold">
+                          {formatCurrency(account.equity)}
+                        </div>
+                      </div>
+                      
+                      {/* Trades */}
+                      <div className="col-span-1 text-center">
+                        <div className="font-semibold text-blue-600">
+                          {account.openTrades || 0}
+                        </div>
+                      </div>
+                      
+                      {/* Open P&L */}
+                      <div className="col-span-1 text-right">
+                        <div className={`font-mono text-xs ${
+                          isProfit ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {formatCurrency(account.profit)}
+                        </div>
+                        <div className={`text-xs opacity-75 ${
+                          isProfit ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {formatPercentage(account.profit, account.balance)}
+                        </div>
+                      </div>
+                      
+                      {/* Day P&L */}
+                      <div className="col-span-1 text-right">
+                        <div className={`font-mono text-xs ${
+                          isDayProfit ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {formatCurrency(account.dayProfit || 0)}
+                        </div>
+                      </div>
+                      
+                      {/* Server */}
+                      <div className="col-span-1">
+                        <div className="text-xs">{brokerName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          1:{account.leverage}
+                        </div>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div className="col-span-1 flex items-center justify-end gap-1">
+                        {permissions.canCloseAllPositions && (account.openTrades || 0) > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onCloseAllPositions?.(account)}
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            title="Close All Positions"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                        
+                        {permissions.canEditAccounts && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEditAccount(account)}
+                            className="h-8 w-8 p-0 hover:bg-accent"
+                            title="Edit Account"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
                         
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEditAccount(account)}
-                          className="hover:bg-accent"
+                          onClick={() => onViewAccount?.(account.account)}
+                          className="h-8 w-8 p-0 hover:bg-accent"
+                          title="View Details"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Eye className="w-3 h-3" />
                         </Button>
                       </div>
                     </div>

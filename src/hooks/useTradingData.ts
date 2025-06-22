@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -21,7 +22,7 @@ export const getConnectionStatus = (lastUpdate: string) => {
   }
 };
 
-// Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário e JOIN com VPS)
+// Hook otimizado para buscar TODAS as contas de trading (com filtro por usuário e JOIN com VPS e Groups)
 // Por padrão, mostra apenas contas ativas
 export const useTradingAccounts = (includeArchived = false, includeDeleted = false) => {
   const { profile } = useAuth();
@@ -34,7 +35,8 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
         .from('accounts')
         .select(`
           *,
-          vps_servers(display_name)
+          vps_servers(display_name),
+          account_groups(id, name, color)
         `);
       
       // Filtrar por status (por padrão apenas ativas)
@@ -72,10 +74,11 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
       
       if (error) throw error;
       
-      // Mapear os dados para incluir vps como propriedade direta
+      // Mapear os dados para incluir vps e group como propriedades diretas
       return (data || []).map(account => ({
         ...account,
-        vps: account.vps_servers?.display_name || account.vps_unique_id || 'N/A'
+        vps: account.vps_servers?.display_name || account.vps_unique_id || 'N/A',
+        group: account.account_groups
       }));
     },
     enabled: !!profile, // Só executa quando tem perfil carregado
@@ -99,7 +102,8 @@ export const useTradingAccount = (accountNumber?: string) => {
         .from('accounts')
         .select(`
           *,
-          vps_servers(display_name)
+          vps_servers(display_name),
+          account_groups(id, name, color)
         `)
         .eq('account', accountNumber);
       
@@ -128,11 +132,12 @@ export const useTradingAccount = (accountNumber?: string) => {
       
       if (error) throw error;
       
-      // Mapear os dados para incluir vps como propriedade direta
+      // Mapear os dados para incluir vps e group como propriedades diretas
       if (data) {
         return {
           ...data,
-          vps: data.vps_servers?.display_name || data.vps_unique_id || 'N/A'
+          vps: data.vps_servers?.display_name || data.vps_unique_id || 'N/A',
+          group: data.account_groups
         };
       }
       
@@ -197,7 +202,6 @@ export const useMarginInfo = (accountNumber?: string) => {
   });
 };
 
-// Hook para buscar posições abertas por conta (com verificação de permissão)
 export const useOpenPositions = (accountNumber?: string) => {
   const { profile } = useAuth();
   const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
@@ -247,7 +251,6 @@ export const useOpenPositions = (accountNumber?: string) => {
   });
 };
 
-// Hook para buscar histórico de trades por conta (com verificação de permissão)
 export const useTradeHistory = (accountNumber?: string) => {
   const { profile } = useAuth();
   const { data: showTraderDataSetting } = useSystemSetting('show_trader_data');
@@ -339,6 +342,13 @@ export const useRealtimeUpdates = () => {
         { event: '*', schema: 'public', table: 'history' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['history'] });
+        }
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'account_groups' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['account-groups'] });
+          queryClient.invalidateQueries({ queryKey: ['accounts'] });
         }
       )
       .subscribe();

@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       accounts: {
         Row: {
           account: string
@@ -17,6 +47,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           equity: number
+          group_id: string | null
           id: string
           leverage: number
           name: string | null
@@ -34,6 +65,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           equity?: number
+          group_id?: string | null
           id?: string
           leverage?: number
           name?: string | null
@@ -51,6 +83,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           equity?: number
+          group_id?: string | null
           id?: string
           leverage?: number
           name?: string | null
@@ -62,6 +95,13 @@ export type Database = {
           vps_unique_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "accounts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "account_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "accounts_vps_unique_id_fkey"
             columns: ["vps_unique_id"]

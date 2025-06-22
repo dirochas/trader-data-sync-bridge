@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Archive, Trash2 } from 'lucide-react';
+import { useAccountGroups } from '@/hooks/useAccountGroups';
 
 interface EditAccountModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface EditAccountModalProps {
     broker: string | null;
     server: string;
     status?: string;
+    group_id?: string | null;
   } | null;
   onAccountUpdated: () => void;
 }
@@ -28,16 +30,19 @@ interface EditAccountModalProps {
 const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
   const [formData, setFormData] = useState({
     name: account?.name || '',
+    group_id: account?.group_id || '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { data: groups = [], isLoading: groupsLoading } = useAccountGroups();
 
   React.useEffect(() => {
     if (account) {
       setFormData({
         name: account.name || '',
+        group_id: account.group_id || '',
       });
     }
   }, [account]);
@@ -52,6 +57,7 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
         .from('accounts')
         .update({
           name: formData.name.trim() || null,
+          group_id: formData.group_id || null,
         })
         .eq('id', account.id);
 
@@ -161,6 +167,33 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Digite o nome da conta"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="group">Grupo</Label>
+              <Select
+                value={formData.group_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, group_id: value }))}
+                disabled={groupsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um grupo (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum grupo</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full border border-white shadow-sm"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        {group.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

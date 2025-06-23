@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -103,7 +102,6 @@ export const AccountGroupView = ({
     return 'N/A';
   };
 
-  // Encontrar informações do grupo
   const getGroupInfo = (groupId: string) => {
     if (groupId === 'ungrouped') {
       return {
@@ -120,7 +118,6 @@ export const AccountGroupView = ({
     };
   };
 
-  // Calcular estatísticas do grupo
   const getGroupStats = (groupAccounts: Account[]) => {
     const totalBalance = groupAccounts.reduce((sum, acc) => sum + acc.balance, 0);
     const totalEquity = groupAccounts.reduce((sum, acc) => sum + acc.equity, 0);
@@ -131,9 +128,7 @@ export const AccountGroupView = ({
     return { totalBalance, totalEquity, totalProfit, totalTrades, isProfit };
   };
 
-  // Preparar dados dos grupos para ordenação
   const groupsData: GroupData[] = React.useMemo(() => {
-    // Agrupar contas por grupo
     const groupedAccounts = accounts.reduce((acc, account) => {
       const groupId = account.group_id || 'ungrouped';
       if (!acc[groupId]) {
@@ -143,7 +138,6 @@ export const AccountGroupView = ({
       return acc;
     }, {} as Record<string, Account[]>);
 
-    // Converter para array de objetos para facilitar ordenação
     return Object.entries(groupedAccounts).map(([groupId, groupAccounts]) => ({
       groupId,
       groupInfo: getGroupInfo(groupId),
@@ -152,7 +146,6 @@ export const AccountGroupView = ({
     }));
   }, [accounts, groups]);
 
-  // Aplicar ordenação baseada na configuração recebida
   const sortedGroups = React.useMemo(() => {
     if (!groupSortConfig || !groupSortConfig.key) {
       return groupsData;
@@ -189,7 +182,11 @@ export const AccountGroupView = ({
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
         
         return (
-          <Card key={groupId} className="overflow-hidden">
+          <Card 
+            key={groupId} 
+            className="overflow-hidden border-2"
+            style={{ borderColor: groupInfo.color }}
+          >
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

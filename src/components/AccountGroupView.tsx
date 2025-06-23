@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -235,8 +234,6 @@ export const AccountGroupView = ({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {headerControls}
-        </div>
-        <div className="flex-shrink-0">
           {renderSortControls()}
         </div>
       </div>

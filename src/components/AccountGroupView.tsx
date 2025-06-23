@@ -184,8 +184,12 @@ export const AccountGroupView = ({
         return (
           <Card 
             key={groupId} 
-            className="overflow-hidden border-2"
-            style={{ borderColor: groupInfo.color }}
+            className="overflow-hidden border"
+            style={{ 
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: `${groupInfo.color}80` // Adding 80 for 50% opacity in hex
+            }}
           >
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">

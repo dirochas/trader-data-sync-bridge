@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,13 +34,14 @@ interface AccountGroupViewProps {
   onEditAccount: (account: Account) => void;
   onViewAccount?: (accountNumber: string) => void;
   onCloseAllPositions?: (account: Account) => void;
+  headerControls?: React.ReactNode; // Para receber os controles do cabeçalho
 }
 
 interface GroupData {
   groupId: string;
   groupInfo: {
     name: string;
-    description?: string; // Make this optional to match AccountGroup
+    description?: string;
     color: string;
   };
   accounts: Account[];
@@ -56,7 +58,8 @@ export const AccountGroupView = ({
   accounts, 
   onEditAccount, 
   onViewAccount,
-  onCloseAllPositions 
+  onCloseAllPositions,
+  headerControls 
 }: AccountGroupViewProps) => {
   const { data: groups = [] } = useAccountGroups();
   const permissions = usePermissions();
@@ -187,43 +190,55 @@ export const AccountGroupView = ({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Controles de Ordenação - Compacto e Inline */}
-      <div className="flex items-center justify-center gap-4 px-4 py-2 bg-card/30 rounded-lg border">
-        <span className="text-xs font-medium text-muted-foreground">Ordenar por:</span>
-        <ToggleGroup 
-          type="single" 
-          value={getCurrentSortValue()} 
-          onValueChange={handleSortChange}
-          className="bg-muted/50 rounded-md p-0.5"
+  // Renderizar os controles de ordenação
+  const renderSortControls = () => (
+    <div className="flex items-center gap-3">
+      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
+      <ToggleGroup 
+        type="single" 
+        value={getCurrentSortValue()} 
+        onValueChange={handleSortChange}
+        className="bg-muted/50 rounded-md p-0.5"
+        size="sm"
+      >
+        <ToggleGroupItem 
+          value="name" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
           size="sm"
         >
-          <ToggleGroupItem 
-            value="name" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-            size="sm"
-          >
-            <SortAsc className="w-3 h-3" />
-            Nome
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="totalProfit" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-            size="sm"
-          >
-            <DollarSign className="w-3 h-3" />
-            P&L
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="totalTrades" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-            size="sm"
-          >
-            <BarChart3 className="w-3 h-3" />
-            Trades
-          </ToggleGroupItem>
-        </ToggleGroup>
+          <SortAsc className="w-3 h-3" />
+          Nome
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="totalProfit" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+          size="sm"
+        >
+          <DollarSign className="w-3 h-3" />
+          P&L
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="totalTrades" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+          size="sm"
+        >
+          <BarChart3 className="w-3 h-3" />
+          Trades
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Cabeçalho com controles inline */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {headerControls}
+        </div>
+        <div className="flex-shrink-0">
+          {renderSortControls()}
+        </div>
       </div>
 
       {/* Lista de Grupos */}

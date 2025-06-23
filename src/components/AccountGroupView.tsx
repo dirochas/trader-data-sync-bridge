@@ -63,6 +63,9 @@ export const AccountGroupView = ({
   const { data: groups = [] } = useAccountGroups();
   const permissions = usePermissions();
   
+  // Debug log para confirmar que este componente está sendo renderizado
+  console.log('🔍 AccountGroupView renderizado - grupos:', groups.length);
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -230,7 +233,7 @@ export const AccountGroupView = ({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho com controles de ordenação no lugar do título */}
+      {/* APENAS os controles de ordenação - SEM título */}
       <div className="flex items-center gap-4">
         {headerControls}
         {renderSortControls()}

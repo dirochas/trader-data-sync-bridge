@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -189,8 +188,8 @@ export const AccountGroupView = ({
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
         
         return (
-          <Card key={groupId} className="overflow-hidden bg-slate-900 border border-slate-700">
-            <CardHeader className="pb-4 bg-slate-800">
+          <Card key={groupId} className="overflow-hidden bg-slate-800 border border-slate-600">
+            <CardHeader className="pb-4 bg-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div 
@@ -240,9 +239,9 @@ export const AccountGroupView = ({
               </div>
             </CardHeader>
             
-            <CardContent className="pt-0 bg-slate-900">
+            <CardContent className="pt-0 bg-slate-800">
               {/* Cabeçalho das Colunas - Distribuição otimizada */}
-              <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-slate-600 bg-slate-800 text-xs font-medium text-gray-200">
+              <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-slate-600 bg-slate-700 text-xs font-medium text-gray-200">
                 <div className="col-span-1">Status</div>
                 <div className="col-span-2">Account Name</div>
                 <div className="col-span-1">Client</div>
@@ -266,7 +265,7 @@ export const AccountGroupView = ({
                   return (
                     <div
                       key={account.id}
-                      className="grid grid-cols-12 gap-3 p-4 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 transition-colors items-center text-sm"
+                      className="grid grid-cols-12 gap-3 p-4 rounded-lg border border-slate-600 bg-slate-700 hover:bg-slate-600 transition-colors items-center text-sm"
                     >
                       {/* Status */}
                       <div className="col-span-1 flex items-center">

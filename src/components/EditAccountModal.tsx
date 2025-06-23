@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccountGroups, useCreateAccountGroup } from '@/hooks/useAccountGroups';
 import { Plus } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface EditAccountModalProps {
   isOpen: boolean;
@@ -39,9 +40,11 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [newGroupColor, setNewGroupColor] = useState('#3B82F6');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: groups = [] } = useAccountGroups();
   const { toast } = useToast();
+  const { profile } = useAuth();
   const createGroupMutation = useCreateAccountGroup();
 
   useEffect(() => {
@@ -58,32 +61,44 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
+      console.log('🔄 Iniciando atualização da conta:', account.id);
+      console.log('👤 Usuário atual:', profile?.email, 'Role:', profile?.role);
+      
       const updates = {
-        name: accountName,
-        account: accountNumber,
+        name: accountName.trim(),
+        account: accountNumber.trim(),
         group_id: selectedGroupId === "none" ? null : selectedGroupId,
-        vps: vps,
-        vps_unique_id: vpsUniqueId,
-        broker: broker,
-        server: server,
+        vps: vps.trim(),
+        vps_unique_id: vpsUniqueId.trim(),
+        broker: broker.trim(),
+        server: server.trim(),
+        updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      console.log('📝 Dados para atualização:', updates);
+
+      const { data, error } = await supabase
         .from('accounts')
         .update(updates)
-        .eq('id', account.id);
+        .eq('id', account.id)
+        .select();
 
       if (error) {
+        console.error('❌ Erro na atualização:', error);
         toast({
-          title: "Erro",
-          description: "Não foi possível atualizar a conta.",
+          title: "Erro de Permissão",
+          description: `Não foi possível atualizar a conta. ${error.message}`,
           variant: "destructive",
         });
-        console.error('Erro ao atualizar conta:', error);
         return;
       }
+
+      console.log('✅ Conta atualizada com sucesso:', data);
 
       toast({
         title: "Conta atualizada",
@@ -92,13 +107,15 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       
       onAccountUpdated();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erro inesperado:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar a conta.",
+        description: `Erro inesperado: ${error.message || 'Tente novamente.'}`,
         variant: "destructive",
       });
-      console.error('Erro ao atualizar conta:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -164,6 +181,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value)}
                 placeholder="Nome da conta"
+                required
               />
             </div>
             
@@ -257,7 +275,13 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
               />
             </div>
 
-            <Button type="submit" className="w-full">Salvar Alterações</Button>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>

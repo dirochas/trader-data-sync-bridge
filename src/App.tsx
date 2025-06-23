@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,23 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import InactiveAccounts from './pages/InactiveAccounts';
 import { useEffect } from 'react';
 import { startBadgeRemover } from './utils/removeLovableBadge';
-
-// Pages
-import Index from './pages/Index';
-import Dashboard from './pages/Dashboard';
-import AccountMonitor from './pages/AccountMonitor';
-import AccountDetails from './pages/AccountDetails';
-import AccountsManagement from './pages/AccountsManagement';
-import SimulationManagement from './pages/SimulationManagement';
-import ExpertManagement from './pages/ExpertManagement';
-import VPSManagement from './pages/VPSManagement';
-import CommandsManagement from './pages/CommandsManagement';
-import UserManagement from './pages/UserManagement';
-import Settings from './pages/Settings';
-import SystemDiagnosticsPage from './pages/SystemDiagnosticsPage';
-import Auth from './pages/Auth';
-import Unauthorized from './pages/Unauthorized';
-import NotFound from './pages/NotFound';
+import GroupsManagement from './pages/GroupsManagement';
 
 const queryClient = new QueryClient();
 
@@ -71,6 +54,13 @@ const App = () => {
                 <Route path="/account/:accountId" element={
                   <ProtectedRoute>
                     <AccountDetails />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Groups Management - Apenas Admin e Manager */}
+                <Route path="/groups" element={
+                  <ProtectedRoute requiredRoles={['admin', 'manager']}>
+                    <GroupsManagement />
                   </ProtectedRoute>
                 } />
                 

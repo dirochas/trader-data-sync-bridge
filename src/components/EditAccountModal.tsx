@@ -1,152 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Archive, Trash2 } from 'lucide-react';
-import { useAccountGroups } from '@/hooks/useAccountGroups';
+import { supabase } from '@/integrations/supabase/client';
+import { useAccountGroups, useCreateAccountGroup } from '@/hooks/useAccountGroups';
+import { Plus } from 'lucide-react';
 
 interface EditAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  account: {
-    id: string;
-    name: string | null;
-    account: string;
-    vps: string | null;
-    vps_unique_id: string | null;
-    broker: string | null;
-    server: string;
-    status?: string;
-    group_id?: string | null;
-  } | null;
+  account: any;
   onAccountUpdated: () => void;
 }
 
-const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) => {
-  const [formData, setFormData] = useState({
-    name: account?.name || '',
-    group_id: account?.group_id || 'none',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
-  const { data: groups = [], isLoading: groupsLoading } = useAccountGroups();
+interface AccountGroup {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
 
-  React.useEffect(() => {
+export default function EditAccountModal({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) {
+  const [accountName, setAccountName] = useState(account?.name || '');
+  const [accountNumber, setAccountNumber] = useState(account?.account || '');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(account?.group_id || null);
+  const [vps, setVps] = useState(account?.vps || '');
+  const [vpsUniqueId, setVpsUniqueId] = useState(account?.vps_unique_id || '');
+  const [broker, setBroker] = useState(account?.broker || '');
+  const [server, setServer] = useState(account?.server || '');
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [newGroupColor, setNewGroupColor] = useState('#3B82F6');
+  
+  const { data: groups = [] } = useAccountGroups();
+  const { toast } = useToast();
+  const createGroupMutation = useCreateAccountGroup();
+
+  useEffect(() => {
     if (account) {
-      setFormData({
-        name: account.name || '',
-        group_id: account.group_id || 'none',
-      });
+      setAccountName(account.name || '');
+      setAccountNumber(account.account || '');
+      setSelectedGroupId(account.group_id || null);
+      setVps(account.vps || '');
+      setVpsUniqueId(account.vps_unique_id || '');
+      setBroker(account.broker || '');
+      setServer(account.server || '');
     }
   }, [account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account) return;
 
-    setIsLoading(true);
     try {
+      const updates = {
+        name: accountName,
+        account: accountNumber,
+        group_id: selectedGroupId === "" ? null : selectedGroupId,
+        vps: vps,
+        vps_unique_id: vpsUniqueId,
+        broker: broker,
+        server: server,
+      };
+
       const { error } = await supabase
         .from('accounts')
-        .update({
-          name: formData.name.trim() || null,
-          group_id: formData.group_id === 'none' ? null : formData.group_id,
-        })
+        .update(updates)
         .eq('id', account.id);
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar a conta.",
+          variant: "destructive",
+        });
+        console.error('Erro ao atualizar conta:', error);
+        return;
+      }
 
       toast({
         title: "Conta atualizada",
-        description: "Os dados da conta foram atualizados com sucesso.",
+        description: "A conta foi atualizada com sucesso.",
       });
-
+      
       onAccountUpdated();
       onClose();
     } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a conta.",
+        variant: "destructive",
+      });
       console.error('Erro ao atualizar conta:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar os dados da conta.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleArchiveAccount = async () => {
-    if (!account) return;
-
-    setIsArchiving(true);
-    try {
-      const { error } = await supabase
-        .from('accounts')
-        .update({
-          status: 'archived',
-        })
-        .eq('id', account.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Conta arquivada",
-        description: "A conta foi arquivada com sucesso. Ela não aparecerá mais no monitor ativo, mas o histórico permanece acessível.",
-      });
-
-      onAccountUpdated();
-      onClose();
-    } catch (error) {
-      console.error('Erro ao arquivar conta:', error);
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) {
       toast({
         title: "Erro",
-        description: "Não foi possível arquivar a conta.",
+        description: "Digite um nome para o grupo.",
         variant: "destructive",
       });
-    } finally {
-      setIsArchiving(false);
+      return;
     }
-  };
 
-  const handleDeleteAccount = async () => {
-    if (!account) return;
-
-    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('accounts')
-        .update({
-          status: 'deleted',
-          deleted_at: new Date().toISOString(),
-        })
-        .eq('id', account.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Conta movida para lixeira",
-        description: "A conta foi movida para lixeira e será permanentemente deletada em 30 dias. Você pode restaurá-la até lá.",
-        variant: "destructive",
+      await createGroupMutation.mutateAsync({
+        name: newGroupName.trim(),
+        description: newGroupDescription.trim() || undefined,
+        color: newGroupColor,
       });
-
-      onAccountUpdated();
-      onClose();
+      
+      setNewGroupName('');
+      setNewGroupDescription('');
+      setShowCreateGroup(false);
+      
+      // Recarregar grupos
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
-      console.error('Erro ao deletar conta:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível mover a conta para lixeira.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
+      console.error('Erro ao criar grupo:', error);
     }
   };
 
@@ -157,35 +136,45 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
           <DialogTitle>Editar Conta</DialogTitle>
         </DialogHeader>
         
-        {account && (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome da Conta</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Digite o nome da conta"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome da Conta</Label>
+            <Input
+              id="name"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+              placeholder="Nome da conta"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="account">Número da Conta</Label>
+            <Input
+              id="account"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="Número da conta"
+              disabled
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="group">Grupo</Label>
-              <Select
-                value={formData.group_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, group_id: value }))}
-                disabled={groupsLoading}
+          <div className="space-y-2">
+            <Label htmlFor="group">Grupo</Label>
+            <div className="flex gap-2">
+              <Select 
+                value={selectedGroupId || ''} 
+                onValueChange={(value) => setSelectedGroupId(value || null)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um grupo (opcional)" />
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Selecionar grupo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum grupo</SelectItem>
+                  <SelectItem value="">Nenhum grupo</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id}>
                       <div className="flex items-center gap-2">
                         <div 
-                          className="w-3 h-3 rounded-full border border-white shadow-sm"
+                          className="w-3 h-3 rounded-full border border-gray-300"
                           style={{ backgroundColor: group.color }}
                         />
                         {group.name}
@@ -194,166 +183,117 @@ const EditAccountModal = ({ isOpen, onClose, account, onAccountUpdated }: EditAc
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Botão + sempre visível */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCreateGroup(true)}
+                className="px-3"
+                title="Criar novo grupo"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="account">Número da Conta</Label>
-              <Input
-                id="account"
-                value={account.account}
-                disabled
-                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-500">Este campo não pode ser editado</p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="vps">VPS</Label>
+            <Input
+              id="vps"
+              value={vps}
+              onChange={(e) => setVps(e.target.value)}
+              placeholder="VPS"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="vps_unique_id">VPS Unique ID</Label>
+            <Input
+              id="vps_unique_id"
+              value={vpsUniqueId}
+              onChange={(e) => setVpsUniqueId(e.target.value)}
+              placeholder="VPS Unique ID"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="broker">Broker</Label>
+            <Input
+              id="broker"
+              value={broker}
+              onChange={(e) => setBroker(e.target.value)}
+              placeholder="Broker"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="server">Server</Label>
+            <Input
+              id="server"
+              value={server}
+              onChange={(e) => setServer(e.target.value)}
+              placeholder="Server"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="vps">Nome do VPS (Display)</Label>
-              <Input
-                id="vps"
-                value={account.vps || ''}
-                disabled
-                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-500">
-                Para editar o nome do VPS, use a página VPS Management - isso atualizará todas as contas deste VPS
-              </p>
-            </div>
+          <Button type="submit">Salvar Alterações</Button>
+        </form>
 
-            {account.vps_unique_id && (
-              <div className="space-y-2">
-                <Label htmlFor="vps_unique_id">ID Único do VPS</Label>
-                <Input
-                  id="vps_unique_id"
-                  value={account.vps_unique_id}
-                  disabled
-                  className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed font-mono text-sm"
-                />
-                <p className="text-xs text-gray-500">Identificador único interno (não editável)</p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="server">Servidor</Label>
-              <Input
-                id="server"
-                value={account.server || 'N/A'}
-                disabled
-                className="bg-gray-50 text-gray-700 border-gray-200 cursor-not-allowed font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500">Este campo é atualizado automaticamente pelo EA</p>
-            </div>
-
-            <div className="flex flex-col space-y-3 pt-4">
-              {/* Botão principal de salvar */}
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isLoading}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
-
-              {/* Separador */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-200" />
+        {showCreateGroup && (
+          <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Grupo</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newGroupName">Nome do Grupo</Label>
+                  <Input
+                    id="newGroupName"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    placeholder="Nome do grupo"
+                  />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Ações Avançadas</span>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="newGroupDescription">Descrição</Label>
+                  <Input
+                    id="newGroupDescription"
+                    value={newGroupDescription}
+                    onChange={(e) => setNewGroupDescription(e.target.value)}
+                    placeholder="Descrição do grupo"
+                  />
                 </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="newGroupColor">Cor</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      id="newGroupColor"
+                      value={newGroupColor}
+                      onChange={(e) => setNewGroupColor(e.target.value)}
+                      className="w-10 h-8 rounded border border-gray-300"
+                    />
+                    <Input
+                      value={newGroupColor}
+                      onChange={(e) => setNewGroupColor(e.target.value)}
+                      placeholder="#3B82F6"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                
+                <Button onClick={handleCreateGroup}>Criar Grupo</Button>
               </div>
-
-              {/* Botões de ação */}
-              <div className="flex justify-between space-x-2">
-                {/* Botão Arquivar */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 text-amber-700 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-800"
-                      disabled={isLoading || isArchiving || isDeleting}
-                    >
-                      <Archive className="mr-2 h-4 w-4" />
-                      Arquivar
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Arquivar conta?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        A conta <strong>{account.name || account.account}</strong> será arquivada e não aparecerá mais no monitor ativo.
-                        <br /><br />
-                        O histórico de trades e dados permanecerão acessíveis para consulta, mas a conta não estará mais "em trabalho".
-                        <br /><br />
-                        Você pode reverter esta ação posteriormente se necessário.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleArchiveAccount}
-                        disabled={isArchiving}
-                        className="bg-amber-600 hover:bg-amber-700"
-                      >
-                        {isArchiving ? 'Arquivando...' : 'Arquivar Conta'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-
-                {/* Botão Deletar */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400 hover:text-red-800"
-                      disabled={isLoading || isArchiving || isDeleting}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Deletar
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Mover conta para lixeira?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        A conta <strong>{account.name || account.account}</strong> será movida para lixeira.
-                        <br /><br />
-                        <span className="text-amber-600 font-medium">⚠️ Esta ação pode ser revertida por 30 dias.</span>
-                        <br /><br />
-                        Após 30 dias, a conta e todos os seus dados (histórico, posições, etc.) serão <strong>permanentemente deletados</strong>.
-                        <br /><br />
-                        Use esta opção apenas para contas que nunca mais serão utilizadas.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDeleteAccount}
-                        disabled={isDeleting}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        {isDeleting ? 'Movendo...' : 'Mover para Lixeira'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-          </form>
+            </DialogContent>
+          </Dialog>
         )}
       </DialogContent>
     </Dialog>
   );
-};
-
-export default EditAccountModal;
+}

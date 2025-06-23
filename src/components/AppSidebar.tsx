@@ -13,7 +13,8 @@ import {
   Terminal,
   Archive,
   LogOut,
-  UserCog
+  UserCog,
+  Folder
 } from 'lucide-react';
 import {
   Sidebar,
@@ -50,6 +51,12 @@ const menuItems = [
     url: '/accounts', 
     icon: Monitor,
     permissionKey: 'canAccessAccountMonitor' as const
+  },
+  { 
+    title: 'Groups Management', 
+    url: '/groups', 
+    icon: Folder,
+    permissionKey: 'canAccessUserManagement' as const
   },
   { 
     title: 'Hedge Simulator', 

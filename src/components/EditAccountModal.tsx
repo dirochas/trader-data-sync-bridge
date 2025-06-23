@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,11 +30,7 @@ interface AccountGroup {
 
 export default function EditAccountModal({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) {
   const [accountName, setAccountName] = useState(account?.name || '');
-  const [accountNumber, setAccountNumber] = useState(account?.account || '');
   const [selectedGroupId, setSelectedGroupId] = useState<string>(account?.group_id || 'none');
-  const [vpsUniqueId, setVpsUniqueId] = useState(account?.vps_unique_id || '');
-  const [broker, setBroker] = useState(account?.broker || '');
-  const [server, setServer] = useState(account?.server || '');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
@@ -48,11 +45,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
   useEffect(() => {
     if (account) {
       setAccountName(account.name || '');
-      setAccountNumber(account.account || '');
       setSelectedGroupId(account.group_id || 'none');
-      setVpsUniqueId(account.vps_unique_id || '');
-      setBroker(account.broker || '');
-      setServer(account.server || '');
     }
   }, [account]);
 
@@ -68,11 +61,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       
       const updates = {
         name: accountName.trim(),
-        account: accountNumber.trim(),
         group_id: selectedGroupId === "none" ? null : selectedGroupId,
-        vps_unique_id: vpsUniqueId.trim(),
-        broker: broker.trim(),
-        server: server.trim(),
         updated_at: new Date().toISOString()
       };
 
@@ -185,11 +174,12 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
               <Label htmlFor="account">Número da Conta</Label>
               <Input
                 id="account"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Número da conta"
+                value={account?.account || ''}
+                placeholder="Este campo não pode ser editado"
                 disabled
+                className="bg-gray-100 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500">Este campo não pode ser editado</p>
             </div>
 
             <div className="space-y-2">
@@ -232,33 +222,27 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="vps_unique_id">VPS Unique ID</Label>
+              <Label htmlFor="vps_unique_id">ID Único do VPS</Label>
               <Input
                 id="vps_unique_id"
-                value={vpsUniqueId}
-                onChange={(e) => setVpsUniqueId(e.target.value)}
-                placeholder="VPS Unique ID"
+                value={account?.vps_unique_id || ''}
+                placeholder="Identificador único interno (não editável)"
+                disabled
+                className="bg-gray-100 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500">Identificador único interno (não editável)</p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="broker">Broker</Label>
-              <Input
-                id="broker"
-                value={broker}
-                onChange={(e) => setBroker(e.target.value)}
-                placeholder="Broker"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="server">Server</Label>
+              <Label htmlFor="server">Servidor</Label>
               <Input
                 id="server"
-                value={server}
-                onChange={(e) => setServer(e.target.value)}
-                placeholder="Server"
+                value={account?.server || ''}
+                placeholder="Este campo é atualizado automaticamente pelo EA"
+                disabled
+                className="bg-gray-100 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500">Este campo é atualizado automaticamente pelo EA</p>
             </div>
 
             <Button 

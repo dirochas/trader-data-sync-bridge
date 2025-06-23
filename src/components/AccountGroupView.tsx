@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +7,7 @@ import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X } from 'lucide-re
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { useAccountGroups } from '@/hooks/useAccountGroups';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSorting } from '@/hooks/useSorting';
 
 interface Account {
   id: string;
@@ -33,6 +33,23 @@ interface AccountGroupViewProps {
   onEditAccount: (account: Account) => void;
   onViewAccount?: (accountNumber: string) => void;
   onCloseAllPositions?: (account: Account) => void;
+}
+
+interface GroupData {
+  groupId: string;
+  groupInfo: {
+    name: string;
+    description: string;
+    color: string;
+  };
+  accounts: Account[];
+  stats: {
+    totalBalance: number;
+    totalEquity: number;
+    totalProfit: number;
+    totalTrades: number;
+    isProfit: boolean;
+  };
 }
 
 export const AccountGroupView = ({ 
@@ -85,16 +102,6 @@ export const AccountGroupView = ({
     return 'N/A';
   };
 
-  // Agrupar contas por grupo
-  const groupedAccounts = accounts.reduce((acc, account) => {
-    const groupId = account.group_id || 'ungrouped';
-    if (!acc[groupId]) {
-      acc[groupId] = [];
-    }
-    acc[groupId].push(account);
-    return acc;
-  }, {} as Record<string, Account[]>);
-
   // Encontrar informações do grupo
   const getGroupInfo = (groupId: string) => {
     if (groupId === 'ungrouped') {
@@ -123,11 +130,46 @@ export const AccountGroupView = ({
     return { totalBalance, totalEquity, totalProfit, totalTrades, isProfit };
   };
 
+  // Preparar dados dos grupos para ordenação
+  const groupsData: GroupData[] = React.useMemo(() => {
+    // Agrupar contas por grupo
+    const groupedAccounts = accounts.reduce((acc, account) => {
+      const groupId = account.group_id || 'ungrouped';
+      if (!acc[groupId]) {
+        acc[groupId] = [];
+      }
+      acc[groupId].push(account);
+      return acc;
+    }, {} as Record<string, Account[]>);
+
+    // Converter para array de objetos para facilitar ordenação
+    return Object.entries(groupedAccounts).map(([groupId, groupAccounts]) => ({
+      groupId,
+      groupInfo: getGroupInfo(groupId),
+      accounts: groupAccounts,
+      stats: getGroupStats(groupAccounts)
+    }));
+  }, [accounts, groups]);
+
+  // Implementar ordenação estável por P&L total (decrescente) com desempate por groupId
+  const customSortFunctions = {
+    totalProfit: (a: GroupData, b: GroupData) => {
+      // Ordenar por P&L total (decrescente - maiores lucros primeiro)
+      return b.stats.totalProfit - a.stats.totalProfit;
+    }
+  };
+
+  // Usar o hook de sorting com ordenação padrão por P&L total
+  const { sortedData: sortedGroups } = useSorting(
+    groupsData, 
+    { key: 'totalProfit', direction: 'desc' },
+    customSortFunctions
+  );
+
   return (
     <div className="space-y-6">
-      {Object.entries(groupedAccounts).map(([groupId, groupAccounts]) => {
-        const groupInfo = getGroupInfo(groupId);
-        const stats = getGroupStats(groupAccounts);
+      {sortedGroups.map((groupData) => {
+        const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
         
         return (
           <Card key={groupId} className="overflow-hidden">
@@ -182,7 +224,7 @@ export const AccountGroupView = ({
             </CardHeader>
             
             <CardContent className="pt-0">
-              {/* Cabeçalho das Colunas - Ajustando larguras */}
+              {/* Cabeçalho das Colunas - Distribuição otimizada */}
               <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-border/30 bg-muted/20 text-xs font-medium text-muted-foreground">
                 <div className="col-span-1">Status</div>
                 <div className="col-span-2">Account Name</div>
@@ -340,4 +382,3 @@ export const AccountGroupView = ({
     </div>
   );
 };
-

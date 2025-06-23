@@ -230,12 +230,10 @@ export const AccountGroupView = ({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho com controles inline */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {headerControls}
-          {renderSortControls()}
-        </div>
+      {/* Cabeçalho com controles de ordenação no lugar do título */}
+      <div className="flex items-center gap-4">
+        {headerControls}
+        {renderSortControls()}
       </div>
 
       {/* Lista de Grupos */}

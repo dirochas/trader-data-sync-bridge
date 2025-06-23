@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccountGroups, useCreateAccountGroup } from '@/hooks/useAccountGroups';
-import { Plus } from 'lucide-react';
+import { Plus, Archive, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface EditAccountModalProps {
@@ -36,6 +37,8 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [newGroupColor, setNewGroupColor] = useState('#3B82F6');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { data: groups = [] } = useAccountGroups();
   const { toast } = useToast();
@@ -101,6 +104,72 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleArchiveAccount = async () => {
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({
+          status: 'archived',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', account.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta arquivada",
+        description: "A conta foi arquivada com sucesso.",
+      });
+
+      onAccountUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao arquivar conta:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível arquivar a conta.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({
+          status: 'deleted',
+          deleted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', account.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta movida para lixeira",
+        description: "A conta foi movida para a lixeira. Você tem 30 dias para restaurá-la.",
+        variant: "destructive",
+      });
+
+      onAccountUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível mover a conta para a lixeira.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -177,7 +246,8 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                 value={account?.account || ''}
                 placeholder="Este campo não pode ser editado"
                 disabled
-                className="bg-gray-100 cursor-not-allowed"
+                style={{ backgroundColor: '#4c4f55', color: '#FFF' }}
+                className="cursor-not-allowed border-gray-600"
               />
               <p className="text-xs text-gray-500">Este campo não pode ser editado</p>
             </div>
@@ -228,7 +298,8 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                 value={account?.vps_unique_id || ''}
                 placeholder="Identificador único interno (não editável)"
                 disabled
-                className="bg-gray-100 cursor-not-allowed"
+                style={{ backgroundColor: '#4c4f55', color: '#FFF' }}
+                className="cursor-not-allowed border-gray-600"
               />
               <p className="text-xs text-gray-500">Identificador único interno (não editável)</p>
             </div>
@@ -240,7 +311,8 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                 value={account?.server || ''}
                 placeholder="Este campo é atualizado automaticamente pelo EA"
                 disabled
-                className="bg-gray-100 cursor-not-allowed"
+                style={{ backgroundColor: '#4c4f55', color: '#FFF' }}
+                className="cursor-not-allowed border-gray-600"
               />
               <p className="text-xs text-gray-500">Este campo é atualizado automaticamente pelo EA</p>
             </div>
@@ -253,6 +325,82 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
               {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </form>
+
+          {/* Seção de Ações Avançadas */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">AÇÕES AVANÇADAS</h3>
+            <div className="flex gap-2">
+              {/* Botão Arquivar */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50"
+                    disabled={isArchiving || isDeleting}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Arquivar conta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      A conta <strong>{account?.name || account?.account}</strong> será arquivada e removida do monitor ativo.
+                      <br /><br />
+                      Você pode restaurar a conta a qualquer momento através da página de gerenciamento de contas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleArchiveAccount}
+                      disabled={isArchiving}
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      {isArchiving ? 'Arquivando...' : 'Arquivar Conta'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Botão Deletar */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                    disabled={isArchiving || isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Deletar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Mover para lixeira?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      A conta <strong>{account?.name || account?.account}</strong> será movida para a lixeira.
+                      <br /><br />
+                      <strong>Você terá 30 dias para restaurar</strong> a conta antes que ela seja permanentemente deletada.
+                      <br /><br />
+                      Após 30 dias, todos os dados serão perdidos para sempre.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {isDeleting ? 'Movendo...' : 'Mover para Lixeira'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogFooter>
+              </AlertDialog>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

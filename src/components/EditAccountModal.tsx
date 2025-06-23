@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,6 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
   const [accountName, setAccountName] = useState(account?.name || '');
   const [accountNumber, setAccountNumber] = useState(account?.account || '');
   const [selectedGroupId, setSelectedGroupId] = useState<string>(account?.group_id || 'none');
-  const [vps, setVps] = useState(account?.vps || '');
   const [vpsUniqueId, setVpsUniqueId] = useState(account?.vps_unique_id || '');
   const [broker, setBroker] = useState(account?.broker || '');
   const [server, setServer] = useState(account?.server || '');
@@ -52,7 +50,6 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       setAccountName(account.name || '');
       setAccountNumber(account.account || '');
       setSelectedGroupId(account.group_id || 'none');
-      setVps(account.vps || '');
       setVpsUniqueId(account.vps_unique_id || '');
       setBroker(account.broker || '');
       setServer(account.server || '');
@@ -73,7 +70,6 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
         name: accountName.trim(),
         account: accountNumber.trim(),
         group_id: selectedGroupId === "none" ? null : selectedGroupId,
-        vps: vps.trim(),
         vps_unique_id: vpsUniqueId.trim(),
         broker: broker.trim(),
         server: server.trim(),
@@ -233,16 +229,6 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vps">VPS</Label>
-              <Input
-                id="vps"
-                value={vps}
-                onChange={(e) => setVps(e.target.value)}
-                placeholder="VPS"
-              />
             </div>
             
             <div className="space-y-2">

@@ -397,7 +397,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
                       {isDeleting ? 'Movendo...' : 'Mover para Lixeira'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
-                </AlertDialogFooter>
+                </AlertDialogContent>
               </AlertDialog>
             </div>
           </div>

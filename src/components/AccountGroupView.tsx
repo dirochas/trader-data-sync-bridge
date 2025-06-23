@@ -189,8 +189,8 @@ export const AccountGroupView = ({
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
         
         return (
-          <Card key={groupId} className="overflow-hidden bg-gray-800 dark:bg-gray-900 border border-gray-700 dark:border-gray-700">
-            <CardHeader className="pb-4 bg-gray-700/50 dark:bg-gray-800/50">
+          <Card key={groupId} className="overflow-hidden bg-slate-900 border border-slate-700">
+            <CardHeader className="pb-4 bg-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div 
@@ -198,16 +198,16 @@ export const AccountGroupView = ({
                     style={{ backgroundColor: groupInfo.color }}
                   />
                   <div>
-                    <CardTitle className="text-lg flex items-center gap-2 text-gray-100 dark:text-gray-100">
+                    <CardTitle className="text-lg flex items-center gap-2 text-gray-100">
                       {groupId === 'ungrouped' ? (
-                        <Users className="w-5 h-5 text-gray-400 dark:text-gray-400" />
+                        <Users className="w-5 h-5 text-gray-400" />
                       ) : (
-                        <Folder className="w-5 h-5 text-gray-300 dark:text-gray-300" />
+                        <Folder className="w-5 h-5 text-gray-300" />
                       )}
                       {groupInfo.name}
                     </CardTitle>
                     {groupInfo.description && (
-                      <p className="text-sm text-gray-300 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-300 mt-1">
                         {groupInfo.description}
                       </p>
                     )}
@@ -216,9 +216,9 @@ export const AccountGroupView = ({
                 
                 <div className="flex items-center gap-6 text-right">
                   <div>
-                    <div className="text-sm text-gray-300 dark:text-gray-400">Total P&L</div>
+                    <div className="text-sm text-gray-300">Total P&L</div>
                     <div className={`font-mono font-semibold flex items-center gap-1 ${
-                      stats.isProfit ? 'text-green-400 dark:text-green-400' : 'text-red-400 dark:text-red-400'
+                      stats.isProfit ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {stats.isProfit ? (
                         <TrendingUp className="w-4 h-4" />
@@ -229,20 +229,20 @@ export const AccountGroupView = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-300 dark:text-gray-400">Trades</div>
-                    <div className="font-semibold text-blue-400 dark:text-blue-400">{stats.totalTrades}</div>
+                    <div className="text-sm text-gray-300">Trades</div>
+                    <div className="font-semibold text-blue-400">{stats.totalTrades}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-300 dark:text-gray-400">Contas</div>
-                    <div className="font-semibold text-gray-100 dark:text-gray-100">{groupAccounts.length}</div>
+                    <div className="text-sm text-gray-300">Contas</div>
+                    <div className="font-semibold text-gray-100">{groupAccounts.length}</div>
                   </div>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="pt-0 bg-gray-800 dark:bg-gray-900">
+            <CardContent className="pt-0 bg-slate-900">
               {/* Cabeçalho das Colunas - Distribuição otimizada */}
-              <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-xs font-medium text-gray-200 dark:text-gray-300">
+              <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-slate-600 bg-slate-800 text-xs font-medium text-gray-200">
                 <div className="col-span-1">Status</div>
                 <div className="col-span-2">Account Name</div>
                 <div className="col-span-1">Client</div>
@@ -266,7 +266,7 @@ export const AccountGroupView = ({
                   return (
                     <div
                       key={account.id}
-                      className="grid grid-cols-12 gap-3 p-4 rounded-lg border border-gray-600 dark:border-gray-700 bg-gray-750 dark:bg-gray-800 hover:bg-gray-700 dark:hover:bg-gray-700 transition-colors items-center text-sm"
+                      className="grid grid-cols-12 gap-3 p-4 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 transition-colors items-center text-sm"
                     >
                       {/* Status */}
                       <div className="col-span-1 flex items-center">
@@ -280,43 +280,43 @@ export const AccountGroupView = ({
                       
                       {/* Account Name */}
                       <div className="col-span-2">
-                        <div className="font-medium text-gray-100 dark:text-gray-100">
+                        <div className="font-medium text-gray-100">
                           {account.name || `Account ${account.account}`}
                         </div>
-                        <div className="text-xs text-gray-300 dark:text-gray-400">
+                        <div className="text-xs text-gray-300">
                           {account.clientNickname || 'N/A'}
                         </div>
                       </div>
                       
                       {/* Client */}
                       <div className="col-span-1">
-                        <div className="text-xs text-gray-200 dark:text-gray-300">{permissions.isAdminOrManager ? (account.clientNickname || 'N/A') : 'N/A'}</div>
+                        <div className="text-xs text-gray-200">{permissions.isAdminOrManager ? (account.clientNickname || 'N/A') : 'N/A'}</div>
                       </div>
                       
                       {/* VPS */}
                       <div className="col-span-1">
-                        <Badge variant="secondary" className="text-xs bg-gray-600 dark:bg-gray-600 text-gray-100 dark:text-gray-200">
+                        <Badge variant="secondary" className="text-xs bg-slate-600 text-gray-100">
                           {account.vps}
                         </Badge>
                       </div>
                       
                       {/* Balance */}
                       <div className="col-span-1 text-right">
-                        <div className="font-mono text-xs text-gray-200 dark:text-gray-200">
+                        <div className="font-mono text-xs text-gray-200">
                           {formatCurrency(account.balance)}
                         </div>
                       </div>
                       
                       {/* Equity */}
                       <div className="col-span-1 text-right">
-                        <div className="font-mono text-xs font-semibold text-gray-100 dark:text-gray-100">
+                        <div className="font-mono text-xs font-semibold text-gray-100">
                           {formatCurrency(account.equity)}
                         </div>
                       </div>
                       
                       {/* Trades */}
                       <div className="col-span-1 text-center">
-                        <Badge variant="outline" className="font-mono bg-gray-600 dark:bg-gray-700 border-gray-500 dark:border-gray-600 text-gray-100 dark:text-gray-200">
+                        <Badge variant="outline" className="font-mono bg-slate-600 border-slate-500 text-gray-100">
                           {account.openTrades || 0}
                         </Badge>
                       </div>
@@ -324,7 +324,7 @@ export const AccountGroupView = ({
                       {/* Open P&L */}
                       <div className="col-span-1 text-right">
                         <div className={`flex items-center justify-end gap-1 font-mono text-xs ${
-                          isProfit ? 'text-green-400 dark:text-green-400' : 'text-red-400 dark:text-red-400'
+                          isProfit ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {isProfit ? (
                             <TrendingUp className="w-3 h-3" />
@@ -338,7 +338,7 @@ export const AccountGroupView = ({
                       {/* Day P&L */}
                       <div className="col-span-1 text-right">
                         <div className={`font-mono text-xs ${
-                          isDayProfit ? 'text-green-400 dark:text-green-400' : 'text-red-400 dark:text-red-400'
+                          isDayProfit ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {formatCurrency(account.dayProfit || 0)}
                         </div>
@@ -346,8 +346,8 @@ export const AccountGroupView = ({
                       
                       {/* Server */}
                       <div className="col-span-1">
-                        <div className="text-xs text-gray-200 dark:text-gray-300">{brokerName}</div>
-                        <div className="text-xs text-gray-300 dark:text-gray-400">
+                        <div className="text-xs text-gray-200">{brokerName}</div>
+                        <div className="text-xs text-gray-300">
                           1:{account.leverage}
                         </div>
                       </div>

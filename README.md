@@ -1,4 +1,3 @@
-
 # TraderLab v1.8.3 - Group View Stability & TypeScript Fixes
 
 **Status**: ✅ STABLE - Production Ready - Group View Stability Improvements
@@ -24,6 +23,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
 - **📊 Vista de Grupos Otimizada**: Interface melhorada com distribuição inteligente de colunas e cabeçalhos claros
 - **🎯 Ordenação Estável**: Sistema de sorting inteligente que evita oscilação de posições dos grupos
+- **🎨 Identificação Visual**: Bordas coloridas nos cards dos grupos para melhor organização visual
 
 ### 🛠️ Tecnologias
 
@@ -44,6 +44,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Correção de tipos TypeScript no `GroupData` interface (description opcional)
 - ✅ Melhoria na estabilidade visual da interface de grupos
 - ✅ Sistema de cache inteligente para evitar reorganizações desnecessárias
+- ✅ Ajustes visuais nas bordas dos grupos com cores personalizadas e opacidade otimizada
 
 **Histórico v1.8.2:**
 - ✅ Correção de erros de sintaxe JSX no EditAccountModal
@@ -195,4 +196,3 @@ Nova implementação de sorting estável:
 ## Deploy
 
 O projeto pode ser deployado em qualquer serviço de hospedagem que suporte aplicações React/Vite.
-

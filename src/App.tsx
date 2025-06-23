@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,23 @@ import InactiveAccounts from './pages/InactiveAccounts';
 import { useEffect } from 'react';
 import { startBadgeRemover } from './utils/removeLovableBadge';
 import GroupsManagement from './pages/GroupsManagement';
+
+// Import all the missing components
+import Auth from './pages/Auth';
+import Unauthorized from './pages/Unauthorized';
+import Index from './pages/Index';
+import Dashboard from './pages/Dashboard';
+import AccountMonitor from './pages/AccountMonitor';
+import AccountDetails from './pages/AccountDetails';
+import AccountsManagement from './pages/AccountsManagement';
+import SimulationManagement from './pages/SimulationManagement';
+import ExpertManagement from './pages/ExpertManagement';
+import VPSManagement from './pages/VPSManagement';
+import CommandsManagement from './pages/CommandsManagement';
+import UserManagement from './pages/UserManagement';
+import Settings from './pages/Settings';
+import SystemDiagnosticsPage from './pages/SystemDiagnosticsPage';
+import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
 

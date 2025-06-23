@@ -320,10 +320,10 @@ export const AccountGroupView = ({
                         </Badge>
                       </div>
                       
-                      {/* Open P&L */}
+                      {/* Open P&L - Cores mais claras para tema escuro */}
                       <div className="col-span-1 text-right">
                         <div className={`flex items-center justify-end gap-1 font-mono text-xs ${
-                          isProfit ? 'text-green-400' : 'text-red-400'
+                          isProfit ? 'text-green-300' : 'text-red-300'
                         }`}>
                           {isProfit ? (
                             <TrendingUp className="w-3 h-3" />
@@ -334,10 +334,10 @@ export const AccountGroupView = ({
                         </div>
                       </div>
                       
-                      {/* Day P&L */}
+                      {/* Day P&L - Cores mais claras para tema escuro */}
                       <div className="col-span-1 text-right">
                         <div className={`font-mono text-xs ${
-                          isDayProfit ? 'text-green-400' : 'text-red-400'
+                          isDayProfit ? 'text-green-300' : 'text-red-300'
                         }`}>
                           {formatCurrency(account.dayProfit || 0)}
                         </div>

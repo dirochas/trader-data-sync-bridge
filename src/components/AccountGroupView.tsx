@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -190,43 +189,41 @@ export const AccountGroupView = ({
 
   return (
     <div className="space-y-6">
-      {/* Controles de Ordenação */}
-      <div className="flex justify-center">
-        <Card className="w-fit">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-muted-foreground">Ordenar grupos por:</span>
-              <ToggleGroup 
-                type="single" 
-                value={getCurrentSortValue()} 
-                onValueChange={handleSortChange}
-                className="bg-muted rounded-lg p-1"
-              >
-                <ToggleGroupItem 
-                  value="name" 
-                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
-                >
-                  <SortAsc className="w-4 h-4" />
-                  Nome
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="totalProfit" 
-                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  P&L
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="totalTrades" 
-                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Trades
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Controles de Ordenação - Compacto e Inline */}
+      <div className="flex items-center justify-center gap-4 px-4 py-2 bg-card/30 rounded-lg border">
+        <span className="text-xs font-medium text-muted-foreground">Ordenar por:</span>
+        <ToggleGroup 
+          type="single" 
+          value={getCurrentSortValue()} 
+          onValueChange={handleSortChange}
+          className="bg-muted/50 rounded-md p-0.5"
+          size="sm"
+        >
+          <ToggleGroupItem 
+            value="name" 
+            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+            size="sm"
+          >
+            <SortAsc className="w-3 h-3" />
+            Nome
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="totalProfit" 
+            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+            size="sm"
+          >
+            <DollarSign className="w-3 h-3" />
+            P&L
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="totalTrades" 
+            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+            size="sm"
+          >
+            <BarChart3 className="w-3 h-3" />
+            Trades
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       {/* Lista de Grupos */}

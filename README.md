@@ -1,7 +1,7 @@
 
-# TraderLab v1.8.1 - Professional Trading Management System
+# TraderLab v1.8.2 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - RLS Policies & Account Edit Fixes
+**Status**: ✅ STABLE - Production Ready - Account Edit Modal Fixes & Visual Improvements
 
 ## 📊 Sobre o Projeto
 
@@ -32,9 +32,19 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8.1 - RLS Policies & Account Edit Fixes
+### 🎯 Versão Atual: v1.8.2 - Account Edit Modal Fixes & Visual Improvements
 
-**Novidades v1.8.1:**
+**Novidades v1.8.2:**
+- ✅ Correção de erros de sintaxe JSX no EditAccountModal
+- ✅ Restauração dos botões de arquivar e deletar conta com confirmações modais
+- ✅ Melhoria na visibilidade de campos desabilitados (background #4c4f55 com texto branco)
+- ✅ Remoção definitiva do campo "Broker" (campo desnecessário)
+- ✅ Desabilitação correta de campos coletados pelo EA (número da conta, VPS ID, servidor)
+- ✅ Combinação das melhores funcionalidades das versões anteriores
+- ✅ Interface mais limpa e profissional para edição de contas
+- ✅ Validação aprimorada de formulários com feedback visual
+
+**Histórico v1.8.1:**
 - ✅ Implementação completa de Row Level Security (RLS) na tabela accounts
 - ✅ Políticas de segurança por roles: Admin/Manager veem todas as contas, Clientes veem apenas as suas
 - ✅ Correção do erro de coluna 'vps' inexistente no EditAccountModal
@@ -148,6 +158,16 @@ O sistema implementa políticas RLS rigorosas:
 - **INSERT**: Apenas Admin/Manager podem criar novas contas
 - **UPDATE**: Admin/Manager editam todas; Traders editam apenas as suas
 - **DELETE**: Apenas Admin/Manager podem deletar contas
+
+## ✏️ Edição de Contas
+
+Sistema robusto de edição com:
+
+- **Campos Editáveis**: Apenas nome da conta e grupo podem ser modificados
+- **Campos Protegidos**: Número da conta, VPS ID e servidor são somente leitura
+- **Validação Visual**: Campos desabilitados com contraste adequado
+- **Ações Avançadas**: Arquivar e deletar contas com confirmações modais
+- **Feedback Imediato**: Toasts informativos para todas as operações
 
 ## Deploy
 

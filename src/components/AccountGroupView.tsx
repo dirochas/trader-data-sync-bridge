@@ -191,13 +191,13 @@ export const AccountGroupView = ({
                   return (
                     <div
                       key={account.id}
-                      className="grid grid-cols-12 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-accent/50 transition-colors items-center text-sm"
+                      className="grid grid-cols-12 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors items-center text-sm"
                     >
                       {/* Status */}
                       <div className="col-span-1 flex items-center">
                         <Badge 
                           variant="outline" 
-                          className={`text-xs ${connectionStatus.color}`}
+                          className={`text-xs ${connectionStatus.color} border-0`}
                         >
                           {connectionStatus.icon}
                         </Badge>
@@ -205,7 +205,7 @@ export const AccountGroupView = ({
                       
                       {/* Account Name */}
                       <div className="col-span-2">
-                        <div className="font-semibold text-foreground">
+                        <div className="font-medium text-foreground">
                           {account.name || `Account ${account.account}`}
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -220,7 +220,7 @@ export const AccountGroupView = ({
                       
                       {/* Client */}
                       <div className="col-span-1">
-                        <div className="text-xs">{account.clientNickname || 'N/A'}</div>
+                        <div className="text-xs">{permissions.isAdminOrManager ? (account.clientNickname || 'N/A') : 'N/A'}</div>
                       </div>
                       
                       {/* VPS */}
@@ -246,29 +246,29 @@ export const AccountGroupView = ({
                       
                       {/* Trades */}
                       <div className="col-span-1 text-center">
-                        <div className="font-semibold text-blue-600">
+                        <Badge variant="outline" className="font-mono">
                           {account.openTrades || 0}
-                        </div>
+                        </Badge>
                       </div>
                       
                       {/* Open P&L */}
                       <div className="col-span-1 text-right">
-                        <div className={`font-mono text-xs ${
-                          isProfit ? 'text-green-600' : 'text-red-600'
+                        <div className={`flex items-center justify-end gap-1 font-mono text-xs ${
+                          isProfit ? 'text-green-600' : 'text-red-300'
                         }`}>
-                          {formatCurrency(account.profit)}
-                        </div>
-                        <div className={`text-xs opacity-75 ${
-                          isProfit ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {formatPercentage(account.profit, account.balance)}
+                          {isProfit ? (
+                            <TrendingUp className="w-3 h-3" />
+                          ) : (
+                            <TrendingDown className="w-3 h-3" />
+                          )}
+                          <span>{formatCurrency(account.profit)}</span>
                         </div>
                       </div>
                       
                       {/* Day P&L */}
                       <div className="col-span-1 text-right">
                         <div className={`font-mono text-xs ${
-                          isDayProfit ? 'text-green-600' : 'text-red-600'
+                          isDayProfit ? 'text-green-600' : 'text-red-300'
                         }`}>
                           {formatCurrency(account.dayProfit || 0)}
                         </div>
@@ -286,36 +286,38 @@ export const AccountGroupView = ({
                       <div className="col-span-1 flex items-center justify-end gap-1">
                         {permissions.canCloseAllPositions && (account.openTrades || 0) > 0 && (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => onCloseAllPositions?.(account)}
-                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            className="text-xs text-red-400 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors"
                             title="Close All Positions"
                           >
-                            <X className="w-3 h-3" />
+                            Close All
                           </Button>
                         )}
                         
                         {permissions.canEditAccounts && (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => onEditAccount(account)}
-                            className="h-8 w-8 p-0 hover:bg-accent"
+                            className="text-xs text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                             title="Edit Account"
                           >
                             <Edit className="w-3 h-3" />
+                            Edit
                           </Button>
                         )}
                         
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => onViewAccount?.(account.account)}
-                          className="h-8 w-8 p-0 hover:bg-accent"
+                          className="text-xs text-sky-500 border-sky-300 hover:bg-sky-50 hover:border-sky-400 transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-3 h-3" />
+                          Details
                         </Button>
                       </div>
                     </div>

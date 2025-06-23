@@ -30,7 +30,7 @@ interface AccountGroup {
 export default function EditAccountModal({ isOpen, onClose, account, onAccountUpdated }: EditAccountModalProps) {
   const [accountName, setAccountName] = useState(account?.name || '');
   const [accountNumber, setAccountNumber] = useState(account?.account || '');
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(account?.group_id || null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(account?.group_id || 'none');
   const [vps, setVps] = useState(account?.vps || '');
   const [vpsUniqueId, setVpsUniqueId] = useState(account?.vps_unique_id || '');
   const [broker, setBroker] = useState(account?.broker || '');
@@ -48,7 +48,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
     if (account) {
       setAccountName(account.name || '');
       setAccountNumber(account.account || '');
-      setSelectedGroupId(account.group_id || null);
+      setSelectedGroupId(account.group_id || 'none');
       setVps(account.vps || '');
       setVpsUniqueId(account.vps_unique_id || '');
       setBroker(account.broker || '');
@@ -63,7 +63,7 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       const updates = {
         name: accountName,
         account: accountNumber,
-        group_id: selectedGroupId === "" ? null : selectedGroupId,
+        group_id: selectedGroupId === "none" ? null : selectedGroupId,
         vps: vps,
         vps_unique_id: vpsUniqueId,
         broker: broker,
@@ -182,14 +182,14 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
               <Label htmlFor="group">Grupo</Label>
               <div className="flex gap-2">
                 <Select 
-                  value={selectedGroupId || ''} 
-                  onValueChange={(value) => setSelectedGroupId(value || null)}
+                  value={selectedGroupId} 
+                  onValueChange={(value) => setSelectedGroupId(value)}
                 >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Selecionar grupo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum grupo</SelectItem>
+                    <SelectItem value="none">Nenhum grupo</SelectItem>
                     {groups.map((group) => (
                       <SelectItem key={group.id} value={group.id}>
                         <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 
-# TraderLab v1.8 - Professional Trading Management System
+# TraderLab v1.8.1 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Groups Management & Modal Fixes
+**Status**: ✅ STABLE - Production Ready - RLS Policies & Account Edit Fixes
 
 ## 📊 Sobre o Projeto
 
@@ -21,19 +21,30 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🤖 Gerenciamento de Expert Advisors**: Sistema completo de upload e download de EAs com controle de permissões
 - **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
 - **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
+- **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
 
 ### 🛠️ Tecnologias
 
 - **Frontend**: React 18 + TypeScript + Tailwind CSS
 - **UI Components**: Shadcn/UI + Radix UI
-- **Backend**: Supabase (Database + Auth + Edge Functions)
+- **Backend**: Supabase (Database + Auth + Edge Functions + RLS)
 - **State Management**: TanStack React Query
-- **Security**: DOMPurify + Custom Validation System
+- **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8 - Groups Management & Modal Fixes
+### 🎯 Versão Atual: v1.8.1 - RLS Policies & Account Edit Fixes
 
-**Novidades v1.8:**
+**Novidades v1.8.1:**
+- ✅ Implementação completa de Row Level Security (RLS) na tabela accounts
+- ✅ Políticas de segurança por roles: Admin/Manager veem todas as contas, Clientes veem apenas as suas
+- ✅ Correção do erro de coluna 'vps' inexistente no EditAccountModal
+- ✅ Sistema de permissões refinado para operações CRUD em contas
+- ✅ Logs de debug melhorados para troubleshooting
+- ✅ Tratamento de erros aprimorado com mensagens específicas
+- ✅ Validação de campos obrigatórios e trimming automático
+- ✅ Estado de submissão para prevenir múltiplos envios
+
+**Histórico v1.8:**
 - ✅ Sistema completo de Groups Management implementado
 - ✅ Página dedicada para criação e edição de grupos (`/groups`)
 - ✅ Integração de grupos no EditAccountModal
@@ -110,6 +121,7 @@ Este projeto foi desenvolvido com:
 
 O projeto agora conta com um sistema robusto de segurança:
 
+- **Row Level Security (RLS)**: Isolamento completo de dados por usuário e role
 - **Sanitização de Texto**: Proteção contra XSS e caracteres maliciosos
 - **Validação de Arquivos**: Controle de tamanho e tipo de arquivo
 - **Logging de Segurança**: Auditoria de eventos críticos
@@ -127,6 +139,15 @@ Nova funcionalidade para organização de contas:
 - **Gestão de Contas**: Associação fácil de contas aos grupos
 - **Permissões Específicas**: Apenas Admin e Manager podem gerenciar grupos
 - **Interface Responsiva**: Modais e formulários otimizados para todas as telas
+
+## 🔐 Políticas de Segurança
+
+O sistema implementa políticas RLS rigorosas:
+
+- **SELECT**: Usuários veem apenas suas contas; Admin/Manager veem todas
+- **INSERT**: Apenas Admin/Manager podem criar novas contas
+- **UPDATE**: Admin/Manager editam todas; Traders editam apenas as suas
+- **DELETE**: Apenas Admin/Manager podem deletar contas
 
 ## Deploy
 

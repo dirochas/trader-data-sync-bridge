@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -180,6 +181,21 @@ export const AccountGroupView = ({
             </CardHeader>
             
             <CardContent className="pt-0">
+              {/* Cabeçalho das Colunas */}
+              <div className="grid grid-cols-11 gap-4 px-4 py-2 border-b border-border/30 bg-muted/20 text-xs font-medium text-muted-foreground">
+                <div className="col-span-1">Status</div>
+                <div className="col-span-2">Account Name</div>
+                <div className="col-span-1">Client</div>
+                <div className="col-span-1">VPS</div>
+                <div className="col-span-1 text-right">Balance</div>
+                <div className="col-span-1 text-right">Equity</div>
+                <div className="col-span-1 text-center">Trades</div>
+                <div className="col-span-1 text-right">Open P&L</div>
+                <div className="col-span-1 text-right">Day P&L</div>
+                <div className="col-span-1">Server</div>
+                <div className="col-span-1 text-center">Actions</div>
+              </div>
+
               <div className="space-y-2">
                 {groupAccounts.map((account) => {
                   const connectionStatus = getConnectionStatus(account.updated_at);

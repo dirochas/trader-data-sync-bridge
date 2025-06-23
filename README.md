@@ -1,7 +1,7 @@
 
-# TraderLab v1.7 - Professional Trading Management System
+# TraderLab v1.8 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Visual Alignment & Modal Improvements
+**Status**: ✅ STABLE - Production Ready - Groups Management & Modal Fixes
 
 ## 📊 Sobre o Projeto
 
@@ -20,6 +20,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🔧 Modo Debug Seguro**: Visualização temporária de dados Cliente Trader com auto-desativação
 - **🤖 Gerenciamento de Expert Advisors**: Sistema completo de upload e download de EAs com controle de permissões
 - **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
+- **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
 
 ### 🛠️ Tecnologias
 
@@ -30,9 +31,19 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.7 - Visual Alignment & Modal Improvements
+### 🎯 Versão Atual: v1.8 - Groups Management & Modal Fixes
 
-**Novidades v1.7:**
+**Novidades v1.8:**
+- ✅ Sistema completo de Groups Management implementado
+- ✅ Página dedicada para criação e edição de grupos (`/groups`)
+- ✅ Integração de grupos no EditAccountModal
+- ✅ Correção definitiva do erro Radix UI Select.Item
+- ✅ Sistema de cores personalizadas para grupos
+- ✅ Modal profissional para confirmação de exclusão de grupos
+- ✅ Organização visual melhorada com badges e indicadores
+- ✅ Permissões específicas para gerenciamento de grupos (Admin/Manager)
+
+**Histórico v1.7:**
 - ✅ Alinhamento perfeito entre sidebar e header (4.3rem de altura)
 - ✅ Modal profissional para confirmação de exclusão de Expert Advisors
 - ✅ Substituição de window.confirm() por AlertDialog moderno
@@ -106,6 +117,16 @@ O projeto agora conta com um sistema robusto de segurança:
 - **Isolamento de Usuários**: Cada usuário vê apenas seus próprios dados
 
 Consulte `src/utils/SECURITY_GUIDE.md` para implementação em novas funcionalidades.
+
+## 📁 Sistema de Grupos
+
+Nova funcionalidade para organização de contas:
+
+- **Criação de Grupos**: Interface intuitiva para criar grupos personalizados
+- **Cores Customizadas**: Sistema de cores para identificação visual
+- **Gestão de Contas**: Associação fácil de contas aos grupos
+- **Permissões Específicas**: Apenas Admin e Manager podem gerenciar grupos
+- **Interface Responsiva**: Modais e formulários otimizados para todas as telas
 
 ## Deploy
 

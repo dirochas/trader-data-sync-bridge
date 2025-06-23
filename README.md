@@ -1,6 +1,7 @@
-# TraderLab v1.8.2 - Professional Trading Management System
 
-**Status**: ✅ STABLE - Production Ready - Account Edit Modal Fixes & Visual Improvements
+# TraderLab v1.8.3 - Group View Stability & TypeScript Fixes
+
+**Status**: ✅ STABLE - Production Ready - Group View Stability Improvements
 
 ## 📊 Sobre o Projeto
 
@@ -22,6 +23,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
 - **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
 - **📊 Vista de Grupos Otimizada**: Interface melhorada com distribuição inteligente de colunas e cabeçalhos claros
+- **🎯 Ordenação Estável**: Sistema de sorting inteligente que evita oscilação de posições dos grupos
 
 ### 🛠️ Tecnologias
 
@@ -32,9 +34,18 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8.2 - Account Edit Modal Fixes & Visual Improvements
+### 🎯 Versão Atual: v1.8.3 - Group View Stability & TypeScript Fixes
 
-**Novidades v1.8.2:**
+**Novidades v1.8.3:**
+- ✅ Correção definitiva da oscilação de posições dos grupos no Account Monitor
+- ✅ Implementação de ordenação estável usando o hook `useSorting` otimizado
+- ✅ Sistema de tie-breaker por `groupId` para garantir posições consistentes
+- ✅ Ordenação padrão por P&L total (decrescente) com desempate automático
+- ✅ Correção de tipos TypeScript no `GroupData` interface (description opcional)
+- ✅ Melhoria na estabilidade visual da interface de grupos
+- ✅ Sistema de cache inteligente para evitar reorganizações desnecessárias
+
+**Histórico v1.8.2:**
 - ✅ Correção de erros de sintaxe JSX no EditAccountModal
 - ✅ Restauração dos botões de arquivar e deletar conta com confirmações modais
 - ✅ Melhoria na visibilidade de campos desabilitados (background #4c4f55 com texto branco)
@@ -150,6 +161,7 @@ Nova funcionalidade para organização de contas:
 - **Gestão de Contas**: Associação fácil de contas aos grupos
 - **Permissões Específicas**: Apenas Admin e Manager podem gerenciar grupos
 - **Interface Responsiva**: Modais e formulários otimizados para todas as telas
+- **Ordenação Estável**: Sistema inteligente que evita oscilação de posições
 
 ## 🔐 Políticas de Segurança
 
@@ -170,6 +182,17 @@ Sistema robusto de edição com:
 - **Ações Avançadas**: Arquivar e deletar contas com confirmações modais
 - **Feedback Imediato**: Toasts informativos para todas as operações
 
+## 🎯 Sistema de Ordenação Inteligente
+
+Nova implementação de sorting estável:
+
+- **Ordenação Padrão**: P&L total decrescente (maiores lucros primeiro)
+- **Tie-breaker Automático**: Usa groupId para evitar oscilação de posições
+- **Cache Inteligente**: Sistema que detecta dados temporariamente instáveis
+- **Estabilidade Visual**: Interface consistente sem reorganizações desnecessárias
+- **Performance Otimizada**: Hook reutilizável com memoização eficiente
+
 ## Deploy
 
 O projeto pode ser deployado em qualquer serviço de hospedagem que suporte aplicações React/Vite.
+

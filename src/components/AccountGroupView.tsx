@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -181,8 +182,8 @@ export const AccountGroupView = ({
             </CardHeader>
             
             <CardContent className="pt-0">
-              {/* Cabeçalho das Colunas */}
-              <div className="grid grid-cols-11 gap-4 px-4 py-2 border-b border-border/30 bg-muted/20 text-xs font-medium text-muted-foreground">
+              {/* Cabeçalho das Colunas - Ajustando larguras */}
+              <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-border/30 bg-muted/20 text-xs font-medium text-muted-foreground">
                 <div className="col-span-1">Status</div>
                 <div className="col-span-2">Account Name</div>
                 <div className="col-span-1">Client</div>
@@ -206,7 +207,7 @@ export const AccountGroupView = ({
                   return (
                     <div
                       key={account.id}
-                      className="grid grid-cols-11 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors items-center text-sm"
+                      className="grid grid-cols-12 gap-3 p-4 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors items-center text-sm"
                     >
                       {/* Status */}
                       <div className="col-span-1 flex items-center">
@@ -293,16 +294,16 @@ export const AccountGroupView = ({
                       </div>
                       
                       {/* Actions */}
-                      <div className="col-span-1 flex items-center justify-end gap-1">
+                      <div className="col-span-1 flex items-center justify-center gap-1">
                         {permissions.canCloseAllPositions && (account.openTrades || 0) > 0 && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onCloseAllPositions?.(account)}
-                            className="text-xs text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors"
+                            className="text-xs text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors px-2"
                             title="Close All Positions"
                           >
-                            Close All
+                            <X className="w-3 h-3" />
                           </Button>
                         )}
                         
@@ -311,11 +312,10 @@ export const AccountGroupView = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onEditAccount(account)}
-                            className="text-xs text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                            className="text-xs text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors px-2"
                             title="Edit Account"
                           >
                             <Edit className="w-3 h-3" />
-                            Edit
                           </Button>
                         )}
                         
@@ -323,11 +323,10 @@ export const AccountGroupView = ({
                           variant="outline"
                           size="sm"
                           onClick={() => onViewAccount?.(account.account)}
-                          className="text-xs text-sky-500 border-sky-300 hover:bg-sky-50 hover:border-sky-400 transition-colors"
+                          className="text-xs text-sky-500 border-sky-300 hover:bg-sky-50 hover:border-sky-400 transition-colors px-2"
                           title="View Details"
                         >
                           <Eye className="w-3 h-3" />
-                          Details
                         </Button>
                       </div>
                     </div>
@@ -341,3 +340,4 @@ export const AccountGroupView = ({
     </div>
   );
 };
+

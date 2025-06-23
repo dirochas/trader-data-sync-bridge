@@ -39,7 +39,7 @@ interface GroupData {
   groupId: string;
   groupInfo: {
     name: string;
-    description: string;
+    description?: string; // Make this optional to match AccountGroup
     color: string;
   };
   accounts: Account[];

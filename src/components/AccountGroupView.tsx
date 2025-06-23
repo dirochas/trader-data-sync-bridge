@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -191,7 +190,7 @@ export const AccountGroupView = ({
                   return (
                     <div
                       key={account.id}
-                      className="grid grid-cols-12 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors items-center text-sm"
+                      className="grid grid-cols-11 gap-4 p-4 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors items-center text-sm"
                     >
                       {/* Status */}
                       <div className="col-span-1 flex items-center">
@@ -211,11 +210,6 @@ export const AccountGroupView = ({
                         <div className="text-xs text-muted-foreground">
                           {account.clientNickname || 'N/A'}
                         </div>
-                      </div>
-                      
-                      {/* Number */}
-                      <div className="col-span-1">
-                        <div className="font-mono text-xs">{account.account}</div>
                       </div>
                       
                       {/* Client */}
@@ -254,7 +248,7 @@ export const AccountGroupView = ({
                       {/* Open P&L */}
                       <div className="col-span-1 text-right">
                         <div className={`flex items-center justify-end gap-1 font-mono text-xs ${
-                          isProfit ? 'text-green-600' : 'text-red-300'
+                          isProfit ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {isProfit ? (
                             <TrendingUp className="w-3 h-3" />
@@ -268,7 +262,7 @@ export const AccountGroupView = ({
                       {/* Day P&L */}
                       <div className="col-span-1 text-right">
                         <div className={`font-mono text-xs ${
-                          isDayProfit ? 'text-green-600' : 'text-red-300'
+                          isDayProfit ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {formatCurrency(account.dayProfit || 0)}
                         </div>
@@ -289,7 +283,7 @@ export const AccountGroupView = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onCloseAllPositions?.(account)}
-                            className="text-xs text-red-400 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors"
+                            className="text-xs text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors"
                             title="Close All Positions"
                           >
                             Close All

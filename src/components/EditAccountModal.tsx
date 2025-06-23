@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -120,180 +121,205 @@ export default function EditAccountModal({ isOpen, onClose, account, onAccountUp
       
       setNewGroupName('');
       setNewGroupDescription('');
+      setNewGroupColor('#3B82F6');
       setShowCreateGroup(false);
       
-      // Recarregar grupos
-      await new Promise(resolve => setTimeout(resolve, 100));
+      toast({
+        title: "Grupo criado",
+        description: "O grupo foi criado com sucesso.",
+      });
+      
+      // Aguardar um pouco para o cache ser atualizado
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Erro ao criar grupo:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o grupo.",
+        variant: "destructive",
+      });
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Editar Conta</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome da Conta</Label>
-            <Input
-              id="name"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              placeholder="Nome da conta"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="account">Número da Conta</Label>
-            <Input
-              id="account"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="Número da conta"
-              disabled
-            />
-          </div>
+  const handleCancelCreateGroup = () => {
+    setShowCreateGroup(false);
+    setNewGroupName('');
+    setNewGroupDescription('');
+    setNewGroupColor('#3B82F6');
+  };
 
-          <div className="space-y-2">
-            <Label htmlFor="group">Grupo</Label>
+  return (
+    <>
+      <Dialog open={isOpen && !showCreateGroup} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Conta</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome da Conta</Label>
+              <Input
+                id="name"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Nome da conta"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="account">Número da Conta</Label>
+              <Input
+                id="account"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                placeholder="Número da conta"
+                disabled
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="group">Grupo</Label>
+              <div className="flex gap-2">
+                <Select 
+                  value={selectedGroupId || ''} 
+                  onValueChange={(value) => setSelectedGroupId(value || null)}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecionar grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum grupo</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full border border-gray-300"
+                            style={{ backgroundColor: group.color }}
+                          />
+                          {group.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreateGroup(true)}
+                  className="px-3"
+                  title="Criar novo grupo"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vps">VPS</Label>
+              <Input
+                id="vps"
+                value={vps}
+                onChange={(e) => setVps(e.target.value)}
+                placeholder="VPS"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="vps_unique_id">VPS Unique ID</Label>
+              <Input
+                id="vps_unique_id"
+                value={vpsUniqueId}
+                onChange={(e) => setVpsUniqueId(e.target.value)}
+                placeholder="VPS Unique ID"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="broker">Broker</Label>
+              <Input
+                id="broker"
+                value={broker}
+                onChange={(e) => setBroker(e.target.value)}
+                placeholder="Broker"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="server">Server</Label>
+              <Input
+                id="server"
+                value={server}
+                onChange={(e) => setServer(e.target.value)}
+                placeholder="Server"
+              />
+            </div>
+
+            <Button type="submit" className="w-full">Salvar Alterações</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Criar Grupo - Separado */}
+      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Grupo</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newGroupName">Nome do Grupo</Label>
+              <Input
+                id="newGroupName"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Nome do grupo"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newGroupDescription">Descrição</Label>
+              <Input
+                id="newGroupDescription"
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                placeholder="Descrição do grupo"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newGroupColor">Cor</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="newGroupColor"
+                  value={newGroupColor}
+                  onChange={(e) => setNewGroupColor(e.target.value)}
+                  className="w-10 h-8 rounded border border-gray-300"
+                />
+                <Input
+                  value={newGroupColor}
+                  onChange={(e) => setNewGroupColor(e.target.value)}
+                  placeholder="#3B82F6"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            
             <div className="flex gap-2">
-              <Select 
-                value={selectedGroupId || ''} 
-                onValueChange={(value) => setSelectedGroupId(value || null)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecionar grupo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Nenhum grupo</SelectItem>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full border border-gray-300"
-                          style={{ backgroundColor: group.color }}
-                        />
-                        {group.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Botão + sempre visível */}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCreateGroup(true)}
-                className="px-3"
-                title="Criar novo grupo"
-              >
-                <Plus className="h-4 w-4" />
+              <Button onClick={handleCreateGroup} className="flex-1">
+                Criar Grupo
+              </Button>
+              <Button variant="outline" onClick={handleCancelCreateGroup} className="flex-1">
+                Cancelar
               </Button>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="vps">VPS</Label>
-            <Input
-              id="vps"
-              value={vps}
-              onChange={(e) => setVps(e.target.value)}
-              placeholder="VPS"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="vps_unique_id">VPS Unique ID</Label>
-            <Input
-              id="vps_unique_id"
-              value={vpsUniqueId}
-              onChange={(e) => setVpsUniqueId(e.target.value)}
-              placeholder="VPS Unique ID"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="broker">Broker</Label>
-            <Input
-              id="broker"
-              value={broker}
-              onChange={(e) => setBroker(e.target.value)}
-              placeholder="Broker"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="server">Server</Label>
-            <Input
-              id="server"
-              value={server}
-              onChange={(e) => setServer(e.target.value)}
-              placeholder="Server"
-            />
-          </div>
-
-          <Button type="submit">Salvar Alterações</Button>
-        </form>
-
-        {showCreateGroup && (
-          <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Criar Novo Grupo</DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newGroupName">Nome do Grupo</Label>
-                  <Input
-                    id="newGroupName"
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                    placeholder="Nome do grupo"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="newGroupDescription">Descrição</Label>
-                  <Input
-                    id="newGroupDescription"
-                    value={newGroupDescription}
-                    onChange={(e) => setNewGroupDescription(e.target.value)}
-                    placeholder="Descrição do grupo"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="newGroupColor">Cor</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      id="newGroupColor"
-                      value={newGroupColor}
-                      onChange={(e) => setNewGroupColor(e.target.value)}
-                      className="w-10 h-8 rounded border border-gray-300"
-                    />
-                    <Input
-                      value={newGroupColor}
-                      onChange={(e) => setNewGroupColor(e.target.value)}
-                      placeholder="#3B82F6"
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                
-                <Button onClick={handleCreateGroup}>Criar Grupo</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

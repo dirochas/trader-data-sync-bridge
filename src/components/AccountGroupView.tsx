@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X, SortAsc, DollarSign, BarChart3 } from 'lucide-react';
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { useAccountGroups } from '@/hooks/useAccountGroups';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -151,23 +152,84 @@ export const AccountGroupView = ({
     }));
   }, [accounts, groups]);
 
-  // Implementar ordenação estável por P&L total (decrescente) com desempate por groupId
+  // Funções de ordenação customizadas
   const customSortFunctions = {
+    name: (a: GroupData, b: GroupData) => {
+      const comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
+      return comparison !== 0 ? comparison : a.groupId.localeCompare(b.groupId);
+    },
     totalProfit: (a: GroupData, b: GroupData) => {
-      // Ordenar por P&L total (decrescente - maiores lucros primeiro)
-      return b.stats.totalProfit - a.stats.totalProfit;
+      const profitDiff = b.stats.totalProfit - a.stats.totalProfit;
+      return profitDiff !== 0 ? profitDiff : a.groupId.localeCompare(b.groupId);
+    },
+    totalTrades: (a: GroupData, b: GroupData) => {
+      const tradesDiff = b.stats.totalTrades - a.stats.totalTrades;
+      return tradesDiff !== 0 ? tradesDiff : a.groupId.localeCompare(b.groupId);
     }
   };
 
   // Usar o hook de sorting com ordenação padrão por P&L total
-  const { sortedData: sortedGroups } = useSorting(
+  const { sortedData: sortedGroups, requestSort, sortConfig } = useSorting(
     groupsData, 
     { key: 'totalProfit', direction: 'desc' },
     customSortFunctions
   );
 
+  // Função para obter o valor atual do toggle
+  const getCurrentSortValue = () => {
+    if (!sortConfig) return 'totalProfit';
+    return sortConfig.key;
+  };
+
+  // Função para lidar com mudança de ordenação
+  const handleSortChange = (value: string) => {
+    if (value) {
+      requestSort(value);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Controles de Ordenação */}
+      <div className="flex justify-center">
+        <Card className="w-fit">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Ordenar grupos por:</span>
+              <ToggleGroup 
+                type="single" 
+                value={getCurrentSortValue()} 
+                onValueChange={handleSortChange}
+                className="bg-muted rounded-lg p-1"
+              >
+                <ToggleGroupItem 
+                  value="name" 
+                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
+                >
+                  <SortAsc className="w-4 h-4" />
+                  Nome
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="totalProfit" 
+                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  P&L
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="totalTrades" 
+                  className="flex items-center gap-2 data-[state=on]:bg-background data-[state=on]:text-foreground"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Trades
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista de Grupos */}
       {sortedGroups.map((groupData) => {
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
         

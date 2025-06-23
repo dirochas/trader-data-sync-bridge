@@ -1,13 +1,12 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X, SortAsc, DollarSign, BarChart3 } from 'lucide-react';
+import { Edit, TrendingUp, TrendingDown, Folder, Users, Eye, X } from 'lucide-react';
 import { getConnectionStatus } from '@/hooks/useTradingData';
 import { useAccountGroups } from '@/hooks/useAccountGroups';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useSorting } from '@/hooks/useSorting';
 
 interface Account {
   id: string;
@@ -33,7 +32,7 @@ interface AccountGroupViewProps {
   onEditAccount: (account: Account) => void;
   onViewAccount?: (accountNumber: string) => void;
   onCloseAllPositions?: (account: Account) => void;
-  headerControls?: React.ReactNode; // Para receber os controles do cabeçalho
+  groupSortConfig?: { key: string; direction: 'asc' | 'desc' | null };
 }
 
 interface GroupData {
@@ -58,13 +57,10 @@ export const AccountGroupView = ({
   onEditAccount, 
   onViewAccount,
   onCloseAllPositions,
-  headerControls 
+  groupSortConfig 
 }: AccountGroupViewProps) => {
   const { data: groups = [] } = useAccountGroups();
   const permissions = usePermissions();
-  
-  // Debug log para confirmar que este componente está sendo renderizado
-  console.log('🔍 AccountGroupView renderizado - grupos:', groups.length);
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -156,89 +152,38 @@ export const AccountGroupView = ({
     }));
   }, [accounts, groups]);
 
-  // Funções de ordenação customizadas
-  const customSortFunctions = {
-    name: (a: GroupData, b: GroupData) => {
-      const comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
-      return comparison !== 0 ? comparison : a.groupId.localeCompare(b.groupId);
-    },
-    totalProfit: (a: GroupData, b: GroupData) => {
-      const profitDiff = b.stats.totalProfit - a.stats.totalProfit;
-      return profitDiff !== 0 ? profitDiff : a.groupId.localeCompare(b.groupId);
-    },
-    totalTrades: (a: GroupData, b: GroupData) => {
-      const tradesDiff = b.stats.totalTrades - a.stats.totalTrades;
-      return tradesDiff !== 0 ? tradesDiff : a.groupId.localeCompare(b.groupId);
+  // Aplicar ordenação baseada na configuração recebida
+  const sortedGroups = React.useMemo(() => {
+    if (!groupSortConfig || !groupSortConfig.key) {
+      return groupsData;
     }
-  };
 
-  // Usar o hook de sorting com ordenação padrão por P&L total
-  const { sortedData: sortedGroups, requestSort, sortConfig } = useSorting(
-    groupsData, 
-    { key: 'totalProfit', direction: 'desc' },
-    customSortFunctions
-  );
-
-  // Função para obter o valor atual do toggle
-  const getCurrentSortValue = () => {
-    if (!sortConfig) return 'totalProfit';
-    return sortConfig.key;
-  };
-
-  // Função para lidar com mudança de ordenação
-  const handleSortChange = (value: string) => {
-    if (value) {
-      requestSort(value);
-    }
-  };
-
-  // Renderizar os controles de ordenação
-  const renderSortControls = () => (
-    <div className="flex items-center gap-3">
-      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
-      <ToggleGroup 
-        type="single" 
-        value={getCurrentSortValue()} 
-        onValueChange={handleSortChange}
-        className="bg-muted/50 rounded-md p-0.5"
-        size="sm"
-      >
-        <ToggleGroupItem 
-          value="name" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <SortAsc className="w-3 h-3" />
-          Nome
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="totalProfit" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <DollarSign className="w-3 h-3" />
-          P&L
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="totalTrades" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <BarChart3 className="w-3 h-3" />
-          Trades
-        </ToggleGroupItem>
-      </ToggleGroup>
-    </div>
-  );
+    return [...groupsData].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (groupSortConfig.key) {
+        case 'name':
+          comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
+          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
+          break;
+        case 'totalProfit':
+          comparison = b.stats.totalProfit - a.stats.totalProfit;
+          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
+          break;
+        case 'totalTrades':
+          comparison = b.stats.totalTrades - a.stats.totalTrades;
+          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
+          break;
+        default:
+          return 0;
+      }
+      
+      return groupSortConfig.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [groupsData, groupSortConfig]);
 
   return (
     <div className="space-y-6">
-      {/* APENAS os controles de ordenação - SEM título */}
-      <div className="flex items-center gap-4">
-        {headerControls}
-        {renderSortControls()}
-      </div>
-
       {/* Lista de Grupos */}
       {sortedGroups.map((groupData) => {
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;

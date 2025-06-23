@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { TableHead } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useTradingAccounts, getConnectionStatus } from '@/hooks/useTradingData';
 import { usePagination } from '@/hooks/usePagination';
 import { useSorting } from '@/hooks/useSorting';
@@ -28,7 +29,9 @@ import {
   Archive,
   UserCheck,
   LayoutGrid,
-  Table
+  Table,
+  SortAsc,
+  BarChart3
 } from 'lucide-react';
 
 const AccountMonitor = () => {
@@ -46,6 +49,7 @@ const AccountMonitor = () => {
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<'table' | 'groups'>('table');
+  const [groupSortConfig, setGroupSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: 'totalProfit', direction: 'desc' });
 
   // Query para buscar lista de clientes únicos usando nickname (apenas para admin/manager)
   const { data: clientsList = [] } = useQuery({
@@ -349,6 +353,52 @@ const AccountMonitor = () => {
     }
   );
 
+  // Função para lidar com ordenação de grupos
+  const handleGroupSortChange = (value: string) => {
+    if (value) {
+      setGroupSortConfig({ key: value, direction: 'desc' });
+    }
+  };
+
+  // Renderizar os controles de ordenação para grupos
+  const renderGroupSortControls = () => (
+    <div className="flex items-center gap-3">
+      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
+      <ToggleGroup 
+        type="single" 
+        value={groupSortConfig.key} 
+        onValueChange={handleGroupSortChange}
+        className="bg-muted/50 rounded-md p-0.5"
+        size="sm"
+      >
+        <ToggleGroupItem 
+          value="name" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+          size="sm"
+        >
+          <SortAsc className="w-3 h-3" />
+          Nome
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="totalProfit" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+          size="sm"
+        >
+          <DollarSign className="w-3 h-3" />
+          P&L
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="totalTrades" 
+          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+          size="sm"
+        >
+          <BarChart3 className="w-3 h-3" />
+          Trades
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
+
   const handleViewAccount = (accountNumber: string) => {
     navigate(`/account/${accountNumber}`);
   };
@@ -608,7 +658,15 @@ const AccountMonitor = () => {
         <Card className="tech-card">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Trading Accounts</CardTitle>
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">Trading Accounts</CardTitle>
+                
+                {/* Controles de ordenação para grupos - visíveis apenas no modo grupos */}
+                <div className={`${viewMode === 'groups' ? 'block' : 'hidden'}`}>
+                  {renderGroupSortControls()}
+                </div>
+              </div>
+              
               <div className="flex items-center gap-4">
                 {/* Toggle de Visualização */}
                 <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
@@ -738,6 +796,7 @@ const AccountMonitor = () => {
                   onEditAccount={handleEditAccount}
                   onViewAccount={handleViewAccount}
                   onCloseAllPositions={handleCloseAllPositions}
+                  groupSortConfig={groupSortConfig}
                 />
               </div>
             )}

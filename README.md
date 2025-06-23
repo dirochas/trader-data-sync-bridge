@@ -1,4 +1,3 @@
-
 # TraderLab v1.8.2 - Professional Trading Management System
 
 **Status**: ✅ STABLE - Production Ready - Account Edit Modal Fixes & Visual Improvements
@@ -22,6 +21,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
 - **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
 - **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
+- **📊 Vista de Grupos Otimizada**: Interface melhorada com distribuição inteligente de colunas e cabeçalhos claros
 
 ### 🛠️ Tecnologias
 
@@ -43,6 +43,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Combinação das melhores funcionalidades das versões anteriores
 - ✅ Interface mais limpa e profissional para edição de contas
 - ✅ Validação aprimorada de formulários com feedback visual
+- ✅ Otimização da vista de grupos com melhor distribuição de colunas e cabeçalhos informativos
 
 **Histórico v1.8.1:**
 - ✅ Implementação completa de Row Level Security (RLS) na tabela accounts

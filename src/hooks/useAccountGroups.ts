@@ -22,10 +22,7 @@ export const useAccountGroups = () => {
         .select('*')
         .order('name');
       
-      if (error) {
-        console.error('Erro ao buscar grupos:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as AccountGroup[];
     },
     staleTime: 5000,
@@ -39,30 +36,13 @@ export const useCreateAccountGroup = () => {
 
   return useMutation({
     mutationFn: async (group: { name: string; description?: string; color?: string }) => {
-      // Garantir que o created_by seja preenchido com o usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      const groupData = {
-        ...group,
-        created_by: user.id
-      };
-
-      console.log('Criando grupo com dados:', groupData);
-
       const { data, error } = await supabase
         .from('account_groups')
-        .insert(groupData)
+        .insert(group)
         .select()
         .single();
       
-      if (error) {
-        console.error('Erro ao criar grupo:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -77,7 +57,7 @@ export const useCreateAccountGroup = () => {
       console.error('Erro ao criar grupo:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o grupo. Verifique suas permissões.",
+        description: "Não foi possível criar o grupo.",
         variant: "destructive",
       });
     },
@@ -90,8 +70,6 @@ export const useUpdateAccountGroup = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<AccountGroup> & { id: string }) => {
-      console.log('Atualizando grupo:', id, 'com dados:', updates);
-
       const { data, error } = await supabase
         .from('account_groups')
         .update(updates)
@@ -99,10 +77,7 @@ export const useUpdateAccountGroup = () => {
         .select()
         .single();
       
-      if (error) {
-        console.error('Erro ao atualizar grupo:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -117,7 +92,7 @@ export const useUpdateAccountGroup = () => {
       console.error('Erro ao atualizar grupo:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o grupo. Verifique suas permissões.",
+        description: "Não foi possível atualizar o grupo.",
         variant: "destructive",
       });
     },
@@ -130,17 +105,12 @@ export const useDeleteAccountGroup = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deletando grupo:', id);
-
       const { error } = await supabase
         .from('account_groups')
         .delete()
         .eq('id', id);
       
-      if (error) {
-        console.error('Erro ao deletar grupo:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account-groups'] });
@@ -154,7 +124,7 @@ export const useDeleteAccountGroup = () => {
       console.error('Erro ao remover grupo:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível remover o grupo. Verifique suas permissões.",
+        description: "Não foi possível remover o grupo.",
         variant: "destructive",
       });
     },

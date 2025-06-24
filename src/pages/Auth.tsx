@@ -91,7 +91,12 @@ const Auth = () => {
           backgroundImage: `url('/lovable-uploads/8800f846-5ff2-41c2-a2e9-28e9ad7eb909.png')`,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-gray-900/85 to-gray-800/90" />
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to bottom right, rgb(8 28 16 / 89%) 0%, rgb(17 24 39 / 74%) 50%, rgb(55 31 31 / 43%) 100%)'
+        }}
+      />
       
       {/* Content Container */}
       <div className="relative z-10 w-full max-w-md px-4">

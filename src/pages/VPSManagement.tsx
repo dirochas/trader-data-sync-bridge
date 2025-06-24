@@ -292,6 +292,18 @@ const VPSManagement = () => {
     return pages;
   };
 
+  // Initialize pagination with vpsData and itemsPerPage
+  const {
+    currentPage,
+    totalPages,
+    paginatedData: paginatedVpsData,
+    goToPage,
+    nextPage,
+    previousPage,
+    hasNextPage,
+    hasPreviousPage,
+  } = usePagination(vpsData, itemsPerPage);
+  
   return (
     <AppLayout>
       <div className="p-6 space-y-6">

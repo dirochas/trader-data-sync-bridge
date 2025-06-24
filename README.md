@@ -1,6 +1,6 @@
-# TraderLab v1.8.3 - Group View Stability & TypeScript Fixes
+# TraderLab v1.8.4 - VPS Management Enhancements & Pagination
 
-**Status**: ✅ STABLE - Production Ready - Group View Stability Improvements
+**Status**: ✅ STABLE - Production Ready - VPS Management with Advanced Pagination
 
 ## 📊 Sobre o Projeto
 
@@ -15,7 +15,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🖥️ Simulador de Hedge**: Ferramenta para análise de estratégias com isolamento por usuário
 - **⚡ Integração MetaTrader**: Conexão direta com EAs via API
 - **📱 Mobile Responsivo**: Scroll horizontal funcional em todas as tabelas
-- **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP
+- **🖥️ Gerenciamento VPS Completo**: Controle total de custos, vencimentos e conexões RDP com paginação avançada
 - **🔧 Modo Debug Seguro**: Visualização temporária de dados Cliente Trader com auto-desativação
 - **🤖 Gerenciamento de Expert Advisors**: Sistema completo de upload e download de EAs com controle de permissões
 - **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
@@ -24,6 +24,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **📊 Vista de Grupos Otimizada**: Interface melhorada com distribuição inteligente de colunas e cabeçalhos claros
 - **🎯 Ordenação Estável**: Sistema de sorting inteligente que evita oscilação de posições dos grupos
 - **🎨 Identificação Visual**: Bordas coloridas nos cards dos grupos para melhor organização visual
+- **📄 Paginação Inteligente**: Sistema de paginação completo em todas as páginas de listagem
 
 ### 🛠️ Tecnologias
 
@@ -34,9 +35,19 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8.3 - Group View Stability & TypeScript Fixes
+### 🎯 Versão Atual: v1.8.4 - VPS Management Enhancements & Pagination
 
-**Novidades v1.8.3:**
+**Novidades v1.8.4:**
+- ✅ Sistema completo de paginação na página VPS Management
+- ✅ Seletor de itens por página (5, 10, 25, 50, 100 VPS por página)
+- ✅ Navegação por páginas com botões Previous/Next e números de página
+- ✅ Indicador de progresso mostrando "X de Y VPS" na parte inferior
+- ✅ Interface otimizada para grandes quantidades de servidores VPS
+- ✅ Performance melhorada com carregamento paginado de dados
+- ✅ Controles de paginação responsivos e intuitivos
+- ✅ Integração completa com o hook `usePagination` personalizado
+
+**Histórico v1.8.3:**
 - ✅ Correção definitiva da oscilação de posições dos grupos no Account Monitor
 - ✅ Implementação de ordenação estável usando o hook `useSorting` otimizado
 - ✅ Sistema de tie-breaker por `groupId` para garantir posições consistentes
@@ -196,3 +207,28 @@ Nova implementação de sorting estável:
 ## Deploy
 
 O projeto pode ser deployado em qualquer serviço de hospedagem que suporte aplicações React/Vite.
+
+## 🖥️ Gerenciamento VPS Avançado
+
+Sistema completo para controle de infraestrutura VPS:
+
+- **📊 Dashboard VPS**: Visão geral com cards de resumo (Total VPS, Online, Contas, Custos)
+- **📄 Paginação Inteligente**: Navegação eficiente através de grandes listas de VPS
+- **🔍 Controle de Visualização**: Seletor para mostrar 5, 10, 25, 50 ou 100 VPS por página
+- **🖥️ Conexão RDP**: Download automático de arquivos .rdp para conexão remota
+- **💰 Controle de Custos**: Monitoramento de custos mensais e datas de vencimento
+- **📡 Status em Tempo Real**: Indicadores de conexão (Online, Delayed, Offline)
+- **⚙️ Configuração Completa**: Edição de dados de conexão, custos e informações do servidor
+- **👥 Gestão de Contas**: Visualização de contas por VPS com contadores de conexões ativas
+
+### 📄 Sistema de Paginação Universal
+
+Implementação consistente em todas as páginas de listagem:
+
+- **Hook Personalizado**: `usePagination` reutilizável para todas as tabelas
+- **Controles Intuitivos**: Botões Previous/Next com desabilitação automática
+- **Navegação por Números**: Clique direto em números de página específicos
+- **Seletor de Itens**: Dropdown para escolher quantos itens mostrar por página
+- **Indicadores de Progresso**: Contador "Mostrando X a Y de Z itens"
+- **Performance Otimizada**: Renderização apenas dos itens visíveis na página atual
+- **Responsividade**: Interface adaptável para diferentes tamanhos de tela

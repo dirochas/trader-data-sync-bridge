@@ -10,12 +10,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Folder, Users } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { useAccountGroups, useCreateAccountGroup, useUpdateAccountGroup, useDeleteAccountGroup } from '@/hooks/useAccountGroups';
-import { useTradingData } from '@/hooks/useTradingData';
+import { useTradingAccounts } from '@/hooks/useTradingData';
 import { useToast } from '@/hooks/use-toast';
 
 const GroupsManagement = () => {
   const { data: groups = [], isLoading } = useAccountGroups();
-  const { data: accounts = [] } = useTradingData();
+  const { data: accounts = [] } = useTradingAccounts();
   const createGroupMutation = useCreateAccountGroup();
   const updateGroupMutation = useUpdateAccountGroup();
   const deleteGroupMutation = useDeleteAccountGroup();

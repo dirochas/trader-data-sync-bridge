@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Folder, Users } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { useAccountGroups, useCreateAccountGroup, useUpdateAccountGroup, useDeleteAccountGroup } from '@/hooks/useAccountGroups';
+import { useTradingData } from '@/hooks/useTradingData';
 import { useToast } from '@/hooks/use-toast';
 
 const GroupsManagement = () => {
   const { data: groups = [], isLoading } = useAccountGroups();
+  const { data: accounts = [] } = useTradingData();
   const createGroupMutation = useCreateAccountGroup();
   const updateGroupMutation = useUpdateAccountGroup();
   const deleteGroupMutation = useDeleteAccountGroup();
@@ -29,6 +30,11 @@ const GroupsManagement = () => {
     description: '',
     color: '#3B82F6'
   });
+
+  // Função para contar contas por grupo
+  const getGroupAccountCount = (groupId: string) => {
+    return accounts.filter(account => account.group_id === groupId).length;
+  };
 
   const resetForm = () => {
     setFormData({ name: '', description: '', color: '#3B82F6' });
@@ -195,72 +201,76 @@ const GroupsManagement = () => {
               </CardContent>
             </Card>
           ) : (
-            groups.map((group) => (
-              <Card key={group.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                        style={{ backgroundColor: group.color }}
-                      />
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Folder className="w-5 h-5" />
-                          {group.name}
-                        </CardTitle>
-                        {group.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {group.description}
-                          </p>
-                        )}
+            groups.map((group) => {
+              const accountCount = getGroupAccountCount(group.id);
+              
+              return (
+                <Card key={group.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Folder className="w-5 h-5" />
+                            {group.name}
+                          </CardTitle>
+                          {group.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {group.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {accountCount} {accountCount === 1 ? 'conta' : 'contas'}
+                        </Badge>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditModal(group)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover Grupo</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover o grupo "{group.name}"? 
+                                As contas deste grupo não serão removidas, apenas desagrupadas.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteGroup(group.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        0 contas
-                      </Badge>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(group)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover Grupo</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja remover o grupo "{group.name}"? 
-                              As contas deste grupo não serão removidas, apenas desagrupadas.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteGroup(group.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Remover
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))
+                  </CardHeader>
+                </Card>
+              );
+            })
           )}
         </div>
 

@@ -49,6 +49,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Transição suave entre modos de visualização
 - ✅ Padronização de cores P&L: verde claro (rgb(42 176 91)) para lucro e vermelho claro (rgb(211 147 147)) para prejuízo
 - ✅ Redesign moderno da página de login com identidade visual TraderLab e tema escuro profissional
+- ✅ Correção de cores do novo design da página de login com gradientes personalizados
 
 **Histórico v1.8.4:**
 - ✅ Sistema completo de paginação na página VPS Management

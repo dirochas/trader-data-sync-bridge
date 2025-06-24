@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from './AppSidebar';
+import AppSidebar from './AppSidebar';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleDisplayName } from '@/hooks/usePermissions';

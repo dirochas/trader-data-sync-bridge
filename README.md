@@ -1,6 +1,7 @@
-# TraderLab v1.8.4 - VPS Management Enhancements & Pagination
 
-**Status**: ✅ STABLE - Production Ready - VPS Management with Advanced Pagination
+# TraderLab v1.8.5 - Dual Group View & Enhanced UX
+
+**Status**: ✅ STABLE - Production Ready - Dual Group Visualization System
 
 ## 📊 Sobre o Projeto
 
@@ -21,7 +22,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **🛡️ Sistema de Segurança Global**: Sanitização automática de dados e validação de arquivos
 - **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
 - **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
-- **📊 Vista de Grupos Otimizada**: Interface melhorada com distribuição inteligente de colunas e cabeçalhos claros
+- **📊 Vista de Grupos Dual**: Duas versões de visualização - Completa (V1) e Compacta (V2) com toggle dinâmico
 - **🎯 Ordenação Estável**: Sistema de sorting inteligente que evita oscilação de posições dos grupos
 - **🎨 Identificação Visual**: Bordas coloridas nos cards dos grupos para melhor organização visual
 - **📄 Paginação Inteligente**: Sistema de paginação completo em todas as páginas de listagem
@@ -35,9 +36,20 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8.4 - VPS Management Enhancements & Pagination
+### 🎯 Versão Atual: v1.8.5 - Dual Group View & Enhanced UX
 
-**Novidades v1.8.4:**
+**Novidades v1.8.5:**
+- ✅ Sistema dual de visualização de grupos: V1 (Completa) e V2 (Compacta)
+- ✅ Toggle dinâmico para alternar entre as duas versões no modo grupos
+- ✅ AccountGroupView2: layout ultra-compacto focado em informações essenciais
+- ✅ Grid responsivo com até 3 colunas para acomodar mais grupos na tela
+- ✅ Cards miniaturizados com foco em status, trades abertos e P&L
+- ✅ Interface otimizada para grandes quantidades de grupos
+- ✅ Melhor aproveitamento do espaço horizontal da tela
+- ✅ Controles intuitivos para comparação entre as duas versões
+- ✅ Transição suave entre modos de visualização
+
+**Histórico v1.8.4:**
 - ✅ Sistema completo de paginação na página VPS Management
 - ✅ Seletor de itens por página (5, 10, 25, 50, 100 VPS por página)
 - ✅ Navegação por páginas com botões Previous/Next e números de página
@@ -166,16 +178,25 @@ O projeto agora conta com um sistema robusto de segurança:
 
 Consulte `src/utils/SECURITY_GUIDE.md` para implementação em novas funcionalidades.
 
-## 📁 Sistema de Grupos
+## 📁 Sistema de Grupos Dual
 
-Nova funcionalidade para organização de contas:
+Nova funcionalidade com duas versões de visualização:
 
-- **Criação de Grupos**: Interface intuitiva para criar grupos personalizados
-- **Cores Customizadas**: Sistema de cores para identificação visual
-- **Gestão de Contas**: Associação fácil de contas aos grupos
-- **Permissões Específicas**: Apenas Admin e Manager podem gerenciar grupos
-- **Interface Responsiva**: Modais e formulários otimizados para todas as telas
-- **Ordenação Estável**: Sistema inteligente que evita oscilação de posições
+### 🎨 Group View V1 (Completa)
+- **Layout Detalhado**: Informações completas de cada grupo e conta
+- **Cards Expandidos**: Dados extensivos de performance e status
+- **Ideal Para**: Análise detalhada e monitoramento profundo
+
+### ⚡ Group View V2 (Compacta)
+- **Layout Miniaturizado**: Foco em informações essenciais
+- **Grid Responsivo**: Até 3 colunas para melhor aproveitamento da tela
+- **Dados Essenciais**: Status (bolinha colorida), trades abertos e P&L
+- **Ideal Para**: Visão geral rápida de muitos grupos simultaneamente
+
+### 🔄 Toggle Dinâmico
+- **Troca Instantânea**: Alternância entre V1 e V2 sem recarregar dados
+- **Memória de Preferência**: Sistema lembra da última escolha do usuário
+- **Interface Intuitiva**: Controles claros com labels V1/V2
 
 ## 🔐 Políticas de Segurança
 
@@ -234,3 +255,4 @@ Implementação consistente em todas as páginas de listagem:
 - **Indicadores de Progresso**: Contador "Mostrando X a Y de Z itens"
 - **Performance Otimizada**: Renderização apenas dos itens visíveis na página atual
 - **Responsividade**: Interface adaptável para diferentes tamanhos de tela
+

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,7 +85,7 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 relative overflow-hidden">
       {/* Background Bull/Bear Image with Overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
         style={{
           backgroundImage: `url('/lovable-uploads/b24160d6-28c6-447d-9238-52382c1da474.png')`,
         }}
@@ -101,10 +100,9 @@ const Auth = () => {
             <img 
               src="/lovable-uploads/9a83edf6-5ff0-4a78-be3c-8919ad8bfa34.png" 
               alt="TraderLab Logo" 
-              className="h-16 w-auto"
+              className="h-20 w-auto"
             />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">TraderLab</h1>
           <p className="text-gray-300">Acesse sua conta ou crie uma nova</p>
         </div>
 

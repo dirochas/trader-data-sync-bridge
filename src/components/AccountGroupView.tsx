@@ -148,7 +148,14 @@ export const AccountGroupView = ({
 
   const sortedGroups = React.useMemo(() => {
     if (!groupSortConfig || !groupSortConfig.key) {
-      return groupsData;
+      // Ordenação padrão estável por nome do grupo
+      return [...groupsData].sort((a, b) => {
+        const comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
+        if (comparison === 0) {
+          return a.groupId.localeCompare(b.groupId);
+        }
+        return comparison;
+      });
     }
 
     return [...groupsData].sort((a, b) => {
@@ -157,18 +164,20 @@ export const AccountGroupView = ({
       switch (groupSortConfig.key) {
         case 'name':
           comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
-          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
           break;
         case 'totalProfit':
           comparison = b.stats.totalProfit - a.stats.totalProfit;
-          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
           break;
         case 'totalTrades':
           comparison = b.stats.totalTrades - a.stats.totalTrades;
-          if (comparison === 0) comparison = a.groupId.localeCompare(b.groupId);
           break;
         default:
-          return 0;
+          comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
+      }
+      
+      // Tie-breaker SEMPRE aplicado para estabilidade
+      if (comparison === 0) {
+        comparison = a.groupId.localeCompare(b.groupId);
       }
       
       return groupSortConfig.direction === 'asc' ? comparison : -comparison;
@@ -180,6 +189,11 @@ export const AccountGroupView = ({
       {/* Lista de Grupos */}
       {sortedGroups.map((groupData) => {
         const { groupId, groupInfo, accounts: groupAccounts, stats } = groupData;
+        
+        // Ordenar contas dentro do grupo por número da conta para estabilidade
+        const sortedGroupAccounts = [...groupAccounts].sort((a, b) => {
+          return a.account.localeCompare(b.account);
+        });
         
         return (
           <Card 
@@ -258,7 +272,7 @@ export const AccountGroupView = ({
               </div>
 
               <div className="space-y-2">
-                {groupAccounts.map((account) => {
+                {sortedGroupAccounts.map((account) => {
                   const connectionStatus = getConnectionStatus(account.updated_at);
                   const isProfit = account.profit >= 0;
                   const isDayProfit = (account.dayProfit || 0) >= 0;

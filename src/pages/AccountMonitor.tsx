@@ -276,6 +276,9 @@ const AccountMonitor = () => {
       
       return {
         ...account,
+        // Garantir que sempre temos um ID único e estável para tie-breaker
+        id: account.id || `acc_${account.account}`,
+        account: account.account, // Garantir que account sempre existe
         status: connectionStatus.status === 'Disconnected' ? 'Offline' : connectionStatus.status,
         name: account.name || `Account ${account.account}`,
         vps: account.vps || 'N/A',
@@ -329,26 +332,57 @@ const AccountMonitor = () => {
     hasPreviousPage,
   } = usePagination(filteredAccounts, viewMode === 'table' ? itemsPerPage : filteredAccounts.length);
 
-  // Configuração de ordenação com cache inteligente ativado - apenas para vista de tabela
+  // Configuração de ordenação com tie-breaker garantido - apenas para vista de tabela
   const { sortedData: sortedAccounts, requestSort, getSortIcon, sortConfig } = useSorting(
     paginatedData,
-    { key: 'openTrades', direction: 'desc' }, // Ordenação padrão por trades abertas
+    { key: 'account', direction: 'asc' }, // Ordenação padrão por número da conta (mais estável)
     {
-      // Funções de ordenação customizadas para maior controle
+      // Funções de ordenação customizadas com tie-breaker garantido
       openTrades: (a: any, b: any) => {
         const aCount = a.openTrades || 0;
         const bCount = b.openTrades || 0;
-        return aCount - bCount;
+        const comparison = aCount - bCount;
+        if (comparison === 0) {
+          // Tie-breaker por número da conta
+          return a.account.localeCompare(b.account);
+        }
+        return comparison;
       },
       balance: (a: any, b: any) => {
         const aBalance = Number(a.balance) || 0;
         const bBalance = Number(b.balance) || 0;
-        return aBalance - bBalance;
+        const comparison = aBalance - bBalance;
+        if (comparison === 0) {
+          return a.account.localeCompare(b.account);
+        }
+        return comparison;
       },
       equity: (a: any, b: any) => {
         const aEquity = Number(a.equity) || 0;
         const bEquity = Number(b.equity) || 0;
-        return aEquity - bEquity;
+        const comparison = aEquity - bEquity;
+        if (comparison === 0) {
+          return a.account.localeCompare(b.account);
+        }
+        return comparison;
+      },
+      name: (a: any, b: any) => {
+        const aName = a.name || '';
+        const bName = b.name || '';
+        const comparison = aName.localeCompare(bName);
+        if (comparison === 0) {
+          return a.account.localeCompare(b.account);
+        }
+        return comparison;
+      },
+      clientNickname: (a: any, b: any) => {
+        const aNickname = a.clientNickname || '';
+        const bNickname = b.clientNickname || '';
+        const comparison = aNickname.localeCompare(bNickname);
+        if (comparison === 0) {
+          return a.account.localeCompare(b.account);
+        }
+        return comparison;
       }
     }
   );

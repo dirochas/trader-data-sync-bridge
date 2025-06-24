@@ -61,6 +61,33 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     return suspiciousRate < 0.25;
   };
 
+  // Função de tie-breaker mais robusta
+  const getTieBreaker = (obj: any): string => {
+    // Prioridade: account > id > account_number > qualquer identificador único
+    const identifiers = [
+      obj.account,
+      obj.id, 
+      obj.account_number,
+      obj.accountNumber,
+      obj.name,
+      obj.ticket,
+      obj.vps,
+      obj.server
+    ];
+    
+    for (const identifier of identifiers) {
+      if (identifier && typeof identifier === 'string' && identifier.trim() !== '') {
+        return identifier.toString();
+      }
+      if (identifier && typeof identifier === 'number') {
+        return identifier.toString();
+      }
+    }
+    
+    // Fallback final - usar índice baseado no JSON stringificado
+    return JSON.stringify(obj).substring(0, 50);
+  };
+
   const sortedData = useMemo(() => {
     const currentSortConfig = sortConfigRef.current;
     
@@ -78,32 +105,54 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
     }
     
     if (!currentSortConfig || !currentSortConfig.key) {
-      return dataToUse;
+      // Mesmo sem ordenação, aplicar tie-breaker para estabilidade
+      return [...dataToUse].sort((a, b) => {
+        const aTieBreaker = getTieBreaker(a);
+        const bTieBreaker = getTieBreaker(b);
+        return aTieBreaker.localeCompare(bTieBreaker);
+      });
     }
 
     const result = [...dataToUse].sort((a, b) => {
+      let comparison = 0;
+      
       if (customSortFunctions && customSortFunctions[currentSortConfig.key]) {
-        const customResult = customSortFunctions[currentSortConfig.key](a, b);
-        if (customResult !== 0) {
-          return currentSortConfig.direction === 'asc' ? customResult : -customResult;
-        }
+        comparison = customSortFunctions[currentSortConfig.key](a, b);
       } else {
         const aValue = getNestedValue(a, currentSortConfig.key);
         const bValue = getNestedValue(b, currentSortConfig.key);
 
-        if (aValue < bValue) {
-          return currentSortConfig.direction === 'asc' ? -1 : 1;
+        // Comparação numérica para números
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          comparison = aValue - bValue;
         }
-        if (aValue > bValue) {
-          return currentSortConfig.direction === 'asc' ? 1 : -1;
+        // Comparação de strings
+        else if (typeof aValue === 'string' && typeof bValue === 'string') {
+          comparison = aValue.localeCompare(bValue);
+        }
+        // Comparação mista - números sempre vêm antes de strings
+        else if (typeof aValue === 'number' && typeof bValue === 'string') {
+          comparison = -1;
+        }
+        else if (typeof aValue === 'string' && typeof bValue === 'number') {
+          comparison = 1;
+        }
+        // Comparação para valores undefined/null
+        else {
+          const aStr = String(aValue || '');
+          const bStr = String(bValue || '');
+          comparison = aStr.localeCompare(bStr);
         }
       }
 
-      // Tie-breaker usando ID da conta para estabilidade
-      const aId = getNestedValue(a, 'id') || getNestedValue(a, 'account_number') || '';
-      const bId = getNestedValue(b, 'id') || getNestedValue(b, 'account_number') || '';
+      // Se há empate na ordenação principal, aplicar tie-breaker SEMPRE
+      if (comparison === 0) {
+        const aTieBreaker = getTieBreaker(a);
+        const bTieBreaker = getTieBreaker(b);
+        comparison = aTieBreaker.localeCompare(bTieBreaker);
+      }
       
-      return aId < bId ? -1 : aId > bId ? 1 : 0;
+      return currentSortConfig.direction === 'asc' ? comparison : -comparison;
     });
 
     return result;
@@ -141,7 +190,7 @@ export const useSorting = <T>(data: T[], initialSort?: SortConfig, customSortFun
 
 const getNestedValue = (obj: any, path: string) => {
   const result = path.split('.').reduce((current, key) => {
-    return current && current[key] !== undefined ? current[key] : '';
+    return current && current[key] !== undefined ? current[key] : undefined;
   }, obj);
   
   return result;

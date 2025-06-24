@@ -152,10 +152,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-[80px]' : 'w-64'} border-r bg-sidebar border-sidebar-border`}
+      className={`${isCollapsed ? 'w-[80px]' : 'w-64'} border-r border-sidebar-border`}
       collapsible="icon"
+      style={{ backgroundColor: 'rgb(14, 16, 22)' }}
     >
-      <div className="px-4 pt-3 pb-3 border-b border-sidebar-border bg-sidebar">
+      <div className="px-4 pt-3 pb-3 border-b border-sidebar-border" style={{ backgroundColor: 'rgb(14, 16, 22)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
             <img 
@@ -177,7 +178,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <SidebarContent className={`${isCollapsed ? 'px-2' : 'px-3'} py-4 bg-sidebar`}>
+      <SidebarContent className={`${isCollapsed ? 'px-2' : 'px-3'} py-4`} style={{ backgroundColor: 'rgb(14, 16, 22)' }}>
         <SidebarGroup>
           <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-xs text-sidebar-foreground/60 uppercase tracking-wider mb-2`}>
             Navigation
@@ -265,7 +266,7 @@ export function AppSidebar() {
         </div>
       </SidebarContent>
 
-      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t border-sidebar-border bg-sidebar`}>
+      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t border-sidebar-border`} style={{ backgroundColor: 'rgb(14, 16, 22)' }}>
         <SidebarTrigger className="w-full h-11 bg-sidebar-accent/30 border border-sidebar-border rounded-lg hover:bg-sidebar-accent transition-all duration-200 text-sidebar-foreground hover:text-sidebar-accent-foreground" />
       </div>
     </Sidebar>

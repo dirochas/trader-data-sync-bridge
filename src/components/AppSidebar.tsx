@@ -1,132 +1,275 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Monitor, 
-  Settings, 
-  Server, 
   Users, 
-  BarChart3, 
-  Command,
-  FileText,
-  Bot,
-  Activity,
-  FolderOpen,
-  Archive
+  Settings, 
+  Monitor, 
+  Server, 
+  Brain,
+  Calculator,
+  User,
+  Terminal,
+  Archive,
+  LogOut,
+  UserCog,
+  Folder
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePermissions } from '@/hooks/usePermissions';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermissions, getRoleDisplayName } from '@/hooks/usePermissions';
 
-const AppSidebar = () => {
+const menuItems = [
+  { 
+    title: 'Dashboard', 
+    url: '/dashboard', 
+    icon: LayoutDashboard,
+    permissionKey: 'canAccessDashboard' as const
+  },
+  { 
+    title: 'Account Monitor', 
+    url: '/accounts', 
+    icon: Monitor,
+    permissionKey: 'canAccessAccountMonitor' as const
+  },
+  { 
+    title: 'Groups Management', 
+    url: '/groups', 
+    icon: Folder,
+    permissionKey: 'canAccessGroupsManagement' as const
+  },
+  { 
+    title: 'Hedge Simulator', 
+    url: '/simulations', 
+    icon: Calculator,
+    permissionKey: 'canAccessHedgeSimulator' as const
+  },
+  { 
+    title: 'Expert Management', 
+    url: '/experts', 
+    icon: Brain,
+    permissionKey: 'canAccessExpertManagement' as const
+  },
+  { 
+    title: 'VPS Management', 
+    url: '/vps', 
+    icon: Server,
+    permissionKey: 'canAccessVPS' as const
+  },
+  { 
+    title: 'Commands', 
+    url: '/commands', 
+    icon: Terminal,
+    permissionKey: 'canAccessCommands' as const
+  },
+  { 
+    title: 'User Management', 
+    url: '/users', 
+    icon: Users,
+    permissionKey: 'canAccessUserManagement' as const
+  },
+  { 
+    title: 'Settings', 
+    url: '/settings', 
+    icon: Settings,
+    permissionKey: 'canAccessSettings' as const
+  },
+];
+
+const getRoleColor = (role: string) => {
+  switch (role) {
+    case 'admin':
+      return 'from-red-400 to-red-500';
+    case 'manager':
+      return 'from-blue-400 to-blue-500';
+    case 'client_trader':
+      return 'from-emerald-400 to-teal-400';
+    case 'client_investor':
+      return 'from-purple-400 to-purple-500';
+    default:
+      return 'from-gray-400 to-gray-500';
+  }
+};
+
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const permissions = usePermissions();
+  const currentPath = location.pathname;
+  
+  const isCollapsed = state === 'collapsed';
 
-  const navigation = [
-    { 
-      name: 'Dashboard', 
-      href: '/', 
-      icon: LayoutDashboard,
-      show: permissions.canAccessDashboard
-    },
-    { 
-      name: 'Account Monitor', 
-      href: '/accounts', 
-      icon: Monitor,
-      show: permissions.canAccessAccountMonitor
-    },
-    { 
-      name: 'Inactive Accounts', 
-      href: '/inactive-accounts', 
-      icon: Archive,
-      show: permissions.canAccessAccountsManagement
-    },
-    { 
-      name: 'Hedge Simulator', 
-      href: '/hedge-simulator', 
-      icon: BarChart3,
-      show: permissions.canAccessHedgeSimulator
-    },
-    { 
-      name: 'VPS Management', 
-      href: '/vps', 
-      icon: Server,
-      show: permissions.canAccessVPS
-    },
-    { 
-      name: 'Groups Management', 
-      href: '/groups', 
-      icon: FolderOpen,
-      show: permissions.canAccessGroupsManagement
-    },
-    { 
-      name: 'Commands', 
-      href: '/commands', 
-      icon: Command,
-      show: permissions.canAccessCommands
-    },
-    { 
-      name: 'User Management', 
-      href: '/users', 
-      icon: Users,
-      show: permissions.canAccessUserManagement
-    },
-    { 
-      name: 'Expert Management', 
-      href: '/experts', 
-      icon: Bot,
-      show: permissions.canAccessExpertManagement
-    },
-    { 
-      name: 'Simulation Management', 
-      href: '/simulations', 
-      icon: FileText,
-      show: permissions.canAccessHedgeSimulator
-    },
-    { 
-      name: 'System Diagnostics', 
-      href: '/diagnostics', 
-      icon: Activity,
-      show: permissions.canAccessSettings
-    },
-    { 
-      name: 'Settings', 
-      href: '/settings', 
-      icon: Settings,
-      show: permissions.canAccessSettings
-    },
-  ];
+  const isActive = (path: string) => {
+    if (path === '/accounts') {
+      return currentPath === '/' || currentPath === '/accounts';
+    }
+    return currentPath === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  const handleSettings = () => {
+    navigate('/settings');
+  };
+
+  const userRole = profile?.role || 'client_trader';
+  const displayName = getRoleDisplayName(userRole);
+  const roleColor = getRoleColor(userRole);
+
+  // Filter menu items based on permissions
+  const availableMenuItems = menuItems.filter(item => 
+    permissions[item.permissionKey]
+  );
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          TraderLab
-        </h2>
+    <Sidebar 
+      className={`${isCollapsed ? 'w-[80px]' : 'w-64'} border-r bg-sidebar border-sidebar-border`}
+      collapsible="icon"
+    >
+      <div className="px-4 pt-3 pb-3 border-b border-sidebar-border bg-sidebar">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+            <img 
+              src="/lovable-uploads/39ba8fe9-453c-4813-8fc2-4add8c8536b2.png" 
+              alt="TraderLab Logo" 
+              className="w-8 h-8 object-contain"
+            />
+          </div>
+          {!isCollapsed && (
+            <div className="min-w-0 flex-1">
+              <img 
+                src="/lovable-uploads/9a7101c2-5cb9-4ab1-a575-4a699474138e.png" 
+                alt="TRADERLAB" 
+                className="h-6 object-contain"
+              />
+              <p className="text-xs text-sidebar-foreground/60 mt-1">Trading System</p>
+            </div>
+          )}
+        </div>
       </div>
-      
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {navigation
-          .filter(item => item.show)
-          .map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                )
-              }
+
+      <SidebarContent className={`${isCollapsed ? 'px-2' : 'px-3'} py-4 bg-sidebar`}>
+        <SidebarGroup>
+          <SidebarGroupLabel className={`${isCollapsed ? 'sr-only' : ''} text-xs text-sidebar-foreground/60 uppercase tracking-wider mb-2`}>
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-2">
+              {availableMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild className="h-11">
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} py-3 rounded-xl transition-all duration-300 group ${
+                        isActive(item.url)
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold border border-sidebar-accent' 
+                          : 'hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:translate-x-1'
+                      }`}
+                    >
+                      <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                        isActive(item.url) ? 'text-sidebar-accent-foreground' : 'group-hover:text-sidebar-accent-foreground'
+                      }`} />
+                      {!isCollapsed && (
+                        <span className="text-sm font-medium truncate">
+                          {item.title}
+                        </span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* User Profile Section with Dropdown */}
+        <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className={`bg-sidebar-accent/30 border border-sidebar-border rounded-xl ${isCollapsed ? 'p-2' : 'p-3'} backdrop-blur-sm cursor-pointer hover:bg-sidebar-accent/50 transition-colors ${isCollapsed ? 'flex justify-center' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${roleColor} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-sidebar-foreground">{displayName}</p>
+                      <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.email || 'user@traderlab.com'}</p>
+                      {permissions.isInvestor && (
+                        <p className="text-xs text-purple-400 mt-1">View Only Access</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 bg-sidebar border-sidebar-border"
+              side={isCollapsed ? "right" : "top"}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </NavLink>
-          ))}
-      </nav>
-    </aside>
+              <DropdownMenuLabel className="text-sidebar-foreground">
+                Minha Conta
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-sidebar-border" />
+              
+              <DropdownMenuItem 
+                onClick={handleSettings}
+                className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-sidebar-border" />
+              
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-400 hover:bg-red-900/20 hover:text-red-300 cursor-pointer"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair do Sistema
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </SidebarContent>
+
+      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t border-sidebar-border bg-sidebar`}>
+        <SidebarTrigger className="w-full h-11 bg-sidebar-accent/30 border border-sidebar-border rounded-lg hover:bg-sidebar-accent transition-all duration-200 text-sidebar-foreground hover:text-sidebar-accent-foreground" />
+      </div>
+    </Sidebar>
   );
-};
+}
 
 export default AppSidebar;

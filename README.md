@@ -1,4 +1,3 @@
-
 # TraderLab v1.8.5 - Dual Group View & Enhanced UX
 
 **Status**: ✅ STABLE - Production Ready - Dual Group Visualization System
@@ -48,6 +47,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Melhor aproveitamento do espaço horizontal da tela
 - ✅ Controles intuitivos para comparação entre as duas versões
 - ✅ Transição suave entre modos de visualização
+- ✅ Padronização de cores P&L: verde claro (rgb(42 176 91)) para lucro e vermelho claro (rgb(211 147 147)) para prejuízo
 
 **Histórico v1.8.4:**
 - ✅ Sistema completo de paginação na página VPS Management
@@ -255,4 +255,3 @@ Implementação consistente em todas as páginas de listagem:
 - **Indicadores de Progresso**: Contador "Mostrando X a Y de Z itens"
 - **Performance Otimizada**: Renderização apenas dos itens visíveis na página atual
 - **Responsividade**: Interface adaptável para diferentes tamanhos de tela
-

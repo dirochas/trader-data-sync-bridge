@@ -47,6 +47,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Controles de paginação responsivos e intuitivos
 - ✅ Integração completa com o hook `usePagination` personalizado
 - ✅ Correção das cores do sidebar para manter consistência visual com o tema dark
+- ✅ Restauração da cor azul clara (sky-400) para links ativos no sidebar
 
 **Histórico v1.8.3:**
 - ✅ Correção definitiva da oscilação de posições dos grupos no Account Monitor

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,7 +88,7 @@ const Auth = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
         style={{
-          backgroundImage: `url('/lovable-uploads/b24160d6-28c6-447d-9238-52382c1da474.png')`,
+          backgroundImage: `url('/lovable-uploads/8800f846-5ff2-41c2-a2e9-28e9ad7eb909.png')`,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-gray-900/85 to-gray-800/90" />

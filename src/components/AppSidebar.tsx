@@ -193,12 +193,12 @@ export function AppSidebar() {
                       end 
                       className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} py-3 rounded-xl transition-all duration-300 group ${
                         isActive(item.url)
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold border border-sidebar-accent' 
+                          ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30' 
                           : 'hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:translate-x-1'
                       }`}
                     >
                       <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                        isActive(item.url) ? 'text-sidebar-accent-foreground' : 'group-hover:text-sidebar-accent-foreground'
+                        isActive(item.url) ? 'text-sky-400' : 'group-hover:text-sidebar-accent-foreground'
                       }`} />
                       {!isCollapsed && (
                         <span className="text-sm font-medium truncate">

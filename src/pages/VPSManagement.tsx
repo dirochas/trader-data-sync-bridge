@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useTradingAccounts } from '@/hooks/useTradingData';
+import { usePagination } from '@/hooks/usePagination';
 import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -26,6 +29,7 @@ const VPSManagement = () => {
   
   const [editVPSModalOpen, setEditVPSModalOpen] = useState(false);
   const [selectedVPS, setSelectedVPS] = useState<any>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Agrupar contas por VPS único (usando vps_unique_id)
   const vpsGroups = accounts.reduce((acc, account) => {
@@ -269,6 +273,25 @@ const VPSManagement = () => {
     fetchVPSServersData();
   };
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const showPages = 5; // Number of page buttons to show
+    
+    let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+    let endPage = Math.min(totalPages, startPage + showPages - 1);
+    
+    if (endPage - startPage + 1 < showPages) {
+      startPage = Math.max(1, endPage - showPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -351,7 +374,30 @@ const VPSManagement = () => {
         {/* VPS Table */}
         <Card className="tech-card">
           <CardHeader>
-            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">VPS Servers</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">VPS Servers</CardTitle>
+              
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Mostrar:</span>
+                <Select 
+                  value={itemsPerPage.toString()} 
+                  onValueChange={(value) => setItemsPerPage(Number(value))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-500 dark:text-gray-400">por página</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -369,7 +415,7 @@ const VPSManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vpsData.map((vps) => {
+                  {paginatedVpsData.map((vps) => {
                     const status = getVPSStatus(vps);
                     const StatusIcon = status.icon;
                     
@@ -448,6 +494,45 @@ const VPSManagement = () => {
                 <p className="mt-1 text-sm text-gray-500">
                   Conecte seus EAs para começar a detectar VPS automaticamente
                 </p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/20">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, vpsData.length)} de {vpsData.length} VPS
+                </div>
+                
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={previousPage}
+                        className={!hasPreviousPage ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                    
+                    {getPageNumbers().map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => goToPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={nextPage}
+                        className={!hasNextPage ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </CardContent>

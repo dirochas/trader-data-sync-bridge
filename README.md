@@ -46,6 +46,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Performance melhorada com carregamento paginado de dados
 - ✅ Controles de paginação responsivos e intuitivos
 - ✅ Integração completa com o hook `usePagination` personalizado
+- ✅ Correção das cores do sidebar para manter consistência visual com o tema dark
 
 **Histórico v1.8.3:**
 - ✅ Correção definitiva da oscilação de posições dos grupos no Account Monitor

@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/AppLayout';
 import { AccountTableView } from '@/components/AccountTableView';
 import { AccountGroupView } from '@/components/AccountGroupView';
+import { AccountGroupView2 } from '@/components/AccountGroupView2';
 import EditAccountModal from '@/components/EditAccountModal';
 import CloseAllPositionsModal from '@/components/CloseAllPositionsModal';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -50,6 +51,7 @@ const AccountMonitor = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<'table' | 'groups'>('table');
   const [groupSortConfig, setGroupSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: 'totalProfit', direction: 'desc' });
+  const [useCompactGroups, setUseCompactGroups] = useState(false);
 
   // Query para buscar lista de clientes únicos usando nickname (apenas para admin/manager)
   const { data: clientsList = [] } = useQuery({
@@ -723,6 +725,23 @@ const AccountMonitor = () => {
                   </div>
                 </div>
 
+                {/* Toggle para Versão Compacta dos Grupos - visível apenas no modo grupos */}
+                {viewMode === 'groups' && (
+                  <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">V1</span>
+                    </div>
+                    <Switch
+                      id="compact-groups"
+                      checked={useCompactGroups}
+                      onCheckedChange={setUseCompactGroups}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">V2</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -825,13 +844,23 @@ const AccountMonitor = () => {
               </>
             ) : (
               <div className="p-6">
-                <AccountGroupView 
-                  accounts={filteredAccounts}
-                  onEditAccount={handleEditAccount}
-                  onViewAccount={handleViewAccount}
-                  onCloseAllPositions={handleCloseAllPositions}
-                  groupSortConfig={groupSortConfig}
-                />
+                {useCompactGroups ? (
+                  <AccountGroupView2 
+                    accounts={filteredAccounts}
+                    onEditAccount={handleEditAccount}
+                    onViewAccount={handleViewAccount}
+                    onCloseAllPositions={handleCloseAllPositions}
+                    groupSortConfig={groupSortConfig}
+                  />
+                ) : (
+                  <AccountGroupView 
+                    accounts={filteredAccounts}
+                    onEditAccount={handleEditAccount}
+                    onViewAccount={handleViewAccount}
+                    onCloseAllPositions={handleCloseAllPositions}
+                    groupSortConfig={groupSortConfig}
+                  />
+                )}
               </div>
             )}
 

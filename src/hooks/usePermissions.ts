@@ -16,6 +16,7 @@ interface Permissions {
   canAccessUserManagement: boolean;
   canAccessExpertManagement: boolean;
   canAccessSettings: boolean;
+  canAccessGroupsManagement: boolean; // Nova permissão para gerenciamento de grupos
   
   // Action permissions
   canEditAccounts: boolean;
@@ -23,6 +24,8 @@ interface Permissions {
   canViewAccountDetails: boolean;
   canManageVPS: boolean;
   canEditVPSDisplayName: boolean; // Nova permissão específica para VPS
+  canManageGroups: boolean; // Nova permissão para gerenciar grupos
+  canCreateGroups: boolean; // Nova permissão para criar grupos
   
   // UI state
   isAdmin: boolean;
@@ -56,6 +59,7 @@ export const usePermissions = (): Permissions => {
     canAccessUserManagement: isAdminOrManager, // Only admin/manager
     canAccessExpertManagement: isAdminOrManager || isTrader, // Investors cannot access
     canAccessSettings: true, // Everyone can access settings
+    canAccessGroupsManagement: isAdminOrManager || isTrader, // Admin, Manager e Trader podem acessar
     
     // Action permissions
     canEditAccounts: isAdminOrManager || isTrader, // Investors cannot edit
@@ -63,6 +67,8 @@ export const usePermissions = (): Permissions => {
     canViewAccountDetails: true, // Everyone can view details
     canManageVPS: isAdminOrManager || isTrader, // Investors cannot manage VPS
     canEditVPSDisplayName: isAdminOrManager || isTrader, // Investors cannot edit VPS names
+    canManageGroups: isAdminOrManager || isTrader, // Admin, Manager e Trader podem gerenciar grupos
+    canCreateGroups: isAdminOrManager || isTrader, // Admin, Manager e Trader podem criar grupos
     
     // UI state helpers
     isAdmin,
@@ -96,7 +102,7 @@ export const getRolePermissionsSummary = (role: UserRole): string[] => {
     case 'manager':
       return ['Full Access', 'All Features', 'User Management'];
     case 'client_trader':
-      return ['Trading Features', 'Account Management', 'Hedge Simulator'];
+      return ['Trading Features', 'Account Management', 'Hedge Simulator', 'Group Management'];
     case 'client_investor':
       return ['View Only', 'Account Monitoring', 'Basic Dashboard'];
     default:

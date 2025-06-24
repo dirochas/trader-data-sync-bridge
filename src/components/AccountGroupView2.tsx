@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -198,9 +197,8 @@ export const AccountGroupView2 = ({
                     </Badge>
                     <span className="text-xs text-muted-foreground">trades</span>
                   </div>
-                  <div className={`font-mono text-sm font-semibold flex items-center gap-1 ${
-                    stats.isProfit ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <div className={`font-mono text-sm font-semibold flex items-center gap-1`}
+                       style={{ color: stats.isProfit ? 'rgb(42 176 91)' : 'rgb(211 147 147)' }}>
                     {stats.isProfit ? (
                       <TrendingUp className="w-3 h-3" />
                     ) : (
@@ -243,9 +241,8 @@ export const AccountGroupView2 = ({
                           <Badge variant="outline" className="font-mono text-xs">
                             {account.openTrades || 0}
                           </Badge>
-                          <div className={`font-mono text-xs font-semibold flex items-center gap-1 ${
-                            isProfit ? 'text-green-600' : 'text-red-600'
-                          }`}>
+                          <div className={`font-mono text-xs font-semibold flex items-center gap-1`}
+                               style={{ color: isProfit ? 'rgb(42 176 91)' : 'rgb(211 147 147)' }}>
                             {isProfit ? (
                               <TrendingUp className="w-3 h-3" />
                             ) : (

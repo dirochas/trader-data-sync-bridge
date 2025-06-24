@@ -232,9 +232,8 @@ export const AccountGroupView = ({
                 <div className="flex items-center gap-6 text-right">
                   <div>
                     <div className="text-sm text-muted-foreground">Total P&L</div>
-                    <div className={`font-mono font-semibold flex items-center gap-1 ${
-                      stats.isProfit ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <div className={`font-mono font-semibold flex items-center gap-1`}
+                         style={{ color: stats.isProfit ? 'rgb(42 176 91)' : 'rgb(211 147 147)' }}>
                       {stats.isProfit ? (
                         <TrendingUp className="w-4 h-4" />
                       ) : (
@@ -338,9 +337,8 @@ export const AccountGroupView = ({
                       
                       {/* Open P&L */}
                       <div className="col-span-1 text-right">
-                        <div className={`flex items-center justify-end gap-1 font-mono text-xs ${
-                          isProfit ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <div className={`flex items-center justify-end gap-1 font-mono text-xs`}
+                             style={{ color: isProfit ? 'rgb(42 176 91)' : 'rgb(211 147 147)' }}>
                           {isProfit ? (
                             <TrendingUp className="w-3 h-3" />
                           ) : (
@@ -352,9 +350,8 @@ export const AccountGroupView = ({
                       
                       {/* Day P&L */}
                       <div className="col-span-1 text-right">
-                        <div className={`font-mono text-xs ${
-                          isDayProfit ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <div className={`font-mono text-xs`}
+                             style={{ color: isDayProfit ? 'rgb(42 176 91)' : 'rgb(211 147 147)' }}>
                           {formatCurrency(account.dayProfit || 0)}
                         </div>
                       </div>

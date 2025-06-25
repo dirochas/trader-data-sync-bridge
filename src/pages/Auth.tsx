@@ -94,7 +94,7 @@ const Auth = () => {
       <div 
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to bottom right, rgb(8 28 16 / 89%) 0%, rgb(17 24 39 / 74%) 50%, rgb(55 31 31 / 43%) 100%)'
+          background: 'linear-gradient(135deg, rgb(8 28 16 / 89%) 0%, rgb(17 24 39 / 74%) 50%, rgb(55 31 31 / 43%) 100%)'
         }}
       />
       
@@ -106,7 +106,7 @@ const Auth = () => {
             <img 
               src="/lovable-uploads/9a83edf6-5ff0-4a78-be3c-8919ad8bfa34.png" 
               alt="TraderLab Logo" 
-              className="h-20 w-auto"
+              className="h-30 w-auto"
             />
           </div>
           <p className="text-gray-300">Acesse sua conta ou crie uma nova</p>

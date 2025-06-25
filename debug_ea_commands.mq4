@@ -1,26 +1,25 @@
-
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
-//|                                                    Versão 2.14  |
+//|                                                    Versão 2.15  |
 //+------------------------------------------------------------------+
-#property version   "2.14"
+#property version   "2.15"
 #property strict
 
 #include "VpsIdentifier_MQL4.mqh"  // BIBLIOTECA VPS
 
 input string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/trading-data";
-input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
+input int SendIntervalSeconds = 10; // OTIMIZADO: 3→10 segundos (-70% requests)
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
 
 // NOVA VARIÁVEL PARA IDENTIFICAÇÃO DO USUÁRIO
 input string UserEmail = "usuario@exemplo.com"; // Email do usuário para vinculação da conta
 
-// NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
+// NOVAS VARIÁVEIS PARA POLLING DE COMANDOS - OTIMIZADAS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
-input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
-input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
+input int CommandCheckIntervalSeconds = 30; // OTIMIZADO: 1→30 segundos (-97% requests)
+input int IdleCommandCheckIntervalSeconds = 300; // OTIMIZADO: 30→300 segundos (5 min)
 
-// SISTEMA DE LOGS MELHORADO - VERSÃO 2.14
+// SISTEMA DE LOGS MELHORADO - VERSÃO 2.15
 enum LogLevel {
    LOG_NONE = 0,           // Sem logs
    LOG_ERRORS_ONLY = 1,    // Apenas erros críticos e comandos remotos
@@ -52,8 +51,12 @@ int consecutiveFailures = 0;
 // VARIÁVEL GLOBAL PARA VPS ID
 string g_VpsId = "";
 
+// NOVA VARIÁVEL PARA CONTROLE DE CACHE INTELIGENTE
+datetime lastDataChangeTime = 0;
+string lastDataHash = "";
+
 //+------------------------------------------------------------------+
-// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.14
+// SISTEMA DE LOGGING INTELIGENTE - VERSÃO 2.15
 //+------------------------------------------------------------------+
 void LogPrint(LogLevel level, string category, string message)
 {
@@ -152,15 +155,15 @@ void LogRemoteCloseResult(int closed, int failed, int total)
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   LogSeparator("EA INICIALIZAÇÃO");
+   LogSeparator("EA INICIALIZAÇÃO - VERSÃO OTIMIZADA");
    LogPrint(LOG_ERRORS_ONLY, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.14 - Sistema Inteligente MQL4 + VPS ID");
+   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.15 - OTIMIZADA para reduzir Edge Function calls");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
+   LogPrint(LOG_ERRORS_ONLY, "OPTIMIZATION", "Intervalo OTIMIZADO: " + IntegerToString(SendIntervalSeconds) + " segundos (era 3s)");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
+   LogPrint(LOG_ERRORS_ONLY, "OPTIMIZATION", "Polling OTIMIZADO - Ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
    // INICIALIZAR VPS ID
@@ -174,7 +177,7 @@ int OnInit()
    if(UseTimer)
    {
       EventSetTimer(SendIntervalSeconds);
-      LogPrint(LOG_ERRORS_ONLY, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
+      LogPrint(LOG_ERRORS_ONLY, "TIMER", "Timer OTIMIZADO configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
       LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
    }
    else
@@ -214,6 +217,27 @@ void OnTick()
 }
 
 //+------------------------------------------------------------------+
+// NOVA FUNÇÃO: Calcular hash dos dados para detectar mudanças
+//+------------------------------------------------------------------+
+string CalculateDataHash()
+{
+   string data = "";
+   data += DoubleToString(AccountBalance(), 2);
+   data += DoubleToString(AccountEquity(), 2);
+   data += DoubleToString(AccountProfit(), 2);
+   data += IntegerToString(OrdersTotal());
+   
+   // Hash simples baseado no comprimento e soma dos caracteres
+   int hash = StringLen(data);
+   for(int i = 0; i < StringLen(data); i++)
+   {
+      hash += StringGetCharacter(data, i) * (i + 1);
+   }
+   
+   return IntegerToString(hash);
+}
+
+//+------------------------------------------------------------------+
 // NOVA FUNÇÃO INTELIGENTE: Verificar se há necessidade de processar
 //+------------------------------------------------------------------+
 bool HasOpenOrdersOrPendingOrders()
@@ -236,55 +260,64 @@ bool HasOpenOrdersOrPendingOrders()
 }
 
 //+------------------------------------------------------------------+
-// FUNÇÃO INTELIGENTE CORRIGIDA: Envio de dados com verificação prévia
+// FUNÇÃO INTELIGENTE OTIMIZADA: Envio de dados com verificação prévia
 //+------------------------------------------------------------------+
 void SendTradingDataIntelligent()
 {
    int currentOrderCount = OrdersTotal();
    bool hasOrders = HasOpenOrdersOrPendingOrders();
    
-   // Detectar mudanças de estado
+   // NOVA OTIMIZAÇÃO: Verificar se dados mudaram significativamente
+   string currentHash = CalculateDataHash();
+   bool dataChanged = (currentHash != lastDataHash);
    bool stateChanged = (lastHadOrders != hasOrders) || (lastOrderCount != currentOrderCount);
+   bool forceUpdate = (TimeCurrent() - lastDataChangeTime >= 60); // Força update a cada minuto
    
    if(!hasOrders)
    {
-      // SEM ORDENS - Modo econômico MAS SEMPRE ENVIA DADOS PARA SERVIDOR
+      // SEM ORDENS - Modo econômico SUPER OTIMIZADO
       
-      // Log apenas na primeira vez que entra em modo idle ou a cada 5 minutos
-      if(stateChanged || !idleLogAlreadyShown || TimeCurrent() - lastIdleLog >= 300)
+      // OTIMIZAÇÃO: Só envia se dados mudaram OU a cada 5 minutos
+      if(stateChanged || dataChanged || forceUpdate || TimeCurrent() - lastDataChangeTime >= 300)
       {
-         if(stateChanged || !idleLogAlreadyShown)
+         if(stateChanged || !idleLogAlreadyShown || TimeCurrent() - lastIdleLog >= 300)
          {
-            LogSubSeparator("MODO IDLE ATIVADO");
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountNumber()) + " sem ordens abertas");
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
-            LogPrint(LOG_ALL, "IDLE", "Logs reduzidos ativados - dados continuam sendo enviados");
-            idleLogAlreadyShown = true;
-            activeLogAlreadyShown = false; // Reset flag do modo ativo
+            if(stateChanged || !idleLogAlreadyShown)
+            {
+               LogSubSeparator("MODO IDLE ATIVADO - OTIMIZADO");
+               LogPrint(LOG_ESSENTIAL, "IDLE", "Conta " + IntegerToString(AccountNumber()) + " sem ordens abertas");
+               LogPrint(LOG_ESSENTIAL, "IDLE", "Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
+               LogPrint(LOG_ESSENTIAL, "OPTIMIZATION", "Envios reduzidos - só quando dados mudam ou a cada 5min");
+               idleLogAlreadyShown = true;
+               activeLogAlreadyShown = false;
+            }
+            else
+            {
+               LogPrint(LOG_ESSENTIAL, "IDLE", "Update periódico - Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
+            }
+            lastIdleLog = TimeCurrent();
          }
-         else
-         {
-            // Log periódico (a cada 5 minutos)
-            LogPrint(LOG_ESSENTIAL, "IDLE", "Status idle - Balance: $" + DoubleToString(AccountBalance(), 2) + " | Equity: $" + DoubleToString(AccountEquity(), 2));
-         }
-         lastIdleLog = TimeCurrent();
+         
+         SendIdleStatusToSupabase();
+         lastDataChangeTime = TimeCurrent();
+         lastDataHash = currentHash;
       }
-      
-      // CORREÇÃO: SEMPRE enviar status para o servidor, mesmo sem ordens
-      SendIdleStatusToSupabase();
+      else
+      {
+         LogPrint(LOG_ALL, "OPTIMIZATION", "Envio PULADO - dados inalterados (economia de Edge Functions)");
+      }
    }
    else
    {
-      // COM ORDENS - Modo ativo completo
+      // COM ORDENS - Sempre envia (dados críticos)
       if(stateChanged || !activeLogAlreadyShown)
       {
          LogSubSeparator("MODO ATIVO REATIVADO");
          LogPrint(LOG_ESSENTIAL, "ACTIVE", "Detectadas " + IntegerToString(currentOrderCount) + " ordens - logs completos reativados");
          activeLogAlreadyShown = true;
-         idleLogAlreadyShown = false; // Reset flag do modo idle
+         idleLogAlreadyShown = false;
       }
       
-      // Logs detalhados apenas se mudou de estado ou se está em nível ALL
       if(stateChanged || LoggingLevel >= LOG_ALL)
       {
          LogSubSeparator("COLETA DE DADOS COMPLETA");
@@ -293,7 +326,6 @@ void SendTradingDataIntelligent()
       
       string jsonData = BuildJsonData();
       
-      // Debug - salvar em arquivo apenas quando necessário
       if(LoggingLevel >= LOG_ALL && (stateChanged || TimeCurrent() - lastSendTime >= 30))
       {
          int file = FileOpen("trading_data.json", FILE_WRITE|FILE_TXT);
@@ -305,8 +337,9 @@ void SendTradingDataIntelligent()
          }
       }
       
-      // Enviar via HTTP para Supabase
       SendToSupabase(jsonData);
+      lastDataChangeTime = TimeCurrent();
+      lastDataHash = currentHash;
    }
    
    // Atualizar estado anterior
@@ -525,31 +558,28 @@ void OnTimer()
    // Só funciona se UseTimer = true
    if(UseTimer)
    {
-      // Log reduzido do timer
       bool hasOrders = HasOpenOrdersOrPendingOrders();
       
-      // Log do timer apenas se mudou de estado ou se está em modo ativo com ordens
       if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
       {
-         LogSeparator("EXECUÇÃO TIMER");
-         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToStr(TimeCurrent()));
+         LogSeparator("EXECUÇÃO TIMER OTIMIZADA");
+         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer OTIMIZADO executado - " + TimeToStr(TimeCurrent()));
       }
       
       SendTradingDataIntelligent();
       lastSendTime = TimeCurrent();
       
-      // NOVA FUNCIONALIDADE INTELIGENTE: Verificar comandos com intervalos dinâmicos
+      // OTIMIZAÇÃO CRÍTICA: Polling de comandos muito menos frequente
       if(EnableCommandPolling)
       {
          int intervalToUse = hasOrders ? CommandCheckIntervalSeconds : IdleCommandCheckIntervalSeconds;
          
          if(TimeCurrent() - lastCommandCheck >= intervalToUse)
          {
-            // Log apenas se necessário
             if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
             {
-               LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos...");
-               LogPrint(LOG_ALL, "POLLING", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s");
+               LogPrint(hasOrders ? LOG_ALL : LOG_ALL, "POLLING", "Iniciando verificação de comandos OTIMIZADA...");
+               LogPrint(LOG_ESSENTIAL, "OPTIMIZATION", "Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo OTIMIZADO: " + IntegerToString(intervalToUse) + "s");
             }
             CheckPendingCommands();
             lastCommandCheck = TimeCurrent();
@@ -559,7 +589,7 @@ void OnTimer()
             if(LoggingLevel >= LOG_ALL)
             {
                int remaining = intervalToUse - (TimeCurrent() - lastCommandCheck);
-               LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
+               LogPrint(LOG_ALL, "POLLING", "Próxima verificação OTIMIZADA em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
             }
          }
       }

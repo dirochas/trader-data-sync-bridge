@@ -56,7 +56,7 @@ const AccountMonitor = () => {
   // Função de ordenação multi-nível estável
   const createStableSorter = (primaryKey: string, primaryDirection: 'asc' | 'desc') => {
     return (a: any, b: any) => {
-      // 1º nível: Critério principal
+      // 1º nível: Critério principal escolhido pelo usuário
       let comparison = 0;
       
       switch (primaryKey) {
@@ -112,24 +112,25 @@ const AccountMonitor = () => {
       
       // Se são iguais, aplicar tie-breakers hierárquicos
       if (comparison === 0) {
-        // 2º nível: Status da conexão (Live > Slow > Delayed > Offline)
-        const statusOrder = { 'Live': 1, 'Slow Connection': 2, 'Delayed': 3, 'Offline': 4 };
-        const aStatusOrder = statusOrder[a.status as keyof typeof statusOrder] || 5;
-        const bStatusOrder = statusOrder[b.status as keyof typeof statusOrder] || 5;
-        const statusComparison = aStatusOrder - bStatusOrder;
-        if (statusComparison !== 0) return statusComparison;
+        // 2º nível: Número da conta (numérico se possível)
+        const aAccountNum = parseInt(a.account) || 0;
+        const bAccountNum = parseInt(b.account) || 0;
+        const accountComparison = aAccountNum - bAccountNum;
+        if (accountComparison !== 0) return accountComparison;
         
         // 3º nível: Nome da conta (alfabético)
         const nameComparison = (a.name || '').localeCompare(b.name || '');
         if (nameComparison !== 0) return nameComparison;
         
-        // 4º nível: Número da conta (numérico se possível)
-        const aAccountNum = parseInt(a.account) || 0;
-        const bAccountNum = parseInt(b.account) || 0;
-        if (aAccountNum !== bAccountNum) return aAccountNum - bAccountNum;
+        // 4º nível: ID único (último recurso para garantir estabilidade)
+        const idComparison = (a.id || '').localeCompare(b.id || '');
+        if (idComparison !== 0) return idComparison;
         
-        // 5º nível: ID único (último recurso para garantir estabilidade)
-        return (a.id || '').localeCompare(b.id || '');
+        // 5º nível: Status da conexão (Live > Slow > Delayed > Offline)
+        const statusOrder = { 'Live': 1, 'Slow Connection': 2, 'Delayed': 3, 'Offline': 4 };
+        const aStatusOrder = statusOrder[a.status as keyof typeof statusOrder] || 5;
+        const bStatusOrder = statusOrder[b.status as keyof typeof statusOrder] || 5;
+        return aStatusOrder - bStatusOrder;
       }
       
       return comparison;

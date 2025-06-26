@@ -1,6 +1,6 @@
-# TraderLab v1.8.5 - Dual Group View & Enhanced UX
+# TraderLab v1.8.6 - Stable Multi-Level Sorting & Enhanced UX
 
-**Status**: ✅ STABLE - Production Ready - Dual Group Visualization System
+**Status**: ✅ STABLE - Production Ready - Dual Group Visualization System + Stable Sorting
 
 ## 📊 Sobre o Projeto
 
@@ -22,7 +22,7 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **📁 Groups Management**: Sistema completo de organização de contas em grupos com cores personalizadas
 - **🔐 Row Level Security**: Políticas de segurança implementadas para isolamento total de dados
 - **📊 Vista de Grupos Dual**: Duas versões de visualização - Completa (V1) e Compacta (V2) com toggle dinâmico
-- **🎯 Ordenação Estável**: Sistema de sorting inteligente que evita oscilação de posições dos grupos
+- **🎯 Ordenação Estável Multi-Nível**: Sistema de sorting hierárquico que elimina oscilação de posições
 - **🎨 Identificação Visual**: Bordas coloridas nos cards dos grupos para melhor organização visual
 - **📄 Paginação Inteligente**: Sistema de paginação completo em todas as páginas de listagem
 
@@ -35,9 +35,20 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - **Security**: DOMPurify + Custom Validation System + Row Level Security
 - **Build Tool**: Vite
 
-### 🎯 Versão Atual: v1.8.5 - Dual Group View & Enhanced UX
+### 🎯 Versão Atual: v1.8.6 - Stable Multi-Level Sorting & Enhanced UX
 
-**Novidades v1.8.5:**
+**Novidades v1.8.6:**
+- ✅ Sistema de ordenação multi-nível completamente estável
+- ✅ Implementação de 5 níveis hierárquicos de desempate para eliminar oscilação
+- ✅ Função `createStableSorter` para ordenação consistente em todas as colunas
+- ✅ Tie-breaker inteligente: Critério do Usuário → Nº Conta → Nome → ID → Status
+- ✅ Ordenação numérica correta para números de conta
+- ✅ Status de conexão com prioridade hierárquica (Live > Slow > Delayed > Offline)
+- ✅ Eliminação completa da instabilidade visual na tabela de contas
+- ✅ Performance otimizada com memoização de dados de ordenação
+- ✅ Compatibilidade total com paginação e filtros existentes
+
+**Histórico v1.8.5:**
 - ✅ Sistema dual de visualização de grupos: V1 (Completa) e V2 (Compacta)
 - ✅ Toggle dinâmico para alternar entre as duas versões no modo grupos
 - ✅ AccountGroupView2: layout ultra-compacto focado em informações essenciais
@@ -136,6 +147,80 @@ TraderLab é uma plataforma completa de gerenciamento e monitoramento de contas 
 - ✅ Contador de downloads por EA
 - ✅ Sistema de versionamento para Expert Advisors
 - ✅ Descrições detalhadas e metadados dos EAs
+
+## 🎯 Sistema de Ordenação Multi-Nível
+
+Nova implementação de sorting estável com 5 níveis hierárquicos de desempate:
+
+### 📊 Hierarquia de Ordenação
+
+```typescript
+// Função de ordenação multi-nível estável
+const createStableSorter = (primaryKey: string, primaryDirection: 'asc' | 'desc') => {
+  return (a: any, b: any) => {
+    // 1º nível: Critério principal escolhido pelo usuário
+    let comparison = getPrimaryComparison(a, b, primaryKey);
+    
+    if (comparison === 0) {
+      // 2º nível: Número da conta (numérico)
+      comparison = getAccountNumberComparison(a, b);
+      
+      if (comparison === 0) {
+        // 3º nível: Nome da conta (alfabético)
+        comparison = getAccountNameComparison(a, b);
+        
+        if (comparison === 0) {
+          // 4º nível: ID único (garantia de unicidade)
+          comparison = getUniqueIdComparison(a, b);
+          
+          if (comparison === 0) {
+            // 5º nível: Status da conexão (Live > Slow > Delayed > Offline)
+            comparison = getConnectionStatusComparison(a, b);
+          }
+        }
+      }
+    }
+    
+    return primaryDirection === 'desc' ? -comparison : comparison;
+  };
+};
+```
+
+### 🎯 Benefícios da Ordenação Multi-Nível
+
+- **🔒 Estabilidade Total**: Elimina oscilação de posições na tabela
+- **📊 Critério Principal**: Usuário define o campo de ordenação primário
+- **🔢 Desempate Numérico**: Números de conta ordenados corretamente (2, 10, 20 não 10, 2, 20)
+- **📝 Desempate Alfabético**: Nomes de conta em ordem alfabética quando P&L é igual
+- **🆔 Garantia de Unicidade**: ID único previne empates impossíveis
+- **🌐 Prioridade de Status**: Live > Slow Connection > Delayed > Offline
+
+### 🔄 Equivalência SQL
+
+```sql
+-- Ordenação multi-nível equivalente em SQL
+SELECT * FROM trading_accounts 
+ORDER BY 
+  balance DESC,                   -- 1º: Critério do usuário (ex: Balance)
+  CAST(account AS INTEGER) ASC,   -- 2º: Número da conta (numérico)
+  name ASC,                       -- 3º: Nome da conta (alfabético)
+  id ASC,                         -- 4º: ID único (garantia final)
+  CASE status                     -- 5º: Status da conexão
+    WHEN 'Live' THEN 1
+    WHEN 'Slow Connection' THEN 2
+    WHEN 'Delayed' THEN 3
+    WHEN 'Offline' THEN 4
+    ELSE 5
+  END ASC;
+```
+
+### 🛠️ Implementação Técnica
+
+- **Hook Personalizado**: `useSorting` otimizado com tie-breakers
+- **Memoização Inteligente**: Cache de dados para performance
+- **Validação de Tipos**: Garantia de tipos consistentes (números vs strings)
+- **Fallback Seguro**: Tratamento de valores nulos/undefined
+- **Compatibilidade**: Funciona com paginação e filtros existentes
 
 ## Instalação e Desenvolvimento
 

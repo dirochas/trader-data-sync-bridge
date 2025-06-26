@@ -53,6 +53,89 @@ const AccountMonitor = () => {
   const [groupSortConfig, setGroupSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: 'totalProfit', direction: 'desc' });
   const [useCompactGroups, setUseCompactGroups] = useState(false);
 
+  // Função de ordenação multi-nível estável
+  const createStableSorter = (primaryKey: string, primaryDirection: 'asc' | 'desc') => {
+    return (a: any, b: any) => {
+      // 1º nível: Critério principal
+      let comparison = 0;
+      
+      switch (primaryKey) {
+        case 'account':
+          // Garantir ordenação numérica se for número, senão alfabética
+          const aAccount = parseInt(a.account) || a.account;
+          const bAccount = parseInt(b.account) || b.account;
+          comparison = typeof aAccount === 'number' && typeof bAccount === 'number'
+            ? aAccount - bAccount
+            : String(aAccount).localeCompare(String(bAccount));
+          break;
+          
+        case 'name':
+          comparison = (a.name || '').localeCompare(b.name || '');
+          break;
+          
+        case 'clientNickname':
+          comparison = (a.clientNickname || '').localeCompare(b.clientNickname || '');
+          break;
+          
+        case 'vps':
+          comparison = (a.vps || '').localeCompare(b.vps || '');
+          break;
+          
+        case 'balance':
+          comparison = (Number(a.balance) || 0) - (Number(b.balance) || 0);
+          break;
+          
+        case 'equity':
+          comparison = (Number(a.equity) || 0) - (Number(b.equity) || 0);
+          break;
+          
+        case 'openTrades':
+          comparison = (a.openTrades || 0) - (b.openTrades || 0);
+          break;
+          
+        case 'openPnL':
+          comparison = (a.openPnL || 0) - (b.openPnL || 0);
+          break;
+          
+        case 'dayProfit':
+          comparison = (a.dayProfit || 0) - (b.dayProfit || 0);
+          break;
+          
+        default:
+          comparison = String(a[primaryKey] || '').localeCompare(String(b[primaryKey] || ''));
+      }
+      
+      // Aplicar direção
+      if (primaryDirection === 'desc') {
+        comparison = -comparison;
+      }
+      
+      // Se são iguais, aplicar tie-breakers hierárquicos
+      if (comparison === 0) {
+        // 2º nível: Status da conexão (Live > Slow > Delayed > Offline)
+        const statusOrder = { 'Live': 1, 'Slow Connection': 2, 'Delayed': 3, 'Offline': 4 };
+        const aStatusOrder = statusOrder[a.status as keyof typeof statusOrder] || 5;
+        const bStatusOrder = statusOrder[b.status as keyof typeof statusOrder] || 5;
+        const statusComparison = aStatusOrder - bStatusOrder;
+        if (statusComparison !== 0) return statusComparison;
+        
+        // 3º nível: Nome da conta (alfabético)
+        const nameComparison = (a.name || '').localeCompare(b.name || '');
+        if (nameComparison !== 0) return nameComparison;
+        
+        // 4º nível: Número da conta (numérico se possível)
+        const aAccountNum = parseInt(a.account) || 0;
+        const bAccountNum = parseInt(b.account) || 0;
+        if (aAccountNum !== bAccountNum) return aAccountNum - bAccountNum;
+        
+        // 5º nível: ID único (último recurso para garantir estabilidade)
+        return (a.id || '').localeCompare(b.id || '');
+      }
+      
+      return comparison;
+    };
+  };
+
   // Query para buscar lista de clientes únicos usando nickname (apenas para admin/manager)
   const { data: clientsList = [] } = useQuery({
     queryKey: ['clients-list'],
@@ -263,9 +346,9 @@ const AccountMonitor = () => {
     return 'N/A';
   };
 
-  // Dados enriquecidos com validação mais robusta (usando nickname)
+  // Dados enriquecidos com validação mais robusta e dados consistentes
   const enrichedAccounts = useMemo(() => {
-    return accounts.map(account => {
+    return accounts.map((account, index) => {
       const connectionStatus = getConnectionStatus(account.updated_at);
       const openTradeCount = getOpenTradesCount(account.id);
       const openPnLValue = getOpenPnL(account);
@@ -278,11 +361,13 @@ const AccountMonitor = () => {
       
       return {
         ...account,
-        // Garantir que sempre temos um ID único e estável para tie-breaker
-        id: account.id || `acc_${account.account}`,
-        account: account.account, // Garantir que account sempre existe
+        // Garantir ID único e estável (incluindo índice para máxima estabilidade)
+        id: account.id || `acc_${account.account}_${index}`,
+        // Garantir número da conta como string padronizada
+        account: String(account.account || '').trim(),
+        // Garantir nome sempre preenchido e consistente
+        name: account.name?.trim() || `Account ${account.account}`,
         status: connectionStatus.status === 'Disconnected' ? 'Offline' : connectionStatus.status,
-        name: account.name || `Account ${account.account}`,
         vps: account.vps || 'N/A',
         openTrades: Math.max(0, openTradeCount),
         openPnL: isFinite(openPnLValue) ? openPnLValue : 0,
@@ -334,58 +419,22 @@ const AccountMonitor = () => {
     hasPreviousPage,
   } = usePagination(filteredAccounts, viewMode === 'table' ? itemsPerPage : filteredAccounts.length);
 
-  // Configuração de ordenação com tie-breaker garantido - apenas para vista de tabela
+  // Configuração de ordenação estável com tie-breakers consistentes
   const { sortedData: sortedAccounts, requestSort, getSortIcon, sortConfig } = useSorting(
     paginatedData,
-    { key: 'account', direction: 'asc' }, // Ordenação padrão por número da conta (mais estável)
+    { key: 'name', direction: 'asc' }, // MUDANÇA: Começar com 'name' (mais estável que 'account')
     {
-      // Funções de ordenação customizadas com tie-breaker garantido
-      openTrades: (a: any, b: any) => {
-        const aCount = a.openTrades || 0;
-        const bCount = b.openTrades || 0;
-        const comparison = aCount - bCount;
-        if (comparison === 0) {
-          // Tie-breaker por número da conta
-          return a.account.localeCompare(b.account);
-        }
-        return comparison;
-      },
-      balance: (a: any, b: any) => {
-        const aBalance = Number(a.balance) || 0;
-        const bBalance = Number(b.balance) || 0;
-        const comparison = aBalance - bBalance;
-        if (comparison === 0) {
-          return a.account.localeCompare(b.account);
-        }
-        return comparison;
-      },
-      equity: (a: any, b: any) => {
-        const aEquity = Number(a.equity) || 0;
-        const bEquity = Number(b.equity) || 0;
-        const comparison = aEquity - bEquity;
-        if (comparison === 0) {
-          return a.account.localeCompare(b.account);
-        }
-        return comparison;
-      },
-      name: (a: any, b: any) => {
-        const aName = a.name || '';
-        const bName = b.name || '';
-        const comparison = aName.localeCompare(bName);
-        if (comparison === 0) {
-          return a.account.localeCompare(b.account);
-        }
-        return comparison;
-      },
-      clientNickname: (a: any, b: any) => {
-        const aNickname = a.clientNickname || '';
-        const bNickname = b.clientNickname || '';
-        const comparison = aNickname.localeCompare(bNickname);
-        if (comparison === 0) {
-          return a.account.localeCompare(b.account);
-        }
-        return comparison;
-      }
+      // Usar o sorter estável para todas as colunas
+      account: createStableSorter('account', 'asc'),
+      name: createStableSorter('name', 'asc'),
+      clientNickname: createStableSorter('clientNickname', 'asc'),
+      vps: createStableSorter('vps', 'asc'),
+      status: createStableSorter('status', 'asc'),
+      balance: createStableSorter('balance', 'desc'),
+      equity: createStableSorter('equity', 'desc'),
+      openTrades: createStableSorter('openTrades', 'desc'),
+      openPnL: createStableSorter('openPnL', 'desc'),
+      dayProfit: createStableSorter('dayProfit', 'desc'),
     }
   );
 
@@ -608,7 +657,7 @@ const AccountMonitor = () => {
                 Account Monitor
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Sistema otimizado - Dados críticos: 1s | Contas: 1.5s | Histórico: 5s
+                Sistema otimizado - Ordenação estável multi-nível implementada 🎯
                 {permissions.isInvestor && <span className="ml-2 text-purple-400">(Modo Somente Leitura)</span>}
               </p>
             </div>
@@ -677,7 +726,7 @@ const AccountMonitor = () => {
           <Card className="tech-card tech-card-hover card-blue">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Clients</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-sky-500/20">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
                 <TrendingUp className="h-5 w-5 text-sky-500" />
               </div>
             </CardHeader>

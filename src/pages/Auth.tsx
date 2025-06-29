@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,7 +105,7 @@ const Auth = () => {
             <img 
               src="/lovable-uploads/9a83edf6-5ff0-4a78-be3c-8919ad8bfa34.png" 
               alt="TraderLab Logo" 
-              className="h-20 w-auto"
+              className="h-32 w-auto"
             />
           </div>
           <p className="text-gray-300">Acesse sua conta ou crie uma nova</p>

@@ -4,7 +4,7 @@
 //|                            EA para envio de dados de trading    |
 //+------------------------------------------------------------------+
 #property copyright "MrBot © 2025"
-#property version   "2.15"
+#property version   "2.16"
 
 #include "Includes/Logger.mqh"
 #include "Includes/AccountUtils.mqh"
@@ -19,7 +19,9 @@ string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/tradin
 input string UserEmail = "usuario@exemplo.com"; // Email do usuário para vinculação da conta
 
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
-input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
+input int SendIntervalWithOrders = 5; // Intervalo quando há ordens abertas (segundos)
+input int SendIntervalNoOrders = 300; // Intervalo quando não há ordens abertas (segundos - 5 min)
+input int HeartbeatInterval = 600; // Intervalo de heartbeat para manter conexão (segundos - 10 min)
 
 // VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
@@ -35,8 +37,10 @@ bool EnableVpsIdentification = true; // Habilitar identificação de VPS
 datetime lastSendTime = 0;
 datetime lastCommandCheck = 0;
 datetime lastIdleLog = 0;
+datetime lastHeartbeat = 0;
 bool lastHadOrders = false; // Para detectar mudanças de estado
 int lastOrderCount = -1;    // Para detectar mudanças na quantidade de ordens
+bool isInActiveMode = false; // Flag para controlar modo ativo/inativo
 
 // FLAG INTELIGENTE PARA CONTROLAR LOGS REPETITIVOS
 bool idleLogAlreadyShown = false;
@@ -53,10 +57,11 @@ int OnInit()
    
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ESSENTIAL, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.15 - Conector MQL5 com VPS ID");
+   LogPrint(LOG_ESSENTIAL, "INIT", "Versão: 2.16 - Sistema de Envio Inteligente");
    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
    LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
+   LogPrint(LOG_ALL, "CONFIG", "Intervalo com ordens: " + IntegerToString(SendIntervalWithOrders) + "s | Sem ordens: " + IntegerToString(SendIntervalNoOrders) + "s");
+   LogPrint(LOG_ALL, "CONFIG", "Heartbeat: " + IntegerToString(HeartbeatInterval) + "s");
    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
@@ -72,8 +77,9 @@ int OnInit()
    
    if(UseTimer)
    {
-      EventSetTimer(SendIntervalSeconds);
-      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
+      EventSetTimer(SendIntervalWithOrders); // Inicia com intervalo mínimo
+      LogPrint(LOG_ESSENTIAL, "TIMER", "Timer configurado com intervalos inteligentes");
+      LogPrint(LOG_ALL, "TIMER", "Com ordens: " + IntegerToString(SendIntervalWithOrders) + "s | Sem ordens: " + IntegerToString(SendIntervalNoOrders) + "s");
       LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
    }
    else
@@ -104,11 +110,17 @@ void OnDeinit(const int reason)
 void OnTick()
 {
    // Só funciona se UseTimer = false
-   if(!UseTimer && TimeCurrent() - lastSendTime >= SendIntervalSeconds)
+   if(!UseTimer)
    {
-      LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
-      SendTradingDataIntelligent();
-      lastSendTime = TimeCurrent();
+      bool hasOrders = HasOpenOrdersOrPendingOrders();
+      int currentInterval = hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders;
+      
+      if(TimeCurrent() - lastSendTime >= currentInterval)
+      {
+         LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
+         SendTradingDataIntelligent();
+         lastSendTime = TimeCurrent();
+      }
    }
 }
 
@@ -368,38 +380,75 @@ void OnTimer()
    if(UseTimer)
    {
       bool hasOrders = HasOpenOrdersOrPendingOrders();
+      datetime currentTime = TimeCurrent();
       
-      // LOG INTELIGENTE DO TIMER - FIX: Remove parameter to match Logger.mqh signature
-      string timerMessage = "Timer executado - " + TimeToString(TimeCurrent());
-      LogTimerSmart(timerMessage);
+      // SISTEMA DE ENVIO INTELIGENTE
+      bool shouldSend = false;
+      string sendReason = "";
       
-      SendTradingDataIntelligent();
-      lastSendTime = TimeCurrent();
+      // Detectar mudança de estado (com/sem ordens)
+      if(hasOrders != lastHadOrders)
+      {
+         shouldSend = true;
+         sendReason = hasOrders ? "ATIVADO - Ordens detectadas" : "INATIVO - Sem ordens";
+         isInActiveMode = hasOrders;
+         
+         // Reconfigurar timer baseado no novo estado
+         EventKillTimer();
+         EventSetTimer(hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders);
+         
+         LogSubSeparator("MUDANÇA DE ESTADO");
+         LogPrint(LOG_ESSENTIAL, "SMART", sendReason);
+         LogPrint(LOG_ALL, "SMART", "Timer reconfigurado para: " + IntegerToString(hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders) + "s");
+      }
+      else
+      {
+         // Verificar se deve enviar baseado no intervalo atual
+         int currentInterval = hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders;
+         
+         if(currentTime - lastSendTime >= currentInterval)
+         {
+            shouldSend = true;
+            sendReason = hasOrders ? "MONITORAMENTO ATIVO" : "MONITORAMENTO INATIVO";
+         }
+         
+         // HEARTBEAT - Garantir envio mínimo mesmo sem ordens
+         if(!hasOrders && currentTime - lastHeartbeat >= HeartbeatInterval)
+         {
+            shouldSend = true;
+            sendReason = "HEARTBEAT - Manter conexão";
+            lastHeartbeat = currentTime;
+         }
+      }
       
-      // NOVA FUNCIONALIDADE INTELIGENTE: Verificar comandos com intervalos dinâmicos
+      // Enviar dados se necessário
+      if(shouldSend)
+      {
+         string timerMessage = "Timer: " + sendReason + " - " + TimeToString(currentTime);
+         LogTimerSmart(timerMessage);
+         
+         SendTradingDataIntelligent();
+         lastSendTime = currentTime;
+      }
+      
+      // VERIFICAÇÃO DE COMANDOS (mantém lógica original)
       if(EnableCommandPolling)
       {
          int intervalToUse = hasOrders ? CommandCheckIntervalSeconds : IdleCommandCheckIntervalSeconds;
          
-         if(TimeCurrent() - lastCommandCheck >= intervalToUse)
+         if(currentTime - lastCommandCheck >= intervalToUse)
          {
-            // LOG INTELIGENTE DE COMANDOS - usando sobrecarga com bool para especificar importância
-            string commandMessage = "Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "IDLE") + " | Intervalo: " + IntegerToString(intervalToUse) + "s";
-            LogCommandSmart(commandMessage, false); // false = não é importante
+            string commandMessage = "Verificando comandos - Modo: " + (hasOrders ? "ATIVO" : "INATIVO") + " | Intervalo: " + IntegerToString(intervalToUse) + "s";
+            LogCommandSmart(commandMessage, false);
             CheckPendingCommands();
-            lastCommandCheck = TimeCurrent();
-         }
-         else
-         {
-            if(g_LoggingLevel >= LOG_ALL)
-            {
-               int remaining = intervalToUse - (int)(TimeCurrent() - lastCommandCheck);
-               LogPrint(LOG_ALL, "POLLING", "Próxima verificação em: " + IntegerToString(remaining) + "s (" + (hasOrders ? "modo ativo" : "modo idle") + ")");
-            }
+            lastCommandCheck = currentTime;
          }
       }
       
-      // Marcar primeira execução como completa após alguns ciclos
+      // Atualizar estado anterior
+      lastHadOrders = hasOrders;
+      
+      // Marcar primeira execução como completa
       MarkFirstRunCompleted();
    }
 }

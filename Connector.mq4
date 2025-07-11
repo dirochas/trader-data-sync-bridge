@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
 //|                                           TradingDataSender.mq4 |
-//|                                                    Versão 2.14  |
+//|                                                    Versão 2.16  |
 //+------------------------------------------------------------------+
 #property copyright "MrBot © 2025"
-#property version   "2.14"
+#property version   "2.16"
 #property strict
 
 #include "VpsIdentifier_MQL4.mqh"  // BIBLIOTECA VPS
@@ -15,14 +15,18 @@ string ServerURL = "https://kgrlcsimdszbrkcwjpke.supabase.co/functions/v1/tradin
 input string UserEmail = "usuario@exemplo.com"; // Email do usuário para vinculação da conta
 
 input bool UseTimer = true; // true = OnTimer (sem ticks), false = OnTick (com ticks)
-input int SendIntervalSeconds = 3; // Intervalo de envio (segundos)
+
+// VERSÃO 2.16 - SISTEMA DE ENVIO INTELIGENTE
+input int SendIntervalWithOrders = 5; // Intervalo quando há ordens abertas (segundos)
+input int SendIntervalNoOrders = 300; // Intervalo quando não há ordens (segundos) - 5 minutos
+input int HeartbeatInterval = 600; // Intervalo de heartbeat independente (segundos) - 10 minutos
 
 // NOVAS VARIÁVEIS PARA POLLING DE COMANDOS
 input bool EnableCommandPolling = true; // Habilitar polling de comandos
 input int CommandCheckIntervalSeconds = 1; // Intervalo para verificar comandos (segundos)
 input int IdleCommandCheckIntervalSeconds = 30; // Intervalo quando não há ordens (segundos)
 
-// SISTEMA DE LOGS MELHORADO - VERSÃO 2.14
+// SISTEMA DE LOGS MELHORADO - VERSÃO 2.16
 enum LogLevel {
    LOG_NONE = 0,           // Sem logs
    LOG_ERRORS_ONLY = 1,    // Apenas erros críticos e comandos remotos
@@ -156,14 +160,16 @@ int OnInit()
 {
    LogSeparator("EA INICIALIZAÇÃO");
    LogPrint(LOG_ERRORS_ONLY, "INIT", "EA TRADING DATA SENDER INICIADO");
-   LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.14 - Sistema Inteligente MQL4 + VPS ID");
-   LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
-   LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo de envio: " + IntegerToString(SendIntervalSeconds) + " segundos");
-   LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
-   LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
-   LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
-   LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
+    LogPrint(LOG_ERRORS_ONLY, "INIT", "Versão: 2.16 - Sistema Inteligente MQL4 + VPS ID + Envio Dinâmico");
+    LogPrint(LOG_ALL, "CONFIG", "URL do servidor: " + ServerURL);
+    LogPrint(LOG_ALL, "CONFIG", "Email do usuário: " + UserEmail);
+    LogPrint(LOG_ALL, "CONFIG", "Intervalo com ordens: " + IntegerToString(SendIntervalWithOrders) + "s");
+    LogPrint(LOG_ALL, "CONFIG", "Intervalo sem ordens: " + IntegerToString(SendIntervalNoOrders) + "s");
+    LogPrint(LOG_ALL, "CONFIG", "Heartbeat: " + IntegerToString(HeartbeatInterval) + "s");
+    LogPrint(LOG_ALL, "CONFIG", "Modo selecionado: " + (UseTimer ? "TIMER (sem ticks)" : "TICK (com ticks)"));
+    LogPrint(LOG_ALL, "CONFIG", "Polling de comandos: " + (EnableCommandPolling ? "HABILITADO" : "DESABILITADO"));
+    LogPrint(LOG_ALL, "CONFIG", "Intervalo ativo: " + IntegerToString(CommandCheckIntervalSeconds) + "s | Intervalo idle: " + IntegerToString(IdleCommandCheckIntervalSeconds) + "s");
+    LogPrint(LOG_ALL, "CONFIG", "Nível de log: " + EnumToString(LoggingLevel));
    
    // INICIALIZAR VPS ID
    if(EnableVpsIdentification)
@@ -173,12 +179,15 @@ int OnInit()
       LogPrint(LOG_ERRORS_ONLY, "VPS", "VPS ID ativo: " + g_VpsId);
    }
    
-   if(UseTimer)
-   {
-      EventSetTimer(SendIntervalSeconds);
-      LogPrint(LOG_ERRORS_ONLY, "TIMER", "Timer configurado para " + IntegerToString(SendIntervalSeconds) + " segundos");
-      LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
-   }
+    if(UseTimer)
+    {
+       // SISTEMA DINÂMICO 2.16: Iniciar com intervalo para contas sem ordens
+       bool hasOrders = HasOpenOrdersOrPendingOrders();
+       int initialInterval = hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders;
+       EventSetTimer(initialInterval);
+       LogPrint(LOG_ERRORS_ONLY, "TIMER", "Timer dinâmico configurado - Inicial: " + IntegerToString(initialInterval) + "s");
+       LogPrint(LOG_ALL, "TIMER", "EA funcionará mesmo com mercado FECHADO");
+    }
    else
    {
       LogPrint(LOG_ALL, "TIMER", "EA funcionará apenas com mercado ABERTO (ticks)");
@@ -206,12 +215,18 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   // Só funciona se UseTimer = false
-   if(!UseTimer && TimeCurrent() - lastSendTime >= SendIntervalSeconds)
+   // SISTEMA DINÂMICO 2.16: OnTick com intervalos baseados em ordens
+   if(!UseTimer)
    {
-      LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
-      SendTradingDataIntelligent();
-      lastSendTime = TimeCurrent();
+      bool hasOrders = HasOpenOrdersOrPendingOrders();
+      int currentInterval = hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders;
+      
+      if(TimeCurrent() - lastSendTime >= currentInterval)
+      {
+         LogPrint(LOG_ALL, "TICK", "OnTick executado - enviando dados...");
+         SendTradingDataIntelligent();
+         lastSendTime = TimeCurrent();
+      }
    }
 }
 
@@ -523,21 +538,48 @@ string BuildJsonData()
 //+------------------------------------------------------------------+
 void OnTimer()
 {
-   // Só funciona se UseTimer = true
+   // SISTEMA DINÂMICO 2.16: Timer com reconfiguração automática
    if(UseTimer)
    {
-      // Log reduzido do timer
       bool hasOrders = HasOpenOrdersOrPendingOrders();
+      bool stateChanged = (lastHadOrders != hasOrders);
       
-      // Log do timer apenas se mudou de estado ou se está em modo ativo com ordens
-      if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
+      // SISTEMA DE HEARTBEAT INDEPENDENTE - Versão 2.16
+      if(TimeCurrent() - lastHeartbeat >= HeartbeatInterval)
       {
-         LogSeparator("EXECUÇÃO TIMER");
-         LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToStr(TimeCurrent()));
+         LogPrint(LOG_ERRORS_ONLY, "HEARTBEAT", "💓 Heartbeat - Mantendo conexão ativa");
+         SendTradingDataIntelligent();
+         lastHeartbeat = TimeCurrent();
+         lastSendTime = TimeCurrent();
       }
       
-      SendTradingDataIntelligent();
-      lastSendTime = TimeCurrent();
+      // RECONFIGURAÇÃO DINÂMICA DO TIMER
+      if(stateChanged)
+      {
+         EventKillTimer();
+         int newInterval = hasOrders ? SendIntervalWithOrders : SendIntervalNoOrders;
+         EventSetTimer(newInterval);
+         
+         LogPrint(LOG_ERRORS_ONLY, "TIMER", "🔄 Timer reconfigurado: " + 
+                  (hasOrders ? "MODO ATIVO" : "MODO IDLE") + 
+                  " - " + IntegerToString(newInterval) + "s");
+         
+         // Enviar dados imediatamente na mudança de estado
+         SendTradingDataIntelligent();
+         lastSendTime = TimeCurrent();
+      }
+      else
+      {
+         // Log reduzido do timer
+         if(!idleLogAlreadyShown || hasOrders || LoggingLevel >= LOG_ALL)
+         {
+            LogSeparator("EXECUÇÃO TIMER");
+            LogPrint(LOG_ESSENTIAL, "TIMER", "Timer executado - " + TimeToStr(TimeCurrent()));
+         }
+         
+         SendTradingDataIntelligent();
+         lastSendTime = TimeCurrent();
+      }
       
       // NOVA FUNCIONALIDADE INTELIGENTE: Verificar comandos com intervalos dinâmicos
       if(EnableCommandPolling)

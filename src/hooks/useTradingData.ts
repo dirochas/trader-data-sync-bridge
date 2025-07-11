@@ -245,7 +245,7 @@ export const useOpenPositions = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 3000, // 🔧 OTIMIZADO: 3s para posições (mais crítico mas otimizado)
+    refetchInterval: 3000, // 🔧 OTIMIZADO: 3s para posições (reduzido de 1s para evitar requests simultâneos)
     staleTime: 1000, // 🔧 OTIMIZADO: 1s stale time
     gcTime: 30000, // Mantém cache curto para dados críticos
   });

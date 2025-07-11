@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useTradingAccounts } from '@/hooks/useTradingData';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
 import { AppLayout } from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -18,7 +19,10 @@ import {
   Wifi,
   WifiOff,
   Users,
-  DollarSign
+  DollarSign,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown
 } from 'lucide-react';
 
 const VPSManagement = () => {
@@ -105,6 +109,41 @@ const VPSManagement = () => {
     cost: vpsServersData[vps.vpsUniqueId]?.cost || 0,
     due_date: vpsServersData[vps.vpsUniqueId]?.due_date || null
   }));
+
+  // ✅ IMPLEMENTAÇÃO DE ORDENAÇÃO COMPLETA
+  const customSortFunctions = {
+    status: (a: any, b: any) => {
+      const statusA = getVPSStatus(a).status;
+      const statusB = getVPSStatus(b).status;
+      const statusOrder = { 'Online': 0, 'Delayed': 1, 'Offline': 2 };
+      return (statusOrder[statusA as keyof typeof statusOrder] || 3) - (statusOrder[statusB as keyof typeof statusOrder] || 3);
+    },
+    due_date: (a: any, b: any) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+    },
+    lastUpdate: (a: any, b: any) => {
+      return b.lastUpdate.getTime() - a.lastUpdate.getTime();
+    }
+  };
+
+  const { sortedData, requestSort, getSortIcon: getSortIconFromHook, sortConfig } = useSorting(
+    vpsData, 
+    { key: 'due_date', direction: 'asc' }, // 🎯 Ordenação padrão: vencimentos mais próximos primeiro
+    customSortFunctions
+  );
+
+  // Helper function para renderizar ícones de ordenação melhorados
+  const getSortIcon = (columnKey: string) => {
+    if (!sortConfig || sortConfig.key !== columnKey) {
+      return <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="h-4 w-4 text-primary" />
+      : <ChevronDown className="h-4 w-4 text-primary" />;
+  };
   
   const getVPSStatus = (vps: any) => {
     const now = new Date();
@@ -292,7 +331,7 @@ const VPSManagement = () => {
     return pages;
   };
 
-  // Initialize pagination with vpsData and itemsPerPage
+  // Initialize pagination with sortedData and itemsPerPage
   const {
     currentPage,
     totalPages,
@@ -302,7 +341,7 @@ const VPSManagement = () => {
     previousPage,
     hasNextPage,
     hasPreviousPage,
-  } = usePagination(vpsData, itemsPerPage);
+  } = usePagination(sortedData, itemsPerPage);
   
   return (
     <AppLayout>
@@ -416,13 +455,69 @@ const VPSManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-medium">Status</TableHead>
-                    <TableHead className="font-medium">VPS Name</TableHead>
-                    <TableHead className="text-right font-medium">Accounts</TableHead>
-                    <TableHead className="text-right font-medium">Connected</TableHead>
-                    <TableHead className="text-right font-medium">Cost (US$)</TableHead>
-                    <TableHead className="font-medium">Due Date</TableHead>
-                    <TableHead className="font-medium">Last Update</TableHead>
+                    <TableHead 
+                      className="font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('status')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Status
+                        {getSortIcon('status')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('vpsDisplayName')}
+                    >
+                      <div className="flex items-center gap-1">
+                        VPS Name
+                        {getSortIcon('vpsDisplayName')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-right font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('totalAccounts')}
+                    >
+                      <div className="flex items-center gap-1 justify-end">
+                        Accounts
+                        {getSortIcon('totalAccounts')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-right font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('connectedAccounts')}
+                    >
+                      <div className="flex items-center gap-1 justify-end">
+                        Connected
+                        {getSortIcon('connectedAccounts')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-right font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('cost')}
+                    >
+                      <div className="flex items-center gap-1 justify-end">
+                        Cost (US$)
+                        {getSortIcon('cost')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('due_date')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Due Date
+                        {getSortIcon('due_date')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="font-medium cursor-pointer hover:bg-muted/10 select-none"
+                      onClick={() => requestSort('lastUpdate')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Last Update
+                        {getSortIcon('lastUpdate')}
+                      </div>
+                    </TableHead>
                     <TableHead className="font-medium">Actions</TableHead>
                   </TableRow>
                 </TableHeader>

@@ -129,7 +129,8 @@ void OnTick()
 //+------------------------------------------------------------------+
 void SendTradingDataIntelligent()
 {
-   int currentOrderCount = PositionsTotal() + OrdersTotal();
+   // CORREÇÃO: Usar apenas PositionsTotal() como no MQ4 funcional
+   int currentOrderCount = PositionsTotal();
    bool hasOrders = HasOpenOrdersOrPendingOrders();
    
    // Detectar mudanças de estado

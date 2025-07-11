@@ -10,8 +10,30 @@
 //+------------------------------------------------------------------+
 bool HasOpenOrdersOrPendingOrders()
 {
-   int openPositions = PositionsTotal();
-   int pendingOrders = OrdersTotal();
+   int openPositions = 0;
+   int pendingOrders = 0;
+   
+   // Contar posições abertas manualmente (como no MQ4 funcional)
+   for(int i = 0; i < PositionsTotal(); i++)
+   {
+      if(PositionGetTicket(i) > 0)
+      {
+         openPositions++;
+      }
+   }
+   
+   // Contar ordens pendentes manualmente  
+   for(int i = 0; i < OrdersTotal(); i++)
+   {
+      if(OrderGetTicket(i) > 0)
+      {
+         ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+         if(orderType > ORDER_TYPE_SELL) // Ordens pendentes
+         {
+            pendingOrders++;
+         }
+      }
+   }
    
    return (openPositions > 0 || pendingOrders > 0);
 }

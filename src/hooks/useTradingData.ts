@@ -82,7 +82,7 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
       }));
     },
     enabled: !!profile, // Só executa quando tem perfil carregado
-    refetchInterval: 3000, // 🔧 OTIMIZADO: 3s para contas (alinhado com posições para refletir profit flutuante)
+    refetchInterval: 5000, // 🔧 OTIMIZADO: 5s para contas (menos crítico que posições)
     staleTime: 2000, // 🔧 OTIMIZADO: 2s stale time
     gcTime: 60000, // 🔧 OTIMIZADO: Cache por 1 minuto
   });

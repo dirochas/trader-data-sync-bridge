@@ -132,10 +132,10 @@ export const AccountGroupView2 = ({
           comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);
           break;
         case 'totalProfit':
-          comparison = a.stats.totalProfit - b.stats.totalProfit;
+          comparison = b.stats.totalProfit - a.stats.totalProfit;
           break;
         case 'totalTrades':
-          comparison = a.stats.totalTrades - b.stats.totalTrades;
+          comparison = b.stats.totalTrades - a.stats.totalTrades;
           break;
         default:
           comparison = a.groupInfo.name.localeCompare(b.groupInfo.name);

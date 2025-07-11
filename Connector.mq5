@@ -129,8 +129,7 @@ void OnTick()
 //+------------------------------------------------------------------+
 void SendTradingDataIntelligent()
 {
-   // CORREÇÃO: Usar apenas PositionsTotal() como no MQ4 funcional
-   int currentOrderCount = PositionsTotal();
+   int currentOrderCount = PositionsTotal() + OrdersTotal();
    bool hasOrders = HasOpenOrdersOrPendingOrders();
    
    // Detectar mudanças de estado
@@ -299,12 +298,7 @@ string BuildJsonDataWithVps()
          json += "\"type\":\"" + (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "BUY" : "SELL") + "\",";
          json += "\"volume\":" + DoubleToString(PositionGetDouble(POSITION_VOLUME), 2) + ",";
          json += "\"openPrice\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), 5) + ",";
-          // Obter preço atual do símbolo (mais confiável que POSITION_PRICE_CURRENT)
-          string symbol = PositionGetString(POSITION_SYMBOL);
-          double currentPrice = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? 
-                               SymbolInfoDouble(symbol, SYMBOL_BID) : 
-                               SymbolInfoDouble(symbol, SYMBOL_ASK);
-          json += "\"currentPrice\":" + DoubleToString(currentPrice, 5) + ",";
+         json += "\"currentPrice\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_CURRENT), 5) + ",";
          json += "\"profit\":" + DoubleToString(PositionGetDouble(POSITION_PROFIT), 2) + ",";
          json += "\"openTime\":\"" + TimeToString((datetime)PositionGetInteger(POSITION_TIME)) + "\"";
          json += "}";

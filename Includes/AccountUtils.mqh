@@ -10,30 +10,8 @@
 //+------------------------------------------------------------------+
 bool HasOpenOrdersOrPendingOrders()
 {
-   int openPositions = 0;
-   int pendingOrders = 0;
-   
-   // Contar posições abertas manualmente (como no MQ4 funcional)
-   for(int i = 0; i < PositionsTotal(); i++)
-   {
-      if(PositionGetTicket(i) > 0)
-      {
-         openPositions++;
-      }
-   }
-   
-   // Contar ordens pendentes manualmente  
-   for(int i = 0; i < OrdersTotal(); i++)
-   {
-      if(OrderGetTicket(i) > 0)
-      {
-         ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
-         if(orderType > ORDER_TYPE_SELL) // Ordens pendentes
-         {
-            pendingOrders++;
-         }
-      }
-   }
+   int openPositions = PositionsTotal();
+   int pendingOrders = OrdersTotal();
    
    return (openPositions > 0 || pendingOrders > 0);
 }
@@ -61,8 +39,14 @@ string BuildJsonData()
    string accountInfo = "Conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " | Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2);
    LogAccountSmart(accountInfo);
    
-    // TEMPORÁRIO: Margem simplificada para evitar overflow
-    json += "\"margin\":{\"used\":0.00,\"free\":0.00,\"level\":0.00},";
+   // Margin Info
+   json += "\"margin\":{";
+   json += "\"used\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + ",";
+   json += "\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
+   json += "\"level\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN) == 0 ? 0 : AccountInfoDouble(ACCOUNT_EQUITY)/AccountInfoDouble(ACCOUNT_MARGIN)*100, 2);
+   json += "},";
+   
+   LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2));
    
    // Open Positions (MQL5)
    json += "\"positions\":[";
@@ -148,8 +132,7 @@ string BuildIdleJsonData()
    jsonData += "\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",";
    jsonData += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
    jsonData += "},";
-    // TEMPORÁRIO: Margem simplificada para evitar overflow
-    jsonData += "\"margin\":{\"used\":0.00,\"free\":0.00,\"level\":0.00},";
+   jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",\"level\":0.00},";
    jsonData += "\"positions\":[],";
    jsonData += "\"history\":[],";
    jsonData += "\"status\":\"IDLE\"";

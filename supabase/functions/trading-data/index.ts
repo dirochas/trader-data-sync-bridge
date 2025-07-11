@@ -276,21 +276,40 @@ serve(async (req) => {
       console.log('⚡ OTIMIZAÇÃO: Margem inalterada, pulando update');
     }
 
-    // ✅ PROCESSAMENTO SIMPLIFICADO DE POSIÇÕES (v2.15 style)
-    console.log('=== PROCESSANDO POSIÇÕES (Método v2.15) ===')
+    // ✅ PROCESSAMENTO INTELIGENTE DE POSIÇÕES (UPSERT/UPDATE style)
+    console.log('=== PROCESSANDO POSIÇÕES (Método UPSERT) ===')
     let operationsCount = 0;
 
     // Processar posições apenas se status não for IDLE ou se há posições
     if (status !== 'IDLE' && positions && Array.isArray(positions)) {
       console.log(`📝 Processando ${positions.length} posições...`);
       
-      // Limpar todas as posições existentes primeiro (como v2.15)
-      await supabase
+      // Buscar posições existentes
+      const { data: existingPositions } = await supabase
         .from('positions')
-        .delete()
+        .select('ticket')
         .eq('account_id', accountId);
       
-      // Inserir as novas posições
+      const existingTickets = new Set(existingPositions?.map(p => p.ticket) || []);
+      const currentTickets = new Set(positions.map(p => p.ticket));
+      
+      // Remover posições que não existem mais
+      const ticketsToRemove = [...existingTickets].filter(ticket => !currentTickets.has(ticket));
+      if (ticketsToRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('positions')
+          .delete()
+          .eq('account_id', accountId)
+          .in('ticket', ticketsToRemove);
+        
+        if (deleteError) {
+          console.error('❌ Erro ao remover posições:', deleteError);
+        } else {
+          console.log(`🗑️ Removidas ${ticketsToRemove.length} posições fechadas`);
+        }
+      }
+      
+      // Upsert posições atuais
       for (const pos of positions) {
         if (!pos.ticket || !pos.symbol) {
           console.warn('⚠️ Posição inválida ignorada:', pos);
@@ -311,12 +330,15 @@ serve(async (req) => {
             updated_at: new Date().toISOString()
           };
 
-          const { error: insertError } = await supabase
+          const { error: upsertError } = await supabase
             .from('positions')
-            .insert(positionData);
+            .upsert(positionData, { 
+              onConflict: 'account_id,ticket',
+              ignoreDuplicates: false 
+            });
 
-          if (insertError) {
-            console.error(`❌ Erro ao inserir posição ${pos.ticket}:`, insertError);
+          if (upsertError) {
+            console.error(`❌ Erro ao fazer upsert posição ${pos.ticket}:`, upsertError);
           } else {
             operationsCount++;
           }

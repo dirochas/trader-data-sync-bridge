@@ -397,8 +397,8 @@ serve(async (req) => {
         optimizations: {
           account_updated: accountChanged,
           margin_updated: marginChanged,
-          positions_updated: positionsChanged,
-          savings_applied: !accountChanged || !marginChanged || !positionsChanged
+          positions_updated: operationsCount > 0,
+          savings_applied: !accountChanged || !marginChanged
         },
         timestamp: new Date().toISOString()
       }),

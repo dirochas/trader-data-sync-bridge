@@ -440,19 +440,17 @@ const AccountMonitor = () => {
   );
 
   // Função para lidar com ordenação de grupos
-  const handleGroupSortChange = (value: string) => {
-    if (value) {
-      // Se clicou na mesma coluna, alterna a direção
-      if (groupSortConfig.key === value) {
-        const newDirection = groupSortConfig.direction === 'asc' ? 'desc' : 'asc';
-        setGroupSortConfig({ key: value, direction: newDirection });
-      } else {
-        // Nova coluna - usar padrão apropriado
-        // Para P&L e Trades, padrão é DESC (maiores valores primeiro)
-        // Para Nome, padrão é ASC (alfabética)
-        const defaultDirection = (value === 'totalProfit' || value === 'totalTrades') ? 'desc' : 'asc';
-        setGroupSortConfig({ key: value, direction: defaultDirection });
-      }
+  const handleGroupSortChange = (key: string) => {
+    // Se clicou na mesma coluna, alterna a direção
+    if (groupSortConfig.key === key) {
+      const newDirection = groupSortConfig.direction === 'asc' ? 'desc' : 'asc';
+      setGroupSortConfig({ key, direction: newDirection });
+    } else {
+      // Nova coluna - usar padrão apropriado
+      // Para P&L e Trades, padrão é DESC (maiores valores primeiro)
+      // Para Nome, padrão é ASC (alfabética)
+      const defaultDirection = (key === 'totalProfit' || key === 'totalTrades') ? 'desc' : 'asc';
+      setGroupSortConfig({ key, direction: defaultDirection });
     }
   };
 
@@ -466,41 +464,35 @@ const AccountMonitor = () => {
     return (
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
-        <ToggleGroup 
-          type="single" 
-          value={groupSortConfig.key} 
-          onValueChange={handleGroupSortChange}
-          className="bg-muted/50 rounded-md p-0.5"
-          size="sm"
-        >
-          <ToggleGroupItem 
-            value="name" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+        <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+          <Button
+            variant={groupSortConfig.key === 'name' ? 'secondary' : 'ghost'}
             size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('name')}
           >
             <SortAsc className="w-3 h-3" />
-            Nome
-            <span className="text-xs opacity-60 ml-1">{getSortIcon('name')}</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="totalProfit" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+            Nome {getSortIcon('name')}
+          </Button>
+          <Button
+            variant={groupSortConfig.key === 'totalProfit' ? 'secondary' : 'ghost'}
             size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('totalProfit')}
           >
             <DollarSign className="w-3 h-3" />
-            P&L
-            <span className="text-xs opacity-60 ml-1">{getSortIcon('totalProfit')}</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="totalTrades" 
-            className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
+            P&L {getSortIcon('totalProfit')}
+          </Button>
+          <Button
+            variant={groupSortConfig.key === 'totalTrades' ? 'secondary' : 'ghost'}
             size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('totalTrades')}
           >
             <BarChart3 className="w-3 h-3" />
-            Trades
-            <span className="text-xs opacity-60 ml-1">{getSortIcon('totalTrades')}</span>
-          </ToggleGroupItem>
-        </ToggleGroup>
+            Trades {getSortIcon('totalTrades')}
+          </Button>
+        </div>
       </div>
     );
   };

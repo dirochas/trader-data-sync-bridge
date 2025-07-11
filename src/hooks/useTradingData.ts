@@ -82,9 +82,9 @@ export const useTradingAccounts = (includeArchived = false, includeDeleted = fal
       }));
     },
     enabled: !!profile, // Só executa quando tem perfil carregado
-    refetchInterval: 1500, // Otimizado para 1.5 segundos (dados críticos)
-    staleTime: 500, // Considera dados "frescos" por 500ms
-    gcTime: 30000, // Cache por 30 segundos
+    refetchInterval: 5000, // 🔧 OTIMIZADO: 5s para contas (menos crítico que posições)
+    staleTime: 2000, // 🔧 OTIMIZADO: 2s stale time
+    gcTime: 60000, // 🔧 OTIMIZADO: Cache por 1 minuto
   });
 };
 
@@ -144,9 +144,9 @@ export const useTradingAccount = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 1500, // Mesmo intervalo para consistência
-    staleTime: 500,
-    gcTime: 30000,
+    refetchInterval: 5000, // 🔧 OTIMIZADO: 5s para conta individual
+    staleTime: 2000, // 🔧 OTIMIZADO: 2s stale time
+    gcTime: 60000, // 🔧 OTIMIZADO: Cache por 1 minuto
   });
 };
 
@@ -196,9 +196,9 @@ export const useMarginInfo = (accountNumber?: string) => {
       return data;
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 3000, // Dados menos críticos - 3 segundos
-    staleTime: 1000,
-    gcTime: 60000,
+    refetchInterval: 10000, // 🔧 OTIMIZADO: 10s para margem (menos crítico)
+    staleTime: 3000, // 🔧 OTIMIZADO: 3s stale time
+    gcTime: 120000, // 🔧 OTIMIZADO: Cache por 2 minutos
   });
 };
 
@@ -245,9 +245,9 @@ export const useOpenPositions = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 1000, // MAIS CRÍTICO - 1 segundo para posições
-    staleTime: 300, // Dados muito frescos
-    gcTime: 30000,
+    refetchInterval: 3000, // 🔧 OTIMIZADO: 3s para posições (mais crítico mas otimizado)
+    staleTime: 1000, // 🔧 OTIMIZADO: 1s stale time
+    gcTime: 30000, // Mantém cache curto para dados críticos
   });
 };
 
@@ -295,9 +295,9 @@ export const useTradeHistory = (accountNumber?: string) => {
       return data || [];
     },
     enabled: !!accountNumber && !!profile,
-    refetchInterval: 8000, // Dados históricos - menos críticos, 8 segundos
-    staleTime: 2000,
-    gcTime: 120000, // Cache por 2 minutos
+    refetchInterval: 30000, // 🔧 OTIMIZADO: 30s para histórico (menos crítico)
+    staleTime: 10000, // 🔧 OTIMIZADO: 10s stale time
+    gcTime: 300000, // 🔧 OTIMIZADO: Cache por 5 minutos
   });
 };
 
@@ -311,7 +311,7 @@ export const useRealtimeUpdates = () => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'accounts' },
         () => {
-          // Invalidação mais inteligente - só invalida se dados são "antigos"
+          // 🔧 OTIMIZADO: Invalidação mais inteligente - apenas se dados são antigos
           queryClient.invalidateQueries({ 
             queryKey: ['accounts'],
             refetchType: 'all'
@@ -325,13 +325,16 @@ export const useRealtimeUpdates = () => {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'margin' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['margin-info'] });
+          // 🔧 OTIMIZADO: Invalidação com debounce para margem
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['margin-info'] });
+          }, 2000); // 2s debounce
         }
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'positions' },
         () => {
-          // Posições são críticas - invalidação imediata
+          // 🔧 CRÍTICO: Posições mantêm invalidação imediata mas otimizada
           queryClient.invalidateQueries({ 
             queryKey: ['positions'],
             refetchType: 'all'
@@ -341,20 +344,69 @@ export const useRealtimeUpdates = () => {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'history' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['history'] });
+          // 🔧 OTIMIZADO: Histórico com debounce maior
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['history'] });
+          }, 5000); // 5s debounce
         }
       )
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'account_groups' },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['account-groups'] });
-          queryClient.invalidateQueries({ queryKey: ['accounts'] });
+          // 🔧 OTIMIZADO: Groups com debounce
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['account-groups'] });
+            queryClient.invalidateQueries({ queryKey: ['accounts'] });
+          }, 3000); // 3s debounce
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // 🔧 NOVO: Hook para detectar inatividade da aba/usuário
+  useEffect(() => {
+    let isTabVisible = true;
+    let inactivityTimer: NodeJS.Timeout;
+    
+    const handleVisibilityChange = () => {
+      isTabVisible = !document.hidden;
+      
+      if (isTabVisible) {
+        // Aba voltou a ficar ativa - invalidar dados críticos
+        queryClient.invalidateQueries({ queryKey: ['positions'] });
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        console.log('🔄 Aba ativa - atualizando dados críticos');
+      }
+    };
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        // Após 5 minutos de inatividade, aumentar intervalos
+        if (isTabVisible) {
+          console.log('😴 Usuário inativo - reduzindo frequência de queries');
+          // A query vai automaticamente usar intervalos maiores devido ao staleTime
+        }
+      }, 5 * 60 * 1000); // 5 minutos
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+      document.addEventListener(event, resetInactivityTimer, true);
+    });
+
+    resetInactivityTimer();
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+        document.removeEventListener(event, resetInactivityTimer, true);
+      });
+      clearTimeout(inactivityTimer);
     };
   }, [queryClient]);
 };

@@ -103,6 +103,20 @@ const VPSManagement = () => {
     fetchVPSServersData();
   }, []);
 
+  // ✅ DEFINIR getVPSStatus ANTES de usar na ordenação
+  const getVPSStatus = (vps: any) => {
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - vps.lastUpdate.getTime()) / (1000 * 60);
+    
+    if (diffInMinutes <= 2) {
+      return { status: 'Online', color: 'text-emerald-500', icon: Wifi };
+    } else if (diffInMinutes <= 10) {
+      return { status: 'Delayed', color: 'text-amber-500', icon: Wifi };
+    } else {
+      return { status: 'Offline', color: 'text-rose-400', icon: WifiOff };
+    }
+  };
+
   // Atualizar vpsGroups com dados de cost e due_date
   const vpsData = Object.values(vpsGroups).map(vps => ({
     ...vps,
@@ -143,19 +157,6 @@ const VPSManagement = () => {
     return sortConfig.direction === 'asc' 
       ? <ChevronUp className="h-4 w-4 text-primary" />
       : <ChevronDown className="h-4 w-4 text-primary" />;
-  };
-  
-  const getVPSStatus = (vps: any) => {
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - vps.lastUpdate.getTime()) / (1000 * 60);
-    
-    if (diffInMinutes <= 2) {
-      return { status: 'Online', color: 'text-emerald-500', icon: Wifi };
-    } else if (diffInMinutes <= 10) {
-      return { status: 'Delayed', color: 'text-amber-500', icon: Wifi };
-    } else {
-      return { status: 'Offline', color: 'text-rose-400', icon: WifiOff };
-    }
   };
 
   const handleViewVPS = (vpsUniqueId: string) => {

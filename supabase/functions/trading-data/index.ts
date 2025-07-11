@@ -265,77 +265,88 @@ serve(async (req) => {
       console.log('⚡ OTIMIZAÇÃO: Margem inalterada, pulando update');
     }
 
-    // ✅ DELTA UPDATE: Verificar se posições mudaram
-    console.log('=== VERIFICANDO MUDANÇAS NAS POSIÇÕES ===')
+    // ✅ OPERAÇÕES ATÔMICAS: Atualizar posições sem DELETE ALL
+    console.log('=== PROCESSANDO POSIÇÕES COM OPERAÇÕES ATÔMICAS ===')
     
+    // Buscar posições atuais para comparação
     const { data: currentPositions } = await supabase
       .from('positions')
-      .select('ticket, current, profit')
+      .select('ticket, current, profit, symbol, type, volume, price, time')
       .eq('account_id', accountId);
 
-    let positionsChanged = true; // Default para mudou (primeira vez ou diferente quantidade)
+    const currentTickets = new Set(currentPositions?.map(p => p.ticket) || []);
+    const newTickets = new Set(positions?.map(p => p.ticket) || []);
     
-    if (currentPositions && positions) {
-      // Se quantidade diferente, mudou
-      if (currentPositions.length !== positions.length) {
-        console.log(`Quantidade de posições mudou: ${currentPositions.length} -> ${positions.length}`);
-      } else if (positions.length === 0) {
-        // Se ambos são 0, não mudou
-        positionsChanged = false;
-      } else {
-        // Verificar se alguma posição mudou (preço atual ou profit)
-        positionsChanged = false;
-        for (const newPos of positions) {
-          const currentPos = currentPositions.find(p => p.ticket === newPos.ticket);
-          if (!currentPos || 
-              Math.abs(Number(currentPos.current) - Number(newPos.currentPrice)) > 0.00001 ||
-              Math.abs(Number(currentPos.profit) - Number(newPos.profit)) > 0.01) {
-            positionsChanged = true;
-            break;
+    let operationsCount = 0;
+
+    // 1. UPSERT das posições recebidas (atualizar existentes + inserir novas)
+    if (positions && positions.length > 0) {
+      console.log(`📝 Processando ${positions.length} posições recebidas...`);
+      
+      for (const pos of positions) {
+        try {
+          const positionData = {
+            account_id: accountId,
+            ticket: pos.ticket,
+            symbol: pos.symbol,
+            type: pos.type,
+            volume: pos.volume,
+            price: pos.openPrice,
+            current: pos.currentPrice,
+            profit: pos.profit,
+            time: new Date(pos.openTime).toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { error: upsertError } = await supabase
+            .from('positions')
+            .upsert(positionData, {
+              onConflict: 'account_id,ticket'
+            });
+
+          if (upsertError) {
+            console.error(`Erro ao fazer upsert da posição ${pos.ticket}:`, upsertError);
+          } else {
+            operationsCount++;
           }
+        } catch (error) {
+          console.error(`Erro ao processar posição ${pos.ticket}:`, error);
         }
       }
     }
 
-    console.log('Posições mudaram:', positionsChanged ? 'SIM' : 'NÃO');
+    // 2. DELETAR posições que não vieram mais (foram fechadas)
+    const ticketsToDelete = [...currentTickets].filter(ticket => !newTickets.has(ticket));
+    
+    if (ticketsToDelete.length > 0) {
+      console.log(`🗑️ Removendo ${ticketsToDelete.length} posições fechadas:`, ticketsToDelete);
+      
+      for (const ticket of ticketsToDelete) {
+        try {
+          const { error: deleteError } = await supabase
+            .from('positions')
+            .delete()
+            .eq('account_id', accountId)
+            .eq('ticket', ticket);
 
-    if (positionsChanged) {
-      // Limpar posições antigas
-      await supabase
-        .from('positions')
-        .delete()
-        .eq('account_id', accountId);
-
-      // Inserir novas posições se existirem
-      if (positions && positions.length > 0) {
-        const positionsData = positions.map((pos: any) => ({
-          account_id: accountId,
-          ticket: pos.ticket,
-          symbol: pos.symbol,
-          type: pos.type,
-          volume: pos.volume,
-          price: pos.openPrice,
-          current: pos.currentPrice,
-          profit: pos.profit,
-          time: new Date(pos.openTime).toISOString(),
-          updated_at: new Date().toISOString()
-        }))
-
-        const { error: positionsError } = await supabase
-          .from('positions')
-          .insert(positionsData)
-
-        if (positionsError) {
-          console.error('Erro ao salvar posições:', positionsError)
-          throw new Error(`Erro posições: ${positionsError.message}`)
+          if (deleteError) {
+            console.error(`Erro ao deletar posição ${ticket}:`, deleteError);
+          } else {
+            operationsCount++;
+          }
+        } catch (error) {
+          console.error(`Erro ao remover posição ${ticket}:`, error);
         }
-        console.log('✅ Posições atualizadas:', positions.length)
-      } else {
-        console.log('✅ Posições limpas (nenhuma posição aberta)')
       }
-    } else {
-      console.log('⚡ OTIMIZAÇÃO: Posições inalteradas, pulando update');
     }
+
+    // 3. LOG do resultado
+    const finalPositionsCount = positions?.length || 0;
+    console.log('✅ OPERAÇÕES ATÔMICAS CONCLUÍDAS:');
+    console.log(`   - Posições processadas: ${finalPositionsCount}`);
+    console.log(`   - Operações realizadas: ${operationsCount}`);
+    console.log(`   - Posições removidas: ${ticketsToDelete.length}`);
+    console.log(`   - Posições mantidas/atualizadas: ${finalPositionsCount}`);
 
     // Insert trade history (avoid duplicates) (usando novos nomes)
     if (history && history.length > 0) {

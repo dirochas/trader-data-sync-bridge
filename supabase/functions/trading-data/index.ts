@@ -45,15 +45,26 @@ serve(async (req) => {
     const requestBody = await req.text()
     console.log('Request body recebido:', requestBody)
     
-    const { account, margin, positions, history, vpsId, userEmail } = JSON.parse(requestBody)
+    const data = JSON.parse(requestBody)
+    const { account, margin, positions, history, vpsId, userEmail, status } = data
+    
+    // Validação básica como na v2.15
+    if (!account?.accountNumber || !userEmail) {
+      console.error('❌ Dados obrigatórios faltando:', { account, userEmail })
+      return new Response(
+        JSON.stringify({ error: 'account.accountNumber e userEmail são obrigatórios' }),
+        { status: 400, headers: corsHeaders }
+      )
+    }
     
     console.log('Dados parseados:', { 
-      account: account?.accountNumber, 
+      account: account.accountNumber, 
       margin: margin?.used, 
       positions: positions?.length,
       history: history?.length,
       vpsId: vpsId,
-      userEmail: userEmail
+      userEmail: userEmail,
+      status: status
     })
 
     // Função para processar VPS ID - separar único vs display
@@ -265,123 +276,114 @@ serve(async (req) => {
       console.log('⚡ OTIMIZAÇÃO: Margem inalterada, pulando update');
     }
 
-    // ✅ OPERAÇÕES ATÔMICAS: Atualizar posições sem DELETE ALL
-    console.log('=== PROCESSANDO POSIÇÕES COM OPERAÇÕES ATÔMICAS ===')
-    
-    // Buscar posições atuais para comparação
-    const { data: currentPositions } = await supabase
-      .from('positions')
-      .select('ticket, current, profit, symbol, type, volume, price, time')
-      .eq('account_id', accountId);
-
-    const currentTickets = new Set(currentPositions?.map(p => p.ticket) || []);
-    const newTickets = new Set(positions?.map(p => p.ticket) || []);
-    
+    // ✅ PROCESSAMENTO SIMPLIFICADO DE POSIÇÕES (v2.15 style)
+    console.log('=== PROCESSANDO POSIÇÕES (Método v2.15) ===')
     let operationsCount = 0;
 
-    // 1. UPSERT das posições recebidas (atualizar existentes + inserir novas)
-    if (positions && positions.length > 0) {
-      console.log(`📝 Processando ${positions.length} posições recebidas...`);
+    // Processar posições apenas se status não for IDLE ou se há posições
+    if (status !== 'IDLE' && positions && Array.isArray(positions)) {
+      console.log(`📝 Processando ${positions.length} posições...`);
       
+      // Limpar todas as posições existentes primeiro (como v2.15)
+      await supabase
+        .from('positions')
+        .delete()
+        .eq('account_id', accountId);
+      
+      // Inserir as novas posições
       for (const pos of positions) {
+        if (!pos.ticket || !pos.symbol) {
+          console.warn('⚠️ Posição inválida ignorada:', pos);
+          continue;
+        }
+        
         try {
           const positionData = {
             account_id: accountId,
-            ticket: pos.ticket,
-            symbol: pos.symbol,
-            type: pos.type,
-            volume: pos.volume,
-            price: pos.openPrice,
-            current: pos.currentPrice,
-            profit: pos.profit,
-            time: new Date(pos.openTime).toISOString(),
+            ticket: parseInt(pos.ticket),
+            symbol: String(pos.symbol),
+            type: String(pos.type || 'UNKNOWN'),
+            volume: parseFloat(pos.volume) || 0,
+            price: parseFloat(pos.openPrice || pos.price) || 0,
+            current: parseFloat(pos.currentPrice || pos.current) || 0,
+            profit: parseFloat(pos.profit) || 0,
+            time: pos.openTime || pos.time || new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
 
-          const { error: upsertError } = await supabase
+          const { error: insertError } = await supabase
             .from('positions')
-            .upsert(positionData, {
-              onConflict: 'account_id,ticket'
-            });
+            .insert(positionData);
 
-          if (upsertError) {
-            console.error(`Erro ao fazer upsert da posição ${pos.ticket}:`, upsertError);
+          if (insertError) {
+            console.error(`❌ Erro ao inserir posição ${pos.ticket}:`, insertError);
           } else {
             operationsCount++;
           }
         } catch (error) {
-          console.error(`Erro ao processar posição ${pos.ticket}:`, error);
+          console.error(`❌ Erro ao processar posição ${pos.ticket}:`, error);
         }
+      }
+    } else if (status === 'IDLE') {
+      // Modo IDLE - limpar todas as posições
+      const { error: clearError } = await supabase
+        .from('positions')
+        .delete()
+        .eq('account_id', accountId);
+        
+      if (clearError) {
+        console.error('❌ Erro ao limpar posições no modo IDLE:', clearError);
+      } else {
+        console.log('🧹 Posições limpas no modo IDLE');
       }
     }
 
-    // 2. DELETAR posições que não vieram mais (foram fechadas)
-    const ticketsToDelete = [...currentTickets].filter(ticket => !newTickets.has(ticket));
-    
-    if (ticketsToDelete.length > 0) {
-      console.log(`🗑️ Removendo ${ticketsToDelete.length} posições fechadas:`, ticketsToDelete);
-      
-      for (const ticket of ticketsToDelete) {
-        try {
-          const { error: deleteError } = await supabase
-            .from('positions')
-            .delete()
-            .eq('account_id', accountId)
-            .eq('ticket', ticket);
-
-          if (deleteError) {
-            console.error(`Erro ao deletar posição ${ticket}:`, deleteError);
-          } else {
-            operationsCount++;
-          }
-        } catch (error) {
-          console.error(`Erro ao remover posição ${ticket}:`, error);
-        }
-      }
-    }
-
-    // 3. LOG do resultado
+    // Log do resultado
     const finalPositionsCount = positions?.length || 0;
-    console.log('✅ OPERAÇÕES ATÔMICAS CONCLUÍDAS:');
+    console.log('✅ PROCESSAMENTO DE POSIÇÕES CONCLUÍDO:');
     console.log(`   - Posições processadas: ${finalPositionsCount}`);
     console.log(`   - Operações realizadas: ${operationsCount}`);
-    console.log(`   - Posições removidas: ${ticketsToDelete.length}`);
-    console.log(`   - Posições mantidas/atualizadas: ${finalPositionsCount}`);
+    console.log(`   - Status: ${status || 'ATIVO'}`);
 
-    // Insert trade history (avoid duplicates) (usando novos nomes)
-    if (history && history.length > 0) {
+    // Processar histórico apenas se não for modo IDLE (v2.15 style)
+    if (status !== 'IDLE' && history && history.length > 0) {
       console.log('=== SALVANDO', history.length, 'HISTÓRICO ===')
       for (const trade of history) {
+        if (!trade.ticket || !trade.symbol) {
+          console.warn('⚠️ Trade inválido ignorado:', trade);
+          continue;
+        }
+        
         try {
           const { error: historyError } = await supabase
             .from('history')
             .upsert({
               account_id: accountId,
-              ticket: trade.ticket,
-              symbol: trade.symbol,
-              type: trade.type,
-              volume: trade.volume,
-              price: trade.openPrice,
-              close: trade.closePrice,
-              profit: trade.profit,
-              time: new Date(trade.openTime).toISOString(),
-              close_time: new Date(trade.closeTime).toISOString()
+              ticket: parseInt(trade.ticket),
+              symbol: String(trade.symbol),
+              type: String(trade.type || 'UNKNOWN'),
+              volume: parseFloat(trade.volume) || 0,
+              price: parseFloat(trade.openPrice || trade.price) || 0,
+              close: parseFloat(trade.closePrice || trade.close) || 0,
+              profit: parseFloat(trade.profit) || 0,
+              time: trade.openTime || trade.time || new Date().toISOString(),
+              close_time: trade.closeTime || trade.close_time || new Date().toISOString()
             }, {
               onConflict: 'account_id,ticket'
             })
 
           if (historyError) {
-            console.error('Erro ao salvar trade:', trade.ticket, historyError)
+            console.error('❌ Erro ao salvar trade:', trade.ticket, historyError)
           } else {
-            console.log('Trade salvo:', trade.ticket)
+            console.log('✅ Trade salvo:', trade.ticket)
           }
         } catch (error) {
-          console.error('Erro ao processar trade:', trade.ticket, error)
+          console.error('❌ Erro ao processar trade:', trade.ticket, error)
         }
       }
-      console.log('Histórico processado')
+      console.log('✅ Histórico processado')
     } else {
-      console.log('Nenhum histórico para salvar')
+      console.log('⚡ Histórico ignorado (modo IDLE ou sem dados)')
     }
 
     console.log('=== SUCESSO TOTAL ===')

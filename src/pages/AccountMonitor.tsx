@@ -440,50 +440,62 @@ const AccountMonitor = () => {
   );
 
   // Função para lidar com ordenação de grupos
-  const handleGroupSortChange = (value: string) => {
-    if (value) {
-      setGroupSortConfig({ key: value, direction: 'desc' });
+  const handleGroupSortChange = (key: string) => {
+    // Se clicou na mesma coluna, alterna a direção
+    if (groupSortConfig.key === key) {
+      const newDirection = groupSortConfig.direction === 'asc' ? 'desc' : 'asc';
+      setGroupSortConfig({ key, direction: newDirection });
+    } else {
+      // Nova coluna - usar padrão apropriado
+      // Para P&L e Trades, padrão é DESC (maiores valores primeiro)
+      // Para Nome, padrão é ASC (alfabética)
+      const defaultDirection = (key === 'totalProfit' || key === 'totalTrades') ? 'desc' : 'asc';
+      setGroupSortConfig({ key, direction: defaultDirection });
     }
   };
 
   // Renderizar os controles de ordenação para grupos
-  const renderGroupSortControls = () => (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
-      <ToggleGroup 
-        type="single" 
-        value={groupSortConfig.key} 
-        onValueChange={handleGroupSortChange}
-        className="bg-muted/50 rounded-md p-0.5"
-        size="sm"
-      >
-        <ToggleGroupItem 
-          value="name" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <SortAsc className="w-3 h-3" />
-          Nome
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="totalProfit" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <DollarSign className="w-3 h-3" />
-          P&L
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="totalTrades" 
-          className="flex items-center gap-1.5 text-xs px-2 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground"
-          size="sm"
-        >
-          <BarChart3 className="w-3 h-3" />
-          Trades
-        </ToggleGroupItem>
-      </ToggleGroup>
-    </div>
-  );
+  const renderGroupSortControls = () => {
+    const getSortIcon = (key: string) => {
+      if (groupSortConfig.key !== key) return null;
+      return groupSortConfig.direction === 'asc' ? '↑' : '↓';
+    };
+
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Ordenar por:</span>
+        <div className="flex items-center gap-1 bg-muted/50 rounded-md p-0.5">
+          <Button
+            variant={groupSortConfig.key === 'name' ? 'secondary' : 'ghost'}
+            size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('name')}
+          >
+            <SortAsc className="w-3 h-3" />
+            Nome {getSortIcon('name')}
+          </Button>
+          <Button
+            variant={groupSortConfig.key === 'totalProfit' ? 'secondary' : 'ghost'}
+            size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('totalProfit')}
+          >
+            <DollarSign className="w-3 h-3" />
+            P&L {getSortIcon('totalProfit')}
+          </Button>
+          <Button
+            variant={groupSortConfig.key === 'totalTrades' ? 'secondary' : 'ghost'}
+            size="sm"
+            className="text-xs px-2 py-1 h-auto flex items-center gap-1.5"
+            onClick={() => handleGroupSortChange('totalTrades')}
+          >
+            <BarChart3 className="w-3 h-3" />
+            Trades {getSortIcon('totalTrades')}
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   const handleViewAccount = (accountNumber: string) => {
     navigate(`/account/${accountNumber}`);
@@ -524,9 +536,15 @@ const AccountMonitor = () => {
     queryClient.invalidateQueries({ queryKey: ['trading-accounts'] });
   };
 
+  // Calcular totais excluindo contas desconectadas/offline
+  const onlineAccounts = enrichedAccounts.filter(account => 
+    account.status !== 'Offline' && account.status !== 'Disconnected'
+  );
+  
   const totalAccounts = accounts.length;
-  const totalTrades = allOpenPositions.length;
-  const totalEarnings = accounts.reduce((sum, account) => sum + Number(account.profit || 0), 0);
+  const totalTrades = onlineAccounts.reduce((sum, account) => sum + (account.openTrades || 0), 0);
+  const totalOpenPnL = onlineAccounts.reduce((sum, account) => sum + Number(account.openPnL || 0), 0);
+  const totalDayProfit = enrichedAccounts.reduce((sum, account) => sum + Number(account.dayProfit || 0), 0); // Day profit inclui todos
   const totalClients = accounts.length;
 
   const accountsByStatus = accounts.reduce((acc, account) => {
@@ -536,7 +554,7 @@ const AccountMonitor = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const connectedAccounts = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
+  const connectedAccountsCount = (accountsByStatus['Live'] || 0) + (accountsByStatus['Slow Connection'] || 0);
 
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, filteredAccounts.length);
@@ -687,7 +705,7 @@ const AccountMonitor = () => {
             <CardContent>
               <div className="text-2xl font-medium text-gray-900 dark:text-white">{totalAccounts}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {connectedAccounts} conectadas
+                {connectedAccountsCount} conectadas
               </p>
             </CardContent>
           </Card>
@@ -702,7 +720,7 @@ const AccountMonitor = () => {
             <CardContent>
               <div className="text-2xl font-medium text-emerald-500">{totalTrades}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Posições ativas
+                Apenas contas conectadas
               </p>
             </CardContent>
           </Card>
@@ -715,11 +733,16 @@ const AccountMonitor = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-medium text-emerald-500">
-                US$ {totalEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <div className="space-y-1">
+                <div className="text-lg font-medium text-emerald-500">
+                  US$ {totalOpenPnL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <div className="text-sm font-medium text-blue-500">
+                  Day: US$ {totalDayProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Lucro total
+                Open P&L (conectadas) + Day P&L
               </p>
             </CardContent>
           </Card>

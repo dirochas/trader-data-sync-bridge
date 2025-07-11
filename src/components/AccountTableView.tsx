@@ -132,6 +132,7 @@ export const AccountTableView = ({ accounts, onEditAccount, onCloseAllPositions,
             const isOpenPnLProfit = (account.openPnL || 0) >= 0;
             const isDayPnLProfit = (account.dayProfit || 0) >= 0;
             const hasOpenTrades = (account.openTrades || 0) > 0;
+            const isDisconnected = connectionStatus.status === 'Disconnected' || account.status === 'Offline';
             
             return (
               <TableRow key={account.id} className="hover:bg-muted/30 transition-colors">
@@ -166,13 +167,20 @@ export const AccountTableView = ({ accounts, onEditAccount, onCloseAllPositions,
                   {formatCurrency(account.equity)}
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge variant="outline" className="font-mono">
+                  <Badge 
+                    variant="outline" 
+                    className={`font-mono ${isDisconnected ? 'text-yellow-600 border-yellow-400' : ''}`}
+                  >
                     {account.openTrades || 0}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className={`flex items-center justify-end gap-1 font-mono ${
-                    isOpenPnLProfit ? 'text-green-600' : 'text-red-300'
+                    isDisconnected 
+                      ? 'text-yellow-600' 
+                      : isOpenPnLProfit 
+                        ? 'text-green-600' 
+                        : 'text-red-300'
                   }`}>
                     {isOpenPnLProfit ? (
                       <TrendingUp className="w-4 h-4" />

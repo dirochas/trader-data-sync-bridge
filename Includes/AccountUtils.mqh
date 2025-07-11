@@ -61,12 +61,29 @@ string BuildJsonData()
    string accountInfo = "Conta: " + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + " | Balance: $" + DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2) + " | Equity: $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2);
    LogAccountSmart(accountInfo);
    
-   // Margin Info
-   json += "\"margin\":{";
-   json += "\"used\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + ",";
-   json += "\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
-   json += "\"level\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN) == 0 ? 0 : AccountInfoDouble(ACCOUNT_EQUITY)/AccountInfoDouble(ACCOUNT_MARGIN)*100, 2);
-   json += "},";
+    // Margin Info
+    json += "\"margin\":{";
+    
+    double marginUsed = AccountInfoDouble(ACCOUNT_MARGIN);
+    double marginFree = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+    
+    // CORREÇÃO: Limitar valores extremos para evitar overflow no banco
+    if(marginUsed < 0.01) marginUsed = 0.01; // Evitar divisão por zero/valores muito pequenos
+    if(marginFree > 999999999) marginFree = 999999999; // Limitar valor máximo
+    if(marginUsed > 999999999) marginUsed = 999999999; // Limitar valor máximo
+    
+    // Calcular nível de margem com limite de segurança
+    double marginLevel = 0;
+    if(marginUsed > 0.01) {
+        marginLevel = (equity / marginUsed) * 100;
+        if(marginLevel > 999999) marginLevel = 999999; // Limitar a 999,999%
+    }
+    
+    json += "\"used\":" + DoubleToString(marginUsed, 2) + ",";
+    json += "\"free\":" + DoubleToString(marginFree, 2) + ",";
+    json += "\"level\":" + DoubleToString(marginLevel, 2);
+    json += "},";
    
    LogPrint(LOG_ALL, "MARGIN", "Usada: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN), 2) + " | Livre: $" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2));
    
@@ -154,7 +171,11 @@ string BuildIdleJsonData()
    jsonData += "\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",";
    jsonData += "\"leverage\":" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE));
    jsonData += "},";
-   jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",\"level\":0.00},";
+    // CORREÇÃO: Limitar valores extremos também no modo IDLE
+    double marginFreeIdle = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+    if(marginFreeIdle > 999999999) marginFreeIdle = 999999999;
+    
+    jsonData += "\"margin\":{\"used\":0.00,\"free\":" + DoubleToString(marginFreeIdle, 2) + ",\"level\":0.00},";
    jsonData += "\"positions\":[],";
    jsonData += "\"history\":[],";
    jsonData += "\"status\":\"IDLE\"";
